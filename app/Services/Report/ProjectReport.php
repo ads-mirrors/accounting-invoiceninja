@@ -129,7 +129,7 @@ class ProjectReport extends BaseExport
             return [
                 'id' => $project->hashed_id,
                 'budgeted_hours' => $chartService->getBudgetedHours($project),
-            ]
+            ];
         });
     }
 }
