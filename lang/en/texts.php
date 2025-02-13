@@ -5499,6 +5499,8 @@ $lang = array(
     'remaining_hours' => 'Remaining Hours',
     'just_now' => 'Just Now',
     'yesterday' => 'Yesterday',
+    'enable_client_profile_update' => 'Allow clients to update their profile',
+    'enable_client_profile_update_help' => 'Allow clients to update their profile information from the client portal',
 );
 
 return $lang;
