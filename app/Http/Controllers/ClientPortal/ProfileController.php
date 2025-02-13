@@ -30,6 +30,10 @@ class ProfileController extends Controller
      */
     public function edit(ClientContact $client_contact)
     {
+        if (auth()->guard('contact')->user()->client->getSetting('enable_client_profile_update') === false) {
+            return redirect()->route('client.dashboard');
+        }
+
         return $this->render('profile.index');
     }
 
