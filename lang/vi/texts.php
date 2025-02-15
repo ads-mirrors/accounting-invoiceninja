@@ -5496,6 +5496,9 @@ $lang = array(
     'currency_samoan_tala' => 'Samoa Tala',
     'confirm_duplicate_gateway' => 'Bạn có chắc chắn Tạo đến nối khác không?',
     'clients_limit' => 'Bạn đã đạt đến giới hạn khách hàng của mình. Vui lòng nâng cấp gói của bạn.',
+    'remaining_hours' => 'Giờ còn lại',
+    'just_now' => 'Vừa rồi',
+    'yesterday' => 'Hôm qua',
 );
 
 return $lang;

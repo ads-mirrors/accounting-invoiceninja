@@ -4974,7 +4974,7 @@ $lang = array(
     'e_invoice' => 'E-Invoice',
     'light_dark_mode' => 'Light/Dark Mode',
     'activities' => 'Activities',
-    'recent_transactions' => "Here are your company's most recent transactions:",
+    'recent_transactions' => "Recent Transactions",
     'country_Palestine' => "Palestine",
     'country_Taiwan' => 'Taiwan',
     'duties' => 'Duties',
@@ -5499,6 +5499,8 @@ $lang = array(
     'remaining_hours' => 'Remaining Hours',
     'just_now' => 'Just Now',
     'yesterday' => 'Yesterday',
+    'enable_client_profile_update' => 'Allow clients to update their profile',
+    'enable_client_profile_update_help' => 'Allow clients to update their profile information from the client portal',
 );
 
 return $lang;

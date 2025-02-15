@@ -37,6 +37,12 @@ class ClientSyncCast implements CastsAttributes
 
     public function set($model, string $key, $value, array $attributes)
     {
+                
+                
+        if (is_null($value)) {
+            return [$key => null];
+        }
+
         return [
             $key => json_encode([
                 'qb_id' => $value->qb_id,

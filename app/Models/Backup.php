@@ -82,6 +82,17 @@ class Backup extends BaseModel
         $this->save();
     }
     
+    public function storeBackupFile($file)
+    {
+            
+        $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
+
+        Storage::disk($disk)->put($this->filename, $file);
+
+        $this->disk = $disk;
+        $this->save();
+
+    }
     /**
      * getFile
      *

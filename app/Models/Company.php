@@ -571,6 +571,18 @@ class Company extends BaseModel
         return $this->hasMany(GroupSetting::class);
     }
 
+    public function backups(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Backup::class, // Target model
+            Activity::class, // Intermediate model
+            'company_id', // Foreign key on activities table
+            'activity_id', // Foreign key on backups table
+            'id', // Local key on companies table
+            'id' // Local key on activities table
+        );
+    }
+
     /**
      * @return HasMany
      */
