@@ -735,7 +735,7 @@ class CompanyExport implements ShouldQueue
     {
         $logo = $this->company->present()->logoFile($this->company->settings);
 
-        $zip->addFromString("company_login.png", $logo);
+        $zip->addFromString("company_logo.png", $logo);
         
         return $zip;
     }

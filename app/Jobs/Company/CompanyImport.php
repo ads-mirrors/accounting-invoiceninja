@@ -336,7 +336,9 @@ class CompanyImport implements ShouldQueue
         $this->checkUserCount();
 
         if (array_key_exists('import_settings', $this->request_array) && $this->request_array['import_settings'] == 'true') {
-            $this->preFlightChecks()->importSettings();
+            $this->preFlightChecks()
+                 ->importSettings()
+                 ->importLogo();
         }
 
         if (array_key_exists('import_data', $this->request_array) && $this->request_array['import_data'] == 'true') {
@@ -344,6 +346,7 @@ class CompanyImport implements ShouldQueue
                 $this->preFlightChecks()
                      ->purgeCompanyData()
                      ->importCompany()
+                     ->importLogo()
                      ->importData()
                      ->miscTransformations()
                      ->postImportCleanup();
@@ -463,7 +466,9 @@ class CompanyImport implements ShouldQueue
 
     private function unzipFile()
     {
-        $path = TempFile::filePath(Storage::disk(config('filesystems.default'))->get($this->file_location), basename($this->file_location));
+        $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
+
+        $path = TempFile::filePath(Storage::disk($disk)->get($this->file_location), basename($this->file_location));
 
         $zip = new ZipArchive();
         $res = $zip->open($path);
@@ -657,6 +662,27 @@ class CompanyImport implements ShouldQueue
 
         $this->company->save();
         $this->company = $this->company->fresh();
+
+        return $this;
+    }
+
+
+    private function importLogo()
+    {
+
+        if(file_exists("{$this->root_file_path}company_logo.png")) {
+            $logo = file_get_contents("{$this->root_file_path}company_logo.png");
+
+            $path = (new \App\Jobs\Util\UploadAvatar($logo, $this->company->company_key))->handle();
+            
+            if ($path) {
+                $settings = $this->company->settings;
+                $settings->company_logo = $path;
+                $this->company->settings = $settings;
+                $this->company->save();
+            }
+    
+        }
 
         return $this;
     }
@@ -1365,7 +1391,6 @@ class CompanyImport implements ShouldQueue
 
             $new_document->save(['timestamps' => false]);
 
-            nlog($new_document->toArray());
         }
 
         return $this;
