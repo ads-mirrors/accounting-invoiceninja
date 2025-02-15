@@ -692,7 +692,7 @@ class CompanyExport implements ShouldQueue
                         continue;
                     }
 
-                    $zip->addFromString('documents/' . ($document->name ?? basename($document->url)), $content);
+                    $zip->addFromString('documents/' . $document->url, $content);
                 } catch (\Exception $e) {
                     continue;
                 }
