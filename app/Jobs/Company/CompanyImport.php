@@ -117,6 +117,8 @@ class CompanyImport implements ShouldQueue
 
     private string $import_version = '';
 
+    private string $old_company_key = '';
+
     private $importables = [
         // 'company',
         'users',
@@ -158,6 +160,8 @@ class CompanyImport implements ShouldQueue
         'payments',
         'schedulers',
         'e_invoicing_tokens',
+        'activities',
+        'backups',
     ];
 
     private $company_properties = [
@@ -350,6 +354,7 @@ class CompanyImport implements ShouldQueue
                 NinjaMailerJob::dispatch($nmo);
             } catch (\Exception $e) {
                 info($e->getMessage());
+                info($e->getTraceAsString());
             }
         }
 
@@ -381,6 +386,9 @@ class CompanyImport implements ShouldQueue
                             if ($t = Task::withTrashed()->where('company_id', $this->company->id)->where('id', $t_id)->first()) {
                                 $items[$key]->task_id = $t->hashed_id;
                             }
+                            else {
+                                $items[$key]->task_id = null;
+                            }
 
                         }
 
@@ -392,6 +400,9 @@ class CompanyImport implements ShouldQueue
 
                             if ($e = Expense::withTrashed()->where('company_id', $this->company->id)->where('id', $e_id)->first()) {
                                 $items[$key]->expense_id = $e->hashed_id;
+                            }
+                            else {
+                                $items[$key]->expense_id = null;
                             }
 
                         }
@@ -599,6 +610,7 @@ class CompanyImport implements ShouldQueue
     {
         //$tmp_company = $this->backup_file->company;
         $tmp_company = (object)$this->getObject("company", true);
+        $this->old_company_key = $tmp_company->company_key;
         $tmp_company->company_key = $this->createHash();
         $tmp_company->db = config('database.default');
         $tmp_company->account_id = $this->account->id;
@@ -652,7 +664,7 @@ class CompanyImport implements ShouldQueue
 
         return $this;
     }
-    
+
     private function import_schedulers()
     {
         $this->genericNewClassImport(
@@ -1214,7 +1226,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImportWithoutCompany(
             Backup::class,
-            ['hashed_id','id'],
+            ['hashed_id','id','laravel_through_key'],
             [
                 ['activities' => 'activity_id'],
             ],
@@ -1274,7 +1286,6 @@ class CompanyImport implements ShouldQueue
 
                 $file = @file_get_contents($url);
 
-
                 if ($file) {
                     try {
                         Storage::disk(config('filesystems.default'))->put($document->url, $file);
@@ -1289,7 +1300,10 @@ class CompanyImport implements ShouldQueue
                     continue;
                 }
 
-            } else {
+            } elseif (file_exists("{$this->file_path}/documents/{$document->url}")) {
+                Storage::disk(config('filesystems.default'))->put($document->url, file_get_contents("{$this->file_path}/documents/{$document->url}"));
+            }
+            else {
                 continue;
             }
 
@@ -1658,7 +1672,18 @@ class CompanyImport implements ShouldQueue
             $new_obj->save(['timestamps' => false]);
 
             if ($new_obj instanceof CompanyLedger || $new_obj instanceof EInvoicingToken) {
-            } else {
+            } 
+            elseif ($new_obj instanceof Backup) {
+
+                if(file_exists("{$this->file_path}/backups/{$obj->filename}")) {
+                    $file = file_get_contents("{$this->file_path}/backups/{$obj->filename}");
+                    $new_obj->filename = str_replace($this->old_company_key, $this->company->company_key, $new_obj->filename);
+                    $new_obj->save();
+                    $new_obj = $new_obj->fresh();
+                    $new_obj->storeBackupFile(file_get_contents("{$this->file_path}/backups/{$obj->filename}"));
+                }
+            }
+            else {
                 $this->ids["{$object_property}"]["{$obj->hashed_id}"] = $new_obj->id;
             }
         }
