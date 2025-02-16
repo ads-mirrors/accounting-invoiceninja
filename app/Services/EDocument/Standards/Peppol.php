@@ -1289,6 +1289,13 @@ class Peppol extends AbstractService
 
         }
 
+        if(!isset($this->p_invoice->InvoicePeriod)) {
+            $ip = new InvoicePeriod();
+            $ip->StartDate = new \DateTime($this->invoice->date);
+            $ip->EndDate = new \DateTime($this->invoice->due_date ?? $this->invoice->date);
+            $this->p_invoice->InvoicePeriod = [$ip];
+        }
+
         return $this;
     }
     
