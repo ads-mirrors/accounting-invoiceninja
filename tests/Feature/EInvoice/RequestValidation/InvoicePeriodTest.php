@@ -29,13 +29,14 @@ class InvoicePeriodTest extends TestCase
     public function testEInvoicePeriodValidationPasses()
     {
 
-        $data = $this->invoice->toArray();
         $data['e_invoice'] = [
             'Invoice' => [
-                'InvoicePeriod' => [
+             'InvoicePeriod' => [
+                [
                     'StartDate' => '2025-01-01',
                     'EndDate' => '2025-01-01',
-                ]
+                    ]    
+             ]
             ]
         ];
         

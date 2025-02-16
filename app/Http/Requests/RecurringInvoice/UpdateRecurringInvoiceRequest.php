@@ -12,11 +12,12 @@
 namespace App\Http\Requests\RecurringInvoice;
 
 use App\Http\Requests\Request;
-use App\Http\ValidationRules\Project\ValidProjectForClient;
-use App\Utils\Traits\ChecksEntityStatus;
-use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Validation\Rule;
+use App\Utils\Traits\CleanLineItems;
+use App\Utils\Traits\ChecksEntityStatus;
+use App\Http\ValidationRules\EInvoice\ValidInvoiceScheme;
+use App\Http\ValidationRules\Project\ValidProjectForClient;
 
 class UpdateRecurringInvoiceRequest extends Request
 {
@@ -75,6 +76,8 @@ class UpdateRecurringInvoiceRequest extends Request
         $rules['exchange_rate'] = 'bail|sometimes|numeric';
         $rules['next_send_date'] = 'bail|required|date|after:yesterday';
         $rules['amount'] = ['sometimes', 'bail', 'numeric', 'max:99999999999999'];
+
+        $rules['e_invoice'] = ['sometimes', 'nullable', new ValidInvoiceScheme()];
 
         return $rules;
     }
