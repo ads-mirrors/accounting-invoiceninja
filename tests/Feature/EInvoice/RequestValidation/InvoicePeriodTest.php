@@ -34,8 +34,8 @@ class InvoicePeriodTest extends TestCase
                 'user_id' => $this->user->id,
                 'company_id' => $this->company->id,
                 'client_id' => $this->client->id,
-                ]
-            );
+            ]
+        );
             
         $data = $r->toArray();
 
@@ -47,7 +47,7 @@ class InvoicePeriodTest extends TestCase
                 [
                     'StartDate' => '2025-01-01',
                     'EndDate' => '2025-01-01',
-                    'Description' => 'first day of the month|last day of the month'
+                    'Description' => 'first day of this month|last day of this month'
                 ]    
              ]
             ]
@@ -62,7 +62,15 @@ class InvoicePeriodTest extends TestCase
 
         $arr = $response->json();
 
-        $this->assertEquals($arr['data']['e_invoice']['Invoice']['InvoicePeriod'][0]['Description'], 'first day of the month|last day of the month');
+        $this->assertEquals($arr['data']['e_invoice']['Invoice']['InvoicePeriod'][0]['Description'], 'first day of this month|last day of this month');
+
+        $r = $r->fresh();
+
+        $invoice = \App\Factory\RecurringInvoiceToInvoiceFactory::create($r, $r->client);
+
+        $this->assertEquals($invoice->e_invoice->Invoice->InvoicePeriod[0]->StartDate->date, now()->setTimezone($r->client->timezone()->name)->startOfMonth()->startOfDay()->format('Y-m-d H:i:s.u'));
+        $this->assertEquals($invoice->e_invoice->Invoice->InvoicePeriod[0]->EndDate->date, now()->setTimezone($r->client->timezone()->name)->endOfMonth()->startOfDay()->format('Y-m-d H:i:s.u'));
+
     }
 
 

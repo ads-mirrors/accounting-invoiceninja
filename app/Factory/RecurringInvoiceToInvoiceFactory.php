@@ -90,7 +90,7 @@ class RecurringInvoiceToInvoiceFactory
                         $start_template = explode(',', $parts[0]);
                         $end_template = explode(',', $parts[1]);
 
-                        $start_date = date_create('now', new \DateTimeZone($client->timezone()->name));
+                        $start_date = date_create('now', new \DateTimeZone($recurring_invoice->client->timezone()->name));
 
                         foreach($start_template as $template)
                         {
@@ -99,7 +99,7 @@ class RecurringInvoiceToInvoiceFactory
                         
                         $start_date = $start_date->format('Y-m-d');
 
-                        $end_date = date_create('now', new \DateTimeZone($client->timezone()->name));
+                        $end_date = date_create('now', new \DateTimeZone($recurring_invoice->client->timezone()->name));
 
                         foreach($end_template as $template)
                         {
@@ -110,7 +110,7 @@ class RecurringInvoiceToInvoiceFactory
                         
                         $einvoice = new \InvoiceNinja\EInvoice\Models\Peppol\Invoice();
 
-                        $ip = new InvoiceNinja\EInvoice\Models\Peppol\PeriodType\InvoicePeriod();
+                        $ip = new \InvoiceNinja\EInvoice\Models\Peppol\PeriodType\InvoicePeriod();
                         $ip->StartDate = new \DateTime($start_date);
                         $ip->EndDate = new \DateTime($end_date);
                         $einvoice->InvoicePeriod = [$ip];
