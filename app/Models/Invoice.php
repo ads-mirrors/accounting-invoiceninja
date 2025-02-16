@@ -197,6 +197,7 @@ class Invoice extends BaseModel
         'auto_bill_enabled',
         'uses_inclusive_taxes',
         'vendor_id',
+        'e_invoice',
     ];
 
     protected $casts = [

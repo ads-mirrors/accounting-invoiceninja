@@ -199,12 +199,12 @@ class Peppol extends AbstractService
 
             $this->p_invoice->DocumentCurrencyCode = $this->invoice->client->currency()->code;
 
-            if ($this->invoice->date && $this->invoice->due_date) {
-                $ip = new InvoicePeriod();
-                $ip->StartDate = new \DateTime($this->invoice->date);
-                $ip->EndDate = new \DateTime($this->invoice->due_date);
-                $this->p_invoice->InvoicePeriod = [$ip];
-            }
+            // if ($this->invoice->date && $this->invoice->due_date) {
+            //     $ip = new InvoicePeriod();
+            //     $ip->StartDate = new \DateTime($this->invoice->date);
+            //     $ip->EndDate = new \DateTime($this->invoice->due_date);
+            //     $this->p_invoice->InvoicePeriod = [$ip];
+            // }
 
             if ($this->invoice->project_id) {
                 $pr = new \InvoiceNinja\EInvoice\Models\Peppol\ProjectReferenceType\ProjectReference();
@@ -254,6 +254,7 @@ class Peppol extends AbstractService
      */
     public function decode(mixed $invoice): self
     {
+        
         $this->p_invoice = $this->e->decode('Peppol', json_encode($invoice), 'json');
 
         return $this;
@@ -267,7 +268,7 @@ class Peppol extends AbstractService
     private function setInvoice(): self
     {
         /** Handle Existing Document */
-        if ($this->invoice->e_invoice && isset($this->invoice->e_invoice->Invoice)) {
+        if ($this->invoice->e_invoice && isset($this->invoice->e_invoice->Invoice)  && isset($this->invoice->e_invoice->Invoice->ID)) {
 
             $this->decode($this->invoice->e_invoice->Invoice);
 
@@ -1252,6 +1253,12 @@ class Peppol extends AbstractService
         // Overwrite with any client level settings
         if ($this->_client_settings) {
             foreach (get_object_vars($this->_client_settings) as $prop => $value) {
+                $this->p_invoice->{$prop} = $value;
+            }
+        }
+
+        if(isset($this->invoice->e_invoice->Invoice)) {
+            foreach(get_object_vars($this->invoice->e_invoice->Invoice) as $prop => $value) {
                 $this->p_invoice->{$prop} = $value;
             }
         }
