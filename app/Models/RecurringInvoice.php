@@ -226,6 +226,7 @@ class RecurringInvoice extends BaseModel
         'vendor_id',
         'next_send_date_client',
         'uses_inclusive_taxes',
+        'e_invoice',
     ];
 
     protected $casts = [
@@ -235,6 +236,7 @@ class RecurringInvoice extends BaseModel
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
+        'e_invoice' => 'object',
     ];
 
     protected $appends = [

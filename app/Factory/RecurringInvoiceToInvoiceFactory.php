@@ -66,8 +66,70 @@ class RecurringInvoiceToInvoiceFactory
         $invoice->auto_bill_enabled = $recurring_invoice->auto_bill_enabled;
         $invoice->paid_to_date = 0;
         $invoice->design_id = $recurring_invoice->design_id;
+        $invoice->e_invoice = self::transformEInvoice($recurring_invoice);
 
         return $invoice;
+    }
+
+    private static function transformEInvoice($recurring_invoice)
+    {
+        if(!$recurring_invoice->e_invoice) 
+            return null;
+
+        if(isset($recurring_invoice->e_invoice->Invoice)) {
+            
+            if(isset($recurring_invoice->e_invoice->Invoice->InvoicePeriod) && is_array($recurring_invoice->e_invoice->Invoice->InvoicePeriod)) {
+                $period = $recurring_invoice->e_invoice->Invoice->InvoicePeriod[0];
+                
+                if($description = $period->Description)
+                {
+                    $parts = explode('|', $description);
+
+                    if(count($parts) == 2) 
+                    {
+                        $start_template = explode(',', $parts[0]);
+                        $end_template = explode(',', $parts[1]);
+
+                        $start_date = date_create('now', new \DateTimeZone($client->timezone()->name));
+
+                        foreach($start_template as $template)
+                        {
+                            $start_date->modify($template);
+                        }
+                        
+                        $start_date = $start_date->format('Y-m-d');
+
+                        $end_date = date_create('now', new \DateTimeZone($client->timezone()->name));
+
+                        foreach($end_template as $template)
+                        {
+                            $end_date->modify($template);
+                        }
+
+                        $end_date = $end_date->format('Y-m-d');
+                        
+                        $einvoice = new \InvoiceNinja\EInvoice\Models\Peppol\Invoice();
+
+                        $ip = new InvoiceNinja\EInvoice\Models\Peppol\PeriodType\InvoicePeriod();
+                        $ip->StartDate = new \DateTime($start_date);
+                        $ip->EndDate = new \DateTime($end_date);
+                        $einvoice->InvoicePeriod = [$ip];
+
+                        
+                        $stub = new \stdClass();
+                        $stub->Invoice = $einvoice;
+
+                        return $stub;
+
+                    }
+                }
+            
+            }
+
+            
+        }
+
+        return null;
     }
 
     private static function transformItems($recurring_invoice, $client)
