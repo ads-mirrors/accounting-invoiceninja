@@ -30,7 +30,8 @@ class InvoicePeriodTest extends TestCase
 
     public function testEInvoicePeriodValidationPasses()
     {
-
+        $data = $this->invoice->toArray();
+        $data['client_id'] = $this->client->hashed_id;
         $data['e_invoice'] = [
             'Invoice' => [
              'InvoicePeriod' => [
@@ -47,6 +48,9 @@ class InvoicePeriodTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->putJson('/api/v1/invoices/'.$this->invoice->hashed_id, $data);
 
+
+        echo print_r($response->json(), true);
+
         $response->assertStatus(200);
 
         $arr = $response->json();
@@ -56,6 +60,9 @@ class InvoicePeriodTest extends TestCase
     public function testERecurringInvoicePeriodValidationPasses()
     {
     
+        $data = $this->recurring_invoice->toArray();
+        
+        $data['client_id'] = $this->client->hashed_id;
         $data['e_invoice'] = [
             'Invoice' => [
              'InvoicePeriod' => [
