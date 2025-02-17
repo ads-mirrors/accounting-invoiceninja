@@ -48,9 +48,12 @@ class InvoicePeriodTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->putJson('/api/v1/recurring_invoices/'.$this->recurring_invoice->hashed_id, $data);
 
+        $arr = $response->json();
+
+        echo print_r($arr, true);
+        
         $response->assertStatus(200);
 
-        $arr = $response->json();
 
         $this->assertEquals($arr['data']['e_invoice']['Invoice']['InvoicePeriod'][0]['Description'], 'first day of this month|last day of this month');
 
