@@ -57,4 +57,11 @@ class PaymentWasUpdated implements ShouldBroadcast
     {
         return $this->payment;
     }
+
+    public function broadcastIncludes(): array
+    {
+        return [
+            'client',
+        ];
+    }
 }

@@ -53,4 +53,11 @@ class CreditWasUpdated implements ShouldBroadcast
     {
         return $this->credit;
     }
+    
+    public function broadcastIncludes(): array
+    {
+        return [
+            'client',
+        ];
+    }
 }

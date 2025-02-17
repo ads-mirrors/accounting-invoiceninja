@@ -52,4 +52,11 @@ class InvoiceWasViewed implements ShouldBroadcast
 
         return $manager;
     }
+
+    public function broadcastIncludes(): array
+    {
+        return [
+            'client',
+        ];
+    }
 }

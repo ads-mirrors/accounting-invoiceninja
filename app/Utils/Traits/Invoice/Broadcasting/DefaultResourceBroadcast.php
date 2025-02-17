@@ -44,6 +44,8 @@ trait DefaultResourceBroadcast
         $manager = new Manager();
 
         $manager->setSerializer(new ArraySerializer());
+        
+        $manager->parseIncludes($this->broadcastIncludes());
 
         $class = sprintf('App\\Transformers\\%sTransformer', class_basename($entity));
 

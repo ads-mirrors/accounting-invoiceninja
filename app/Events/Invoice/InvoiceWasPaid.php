@@ -47,4 +47,11 @@ class InvoiceWasPaid implements ShouldBroadcast
     {
         return $this->invoice;
     }
+
+    public function broadcastIncludes(): array
+    {
+        return [
+            'client',
+        ];
+    }
 }
