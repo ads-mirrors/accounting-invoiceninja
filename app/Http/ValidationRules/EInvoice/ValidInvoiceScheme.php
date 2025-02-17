@@ -36,9 +36,13 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
     {
 
         if (isset($value['Invoice'])) {
+            
             $r = new EInvoice();
+
             $errors = $r->validateRequest($value['Invoice'], InvoiceLevel::class);
 
+            echo print_r($errors, true);
+            
             foreach ($errors as $key => $msg) {
 
                 $this->validator->errors()->add(

@@ -48,9 +48,6 @@ class InvoicePeriodTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->putJson('/api/v1/invoices/'.$this->invoice->hashed_id, $data);
 
-
-        echo print_r($response->json(), true);
-
         $response->assertStatus(200);
 
         $arr = $response->json();
@@ -81,8 +78,6 @@ class InvoicePeriodTest extends TestCase
         ])->putJson('/api/v1/recurring_invoices/'.$this->recurring_invoice->hashed_id, $data);
 
         $arr = $response->json();
-
-        echo print_r($arr, true);
         
         $response->assertStatus(200);
 
