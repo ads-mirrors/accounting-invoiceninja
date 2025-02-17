@@ -4974,7 +4974,7 @@ $lang = array(
     'e_invoice' => 'Hóa đơn điện tử',
     'light_dark_mode' => 'Chế độ sáng/tối',
     'activities' => 'Các hoạt động',
-    'recent_transactions' => "Các giao dịch gần đây nhất:",
+    'recent_transactions' => "Giao dịch gần đây",
     'country_Palestine' => "Palestine",
     'country_Taiwan' => 'Đài Loan',
     'duties' => 'Nhiệm vụ',
@@ -5499,6 +5499,8 @@ $lang = array(
     'remaining_hours' => 'Giờ còn lại',
     'just_now' => 'Vừa rồi',
     'yesterday' => 'Hôm qua',
+    'enable_client_profile_update' => 'Cho phép Khách hàng đến cập nhật hồ sơ',
+    'enable_client_profile_update_help' => 'Cho phép Khách hàng đến cập nhật thông tin hồ sơ từ cổng khách hàng',
 );
 
 return $lang;
