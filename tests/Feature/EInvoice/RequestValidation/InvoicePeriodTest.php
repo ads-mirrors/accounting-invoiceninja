@@ -26,11 +26,36 @@ class InvoicePeriodTest extends TestCase
 
     }
 
+    
+
+    public function testEInvoicePeriodValidationPasses()
+    {
+
+        $data['e_invoice'] = [
+            'Invoice' => [
+             'InvoicePeriod' => [
+                [
+                    'StartDate' => '2025-01-01',
+                    'EndDate' => '2025-01-01',
+                    ]    
+             ]
+            ]
+        ];
+        
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->putJson('/api/v1/invoices/'.$this->invoice->hashed_id, $data);
+
+        $response->assertStatus(200);
+
+        $arr = $response->json();
+
+    }
+
     public function testERecurringInvoicePeriodValidationPasses()
     {
     
-        $data = $this->recurring_invoice->toArray();
-        $data['client_id'] = $this->client->hashed_id;
         $data['e_invoice'] = [
             'Invoice' => [
              'InvoicePeriod' => [
@@ -65,33 +90,6 @@ class InvoicePeriodTest extends TestCase
         $this->assertEquals($invoice->e_invoice->Invoice->InvoicePeriod[0]->EndDate->date, now()->setTimezone($this->recurring_invoice->client->timezone()->name)->endOfMonth()->startOfDay()->format('Y-m-d H:i:s.u'));
 
     }
-
-
-    public function testEInvoicePeriodValidationPasses()
-    {
-
-        $data['e_invoice'] = [
-            'Invoice' => [
-             'InvoicePeriod' => [
-                [
-                    'StartDate' => '2025-01-01',
-                    'EndDate' => '2025-01-01',
-                    ]    
-             ]
-            ]
-        ];
-        
-        $response = $this->withHeaders([
-            'X-API-SECRET' => config('ninja.api_secret'),
-            'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/invoices/'.$this->invoice->hashed_id, $data);
-
-        $response->assertStatus(200);
-
-        $arr = $response->json();
-
-    }
-
 
     public function testEInvoicePeriodValidationFails()
     {
