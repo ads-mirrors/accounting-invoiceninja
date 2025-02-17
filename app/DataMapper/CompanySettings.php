@@ -524,8 +524,11 @@ class CompanySettings extends BaseSettings
     public string $email_template_payment_failed = '';
 
     public bool $enable_client_profile_update = true;
+    public bool $preference_product_notes_for_html_view = true;
+
 
     public static $casts = [
+        'preference_product_notes_for_html_view' => 'bool',
         'enable_client_profile_update'       => 'bool',
         'merge_e_invoice_to_pdf'             => 'bool',
         'payment_flow'                       => 'string',

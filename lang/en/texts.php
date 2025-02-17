@@ -5501,6 +5501,8 @@ $lang = array(
     'yesterday' => 'Yesterday',
     'enable_client_profile_update' => 'Allow clients to update their profile',
     'enable_client_profile_update_help' => 'Allow clients to update their profile information from the client portal',
+    'preference_product_notes_for_html_view' => 'Use Item Notes for HTML View',
+    'preference_product_notes_for_html_view_help' => 'Preference the item notes over the product item description if displaying the invoice in HTML.',
 );
 
 return $lang;

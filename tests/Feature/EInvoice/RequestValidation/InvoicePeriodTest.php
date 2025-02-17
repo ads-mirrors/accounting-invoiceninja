@@ -81,7 +81,6 @@ class InvoicePeriodTest extends TestCase
         
         $response->assertStatus(200);
 
-
         $this->assertEquals($arr['data']['e_invoice']['Invoice']['InvoicePeriod'][0]['Description'], 'first day of this month|last day of this month');
 
         $this->recurring_invoice = $this->recurring_invoice->fresh();
