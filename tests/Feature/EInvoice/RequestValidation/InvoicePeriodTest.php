@@ -28,19 +28,9 @@ class InvoicePeriodTest extends TestCase
 
     public function testERecurringInvoicePeriodValidationPasses()
     {
-
-        $r = \App\Models\RecurringInvoice::factory()->create(
-            [
-                'user_id' => $this->user->id,
-                'company_id' => $this->company->id,
-                'client_id' => $this->client->id,
-            ]
-        );
-            
-        $data = $r->toArray();
-
+    
+        $data = $this->recurring_invoice->toArray();
         $data['client_id'] = $this->client->hashed_id;
-
         $data['e_invoice'] = [
             'Invoice' => [
              'InvoicePeriod' => [
@@ -56,7 +46,7 @@ class InvoicePeriodTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/recurring_invoices/'.$r->hashed_id, $data);
+        ])->putJson('/api/v1/recurring_invoices/'.$this->recurring_invoice->hashed_id, $data);
 
         $response->assertStatus(200);
 
@@ -64,12 +54,12 @@ class InvoicePeriodTest extends TestCase
 
         $this->assertEquals($arr['data']['e_invoice']['Invoice']['InvoicePeriod'][0]['Description'], 'first day of this month|last day of this month');
 
-        $r = $r->fresh();
+        $this->recurring_invoice = $this->recurring_invoice->fresh();
 
-        $invoice = \App\Factory\RecurringInvoiceToInvoiceFactory::create($r, $r->client);
+        $invoice = \App\Factory\RecurringInvoiceToInvoiceFactory::create($this->recurring_invoice, $this->recurring_invoice->client);
 
-        $this->assertEquals($invoice->e_invoice->Invoice->InvoicePeriod[0]->StartDate->date, now()->setTimezone($r->client->timezone()->name)->startOfMonth()->startOfDay()->format('Y-m-d H:i:s.u'));
-        $this->assertEquals($invoice->e_invoice->Invoice->InvoicePeriod[0]->EndDate->date, now()->setTimezone($r->client->timezone()->name)->endOfMonth()->startOfDay()->format('Y-m-d H:i:s.u'));
+        $this->assertEquals($invoice->e_invoice->Invoice->InvoicePeriod[0]->StartDate->date, now()->setTimezone($this->recurring_invoice->client->timezone()->name)->startOfMonth()->startOfDay()->format('Y-m-d H:i:s.u'));
+        $this->assertEquals($invoice->e_invoice->Invoice->InvoicePeriod[0]->EndDate->date, now()->setTimezone($this->recurring_invoice->client->timezone()->name)->endOfMonth()->startOfDay()->format('Y-m-d H:i:s.u'));
 
     }
 
