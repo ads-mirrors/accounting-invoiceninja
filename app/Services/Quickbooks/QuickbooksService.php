@@ -71,9 +71,7 @@ class QuickbooksService
 
         $this->sdk = DataService::Configure($merged);
 
-        // $this->sdk->setLogLocation(storage_path("logs/quickbooks.log"));
         $this->sdk->enableLog();
-
         $this->sdk->setMinorVersion("73");
         $this->sdk->throwExceptionOnError(true);
 

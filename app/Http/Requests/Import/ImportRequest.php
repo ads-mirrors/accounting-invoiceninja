@@ -36,7 +36,7 @@ class ImportRequest extends Request
             'hash' => 'nullable|string',
             'column_map' => 'required_with:hash|array',
             'skip_header' => 'required_with:hash|boolean',
-            'files.*' => 'file|mimes:csv,txt',
+            'files.*' => 'file|mimes:csv,txt,zip',
             'bank_integration_id' => 'bail|required_with:column_map.bank_transaction|min:2'
         ];
     }

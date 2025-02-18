@@ -137,7 +137,7 @@ class CSVIngest implements ShouldQueue
                 return new Zoho($this->request, $this->company);
             case 'freshbooks':
                 return new Freshbooks($this->request, $this->company);
-            case 'qbbackup':
+            case 'quickbooks':
                 return new QBBackup($this->request, $this->company);
             default:
                 nlog("could not return provider");
