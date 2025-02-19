@@ -1071,7 +1071,7 @@ class TemplateService
                 'vendor' => $this->getVendor($expense),
                 'project' => ($expense->project && !$nested) ? $this->transformProject($expense->project, true) : [],
             ];
-        });
+         })->toArray();
     }
 
     /**
