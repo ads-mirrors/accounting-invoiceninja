@@ -567,6 +567,18 @@ class InvoiceService
         return $this;
     }
 
+    public function unlockDocuments(): self
+    {
+
+        //2025-02-20 ** Feature to allow documents to be visible / attachable after payment **
+        if ($this->invoice->status_id == Invoice::STATUS_PAID && $this->invoice->client->getSetting('unlock_invoice_documents_after_payment')) {
+            $this->invoice->documents()->update(['is_public' => true]);
+        }
+
+        return $this;
+
+    }
+
     public function fillDefaults(bool $is_recurring = false)
     {
         $this->invoice->load('client.company');
