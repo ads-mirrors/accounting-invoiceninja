@@ -5506,6 +5506,7 @@ $lang = array(
     'project_report' => 'Project Report',
     'unlock_invoice_documents_after_payment' => 'Unlock Documents After Payment',
     'unlock_invoice_documents_after_payment_help' => 'Allows client access to invoice documents when an invoice has been paid',
+    'quickbooks' => 'Quickbooks',
 );
 
 return $lang;

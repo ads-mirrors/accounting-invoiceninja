@@ -65,7 +65,7 @@ class PdfMock
         $pdf_config->settings_object = $this->mock->client;
         $pdf_config->settings = $this->getMergedSettings();
         $this->settings = $pdf_config->settings;
-        $pdf_config->entity_design_id = $pdf_config->settings->{"{$pdf_config->entity_string}_design_id"};
+        $pdf_config->entity_design_id = $pdf_config->settings->{"{$pdf_config->entity_string}_design_id"} ?? 'Wpmbk5ezJn';
         $pdf_config->setPdfVariables();
         $pdf_config->setCurrency(Currency::find($this->settings->currency_id));
         $pdf_config->setCountry(Country::find($this->settings->country_id ?: 840));

@@ -32,6 +32,7 @@ class QuickbooksSettingsCast implements CastsAttributes
             return json_encode(get_object_vars($value));
         }
 
-        return json_encode($value);
+        return null;
+        // return json_encode($value);
     }
 }
