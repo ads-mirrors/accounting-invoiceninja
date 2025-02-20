@@ -74,7 +74,8 @@ class ProjectReport extends BaseExport
             'company_name' => $this->company->present()->name(),
             'created_on' => $this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale()),
             'created_by' => $user_name,
-            'charts' => $this->getCharts($projects),
+            
+            // 'charts' => $this->getCharts($projects),
         ];
 
         $ts = new TemplateService();
