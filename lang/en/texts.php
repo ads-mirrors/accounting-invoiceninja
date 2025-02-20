@@ -5504,6 +5504,8 @@ $lang = array(
     'preference_product_notes_for_html_view' => 'Use Item Notes for HTML View',
     'preference_product_notes_for_html_view_help' => 'Preference the item Description over the item title if displaying the invoice in HTML.',
     'project_report' => 'Project Report',
+    'unlock_invoice_documents_after_payment' => 'Unlock Documents After Payment',
+    'unlock_invoice_documents_after_payment_help' => 'Allows client access to invoice documents when an invoice has been paid',
 );
 
 return $lang;
