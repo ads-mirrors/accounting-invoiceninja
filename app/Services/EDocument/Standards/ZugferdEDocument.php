@@ -260,7 +260,7 @@ class ZugferdEDocument extends AbstractService
             /** @var InvoiceItem $item **/
             
             // 1. Start new position and set basic details
-            $this->xdocument->addNewPosition($index)
+            $this->xdocument->addNewPosition($index+1)
                 ->setDocumentPositionProductDetails(
                     strlen($item->product_key ?? '') >= 1 ? $item->product_key : "no product name defined", 
                     $item->notes

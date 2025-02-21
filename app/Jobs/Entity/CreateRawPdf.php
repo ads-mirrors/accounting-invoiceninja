@@ -97,10 +97,37 @@ class CreateRawPdf
 
     }
 
-    /**
-     * @throws FilePermissionsFailure
-     */
     public function handle()
+    {
+        nlog("Generating PDF for {$this->entity_string}");
+
+        $pdf = $this->generatePdf();
+
+        if($this->isBlankPdf($pdf)) {
+      
+            nlog("Blank PDF detected, generating again");
+            $pdf = $this->generatePdf();
+        }
+
+        return $pdf;
+
+    }
+
+    private function isBlankPdf($pdf): bool
+    {
+
+        $size = mb_strlen($pdf, '8bit'); 
+
+        $blankPdfSize = 12 * 1024; 
+        $tolerance = 100; 
+
+        nlog("PDF EXCEPTION:: size: {$size}, blank PDF size: {$blankPdfSize}, tolerance: {$tolerance}");
+
+        return abs($size) <= $blankPdfSize;
+
+    }
+
+    public function generatePdf()
     {
         $ps = new PdfService($this->invitation, $this->resolveType(), [
             'client' => $this->entity->client ?? false,
@@ -127,6 +154,8 @@ class CreateRawPdf
 
         return $pdf;
     }
+
+
 
     public function failed($e)
     {
