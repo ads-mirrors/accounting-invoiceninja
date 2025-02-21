@@ -40,11 +40,30 @@ return new class extends Migration
             $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('cascade')->onUpdate('cascade');
             $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade');
         });
-    }
 
-    /**
-     * Reverse the migrations.
-     */
+        Schema::table('invoices', function (Blueprint $table){
+
+            $table->foreignId('location_id')->nullable()->constrained()->cascadeOnDelete();
+        });
+
+        Schema::table('recurring_invoices', function (Blueprint $table) {
+            $table->foreignId('location_id')->nullable()->constrained()->cascadeOnDelete();
+        });
+
+        Schema::table('credits', function (Blueprint $table) {
+            $table->foreignId('location_id')->nullable()->constrained()->cascadeOnDelete();
+        });
+
+        Schema::table('quotes', function (Blueprint $table) {
+            $table->foreignId('location_id')->nullable()->constrained()->cascadeOnDelete();
+        });
+
+        Schema::table('purchase_orders', function (Blueprint $table) {
+            $table->foreignId('location_id')->nullable()->constrained()->cascadeOnDelete();
+        });
+
+    }
+    
     public function down(): void
     {
         //

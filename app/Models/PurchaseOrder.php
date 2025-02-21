@@ -307,6 +307,11 @@ class PurchaseOrder extends BaseModel
         return $this->belongsTo(User::class)->withTrashed();
     }
 
+    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Location::class)->withTrashed();
+    }
+
     public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Client::class)->withTrashed();

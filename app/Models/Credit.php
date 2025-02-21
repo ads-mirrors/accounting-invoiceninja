@@ -252,6 +252,11 @@ class Credit extends BaseModel
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
     }
 
+    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Location::class)->withTrashed();
+    }
+
     public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Vendor::class);

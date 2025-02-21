@@ -362,6 +362,11 @@ class RecurringInvoice extends BaseModel
         return $this->belongsTo(User::class)->withTrashed();
     }
 
+    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Location::class)->withTrashed();
+    }
+
     public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
