@@ -227,6 +227,7 @@ class RecurringInvoice extends BaseModel
         'next_send_date_client',
         'uses_inclusive_taxes',
         'e_invoice',
+        'location_id',
     ];
 
     protected $casts = [

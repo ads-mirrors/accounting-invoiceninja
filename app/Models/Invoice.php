@@ -198,6 +198,7 @@ class Invoice extends BaseModel
         'uses_inclusive_taxes',
         'vendor_id',
         'e_invoice',
+        'location_id',
     ];
 
     protected $casts = [

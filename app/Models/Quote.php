@@ -165,6 +165,7 @@ class Quote extends BaseModel
         'subscription_id',
         'uses_inclusive_taxes',
         'vendor_id',
+        'location_id',
     ];
 
     protected $casts = [

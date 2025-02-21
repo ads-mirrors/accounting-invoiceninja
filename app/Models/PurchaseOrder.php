@@ -183,6 +183,7 @@ class PurchaseOrder extends BaseModel
         'vendor_id',
         'last_viewed',
         'currency_id',
+        'location_id',
     ];
 
     protected $casts = [

@@ -175,6 +175,7 @@ class Credit extends BaseModel
         'exchange_rate',
         'subscription_id',
         'vendor_id',
+        'location_id',
     ];
 
     protected $casts = [
