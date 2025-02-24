@@ -2126,9 +2126,9 @@ class PdfBuilder
     /**
      * updateVariables
      *
-     * @return void
+     * @return self
      */
-    public function updateVariables()
+    public function updateVariables(): self
     {
 
         $html = strtr($this->getCompiledHTML(), $this->service->html_variables['labels']);
