@@ -45,6 +45,8 @@ class UpdateLocationRequest extends Request
             $rules['name'] = Rule::unique('locations')->where('company_id', $user->company()->id)->ignore($this->location->id);
         }
 
+        $rules['country_id'] = 'integer|exists:countries,id';
+
         return $rules;
     }
 

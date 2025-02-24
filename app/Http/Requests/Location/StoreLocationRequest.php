@@ -39,7 +39,8 @@ class StoreLocationRequest extends Request
         $rules = [];
 
         $rules['name'] = 'required|unique:expense_categories,name,null,null,company_id,'.$user->companyId();
-
+        $rules['country_id'] = 'integer|exists:countries,id';
+        
         return $this->globalRules($rules);
     }
 
@@ -52,6 +53,7 @@ class StoreLocationRequest extends Request
         if (array_key_exists('color', $input) && is_null($input['color'])) {
             $input['color'] = '';
         }
+
 
         $this->replace($input);
     }

@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->string('postal_code')->nullable();
+            $table->boolean('is_shipping_location')->default(false);
             $table->boolean('is_deleted')->default(false);
             $table->unsignedInteger('country_id')->nullable();
 

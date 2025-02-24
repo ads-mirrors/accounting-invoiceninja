@@ -49,6 +49,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $custom_value3
  * @property string|null $custom_value4
  * @property bool $is_deleted
+ * @property bool $is_shipping_location
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
@@ -87,6 +88,7 @@ class Location extends BaseModel
         'custom_value3',
         'custom_value4',
         'is_deleted',
+        'is_shipping_location',
        ];
 
 
