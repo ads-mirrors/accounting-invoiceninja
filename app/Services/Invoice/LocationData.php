@@ -113,7 +113,7 @@ class LocationData extends AbstractService
         }
     }
 
-    private function getBusinessAddress(): ?string
+    private function getBusinessAddress(): string
     {
         $str = ' ';
 
@@ -147,11 +147,11 @@ class LocationData extends AbstractService
         if ($city || $state || $postalCode) {
             return $this->entity->present()->cityStateZip($city, $state, $postalCode, $swap);
         } else {
-            return false;
+            return null;
         }
     }
 
-    private function getShippingAddress(): ?string  
+    private function getShippingAddress(): string  
     {
         
         $str = ' ';
@@ -174,7 +174,7 @@ class LocationData extends AbstractService
 
     }
     
-    private function getBusinessAddress1(): ?string
+    private function getBusinessAddress1(): string
     {
         if ($this->businessLocation) {
             return $this->businessLocation->address1 ?? '';
@@ -183,7 +183,7 @@ class LocationData extends AbstractService
         return $this->entity->client->address1 ?? '';
     }
 
-    private function getBusinessAddress2(): ?string
+    private function getBusinessAddress2(): string
     {
         if ($this->businessLocation) {
             return $this->businessLocation->address2 ?? '';
@@ -192,7 +192,7 @@ class LocationData extends AbstractService
         return $this->entity->client->address2 ?? '';
     }
 
-    private function getBusinessCity(): ?string
+    private function getBusinessCity(): string
     {
         if ($this->businessLocation) {
             return $this->businessLocation->city ?? '';
@@ -201,7 +201,7 @@ class LocationData extends AbstractService
         return $this->entity->client->city ?? '';
     }
 
-    private function getBusinessState(): ?string
+    private function getBusinessState(): string
     {
         if ($this->businessLocation) {
             return $this->businessLocation->state ?? '';
@@ -210,7 +210,7 @@ class LocationData extends AbstractService
         return $this->entity->client->state ?? '';
     }
 
-    private function getBusinessPostalCode(): ?string
+    private function getBusinessPostalCode(): string
     {
         if ($this->businessLocation) {
             return $this->businessLocation->postal_code ?? '';
@@ -219,7 +219,7 @@ class LocationData extends AbstractService
         return $this->entity->client->postal_code ?? '';
     }
 
-    private function getBusinessCountryName(): ?string
+    private function getBusinessCountryName(): string
     {
         if ($this->businessLocation) {
             return $this->businessLocation->country->name;
@@ -228,7 +228,7 @@ class LocationData extends AbstractService
         return $this->entity->client->country->name;
     }
 
-    private function getBusinessCountryCode(): ?string
+    private function getBusinessCountryCode(): string
     {
         if ($this->businessLocation) {
             return $this->businessLocation->country->iso_3166_2;
@@ -237,7 +237,7 @@ class LocationData extends AbstractService
         return $this->entity->client->country->iso_3166_2;
     }
 
-    private function getShippingAddress1(): ?string
+    private function getShippingAddress1(): string
     {
         if ($this->shippingLocation) {
             return $this->shippingLocation->address1 ?? '';
@@ -246,7 +246,7 @@ class LocationData extends AbstractService
         return $this->entity->client->shipping_address1 ?? '';
     }
 
-    private function getShippingAddress2(): ?string
+    private function getShippingAddress2(): string
     {
         if ($this->shippingLocation) {
             return $this->shippingLocation->address2 ?? '';
@@ -255,7 +255,7 @@ class LocationData extends AbstractService
         return $this->entity->client->shipping_address2 ?? '';
     }
 
-    private function getShippingCity(): ?string
+    private function getShippingCity(): string
     {
         if ($this->shippingLocation) {
             return $this->shippingLocation->city ?? '';
@@ -264,7 +264,7 @@ class LocationData extends AbstractService
         return $this->entity->client->shipping_city ?? '';
     }
 
-    private function getShippingState(): ?string
+    private function getShippingState(): string
     {
         if ($this->shippingLocation) {
             return $this->shippingLocation->state ?? '';
@@ -273,7 +273,7 @@ class LocationData extends AbstractService
         return $this->entity->client->shipping_state ?? '';
     }
 
-    private function getShippingPostalCode(): ?string
+    private function getShippingPostalCode(): string
     {
         if ($this->shippingLocation) {
             return $this->shippingLocation->postal_code ?? '';
@@ -282,7 +282,7 @@ class LocationData extends AbstractService
         return $this->entity->client->shipping_postal_code ?? '';
     }
 
-    private function getShippingCountryName(): ?string
+    private function getShippingCountryName(): string
     {
         if ($this->shippingLocation && $this->shippingLocation->country) {
             return $this->shippingLocation->country->name;
@@ -291,7 +291,7 @@ class LocationData extends AbstractService
         return $this->entity->client->shipping_country->name ?? $this->entity->company->country()->name;
     }
 
-    private function getShippingCountryCode(): ?string
+    private function getShippingCountryCode(): string
     {
         if ($this->shippingLocation && $this->shippingLocation->country) {
             return $this->shippingLocation->country->iso_3166_2;
