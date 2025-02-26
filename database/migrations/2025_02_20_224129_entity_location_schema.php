@@ -34,6 +34,8 @@ return new class extends Migration
             $table->text('custom_value3')->nullable();
             $table->text('custom_value4')->nullable();
 
+            $table->mediumText('tax_data')->nullable();
+
             $table->softDeletes('deleted_at', 6);
             $table->timestamps(6);
         

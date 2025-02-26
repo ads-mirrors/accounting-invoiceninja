@@ -34,6 +34,7 @@ class ClientTransformer extends EntityTransformer
         'contacts',
         'documents',
         'gateway_tokens',
+        'locations',
     ];
 
     /**
@@ -44,7 +45,6 @@ class ClientTransformer extends EntityTransformer
         'ledger',
         'system_logs',
         'group_settings',
-        'locations',
     ];
 
     /**

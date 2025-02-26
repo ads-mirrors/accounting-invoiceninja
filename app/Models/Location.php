@@ -50,6 +50,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $custom_value4
  * @property bool $is_deleted
  * @property bool $is_shipping_location
+ * @property object|array|null $tax_data
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
@@ -91,6 +92,13 @@ class Location extends BaseModel
         'is_shipping_location',
        ];
 
+    protected $casts = [
+        'tax_data' => 'object',
+        'updated_at' => 'timestamp',
+        'created_at' => 'timestamp',
+        'deleted_at' => 'timestamp',
+        'is_deleted' => 'bool',
+    ];
 
     protected $touches = [];
 
