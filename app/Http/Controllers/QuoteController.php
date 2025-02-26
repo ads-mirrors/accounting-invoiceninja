@@ -533,7 +533,6 @@ class QuoteController extends BaseController
             return response(['message' => ctrans('texts.disable_emails_error')], 400);
         }
 
-
         $quotes = Quote::query()->with('invitations')->withTrashed()->whereIn('id', $this->transformKeys($ids))->company()->get();
 
         if (! $quotes) {
