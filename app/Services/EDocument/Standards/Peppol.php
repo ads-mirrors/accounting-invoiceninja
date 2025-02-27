@@ -409,7 +409,7 @@ class Peppol extends AbstractService
 
             $order_reference = new OrderReference();
             $id = new ID();
-            $id->value = $this->invoice->po_number ?? '') > 1 ? $this->invoice->po_number : $this->invoice->number;
+            $id->value = strlen($this->invoice->po_number ?? '') > 1 ? $this->invoice->po_number : $this->invoice->number;
 
             $order_reference->ID = $id;
             $this->p_invoice->OrderReference = $order_reference;
