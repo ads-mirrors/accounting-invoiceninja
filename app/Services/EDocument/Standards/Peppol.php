@@ -405,19 +405,14 @@ class Peppol extends AbstractService
     private function setOrderReference(): self
     {
 
-
-        if (strlen($this->invoice->po_number ?? '') > 1) {
-
             $this->p_invoice->BuyerReference = $this->invoice->po_number ?? '';
 
             $order_reference = new OrderReference();
             $id = new ID();
-            $id->value = $this->invoice->po_number;
+            $id->value = $this->invoice->po_number ?? '') > 1 ? $this->invoice->po_number : $this->invoice->number;
 
             $order_reference->ID = $id;
             $this->p_invoice->OrderReference = $order_reference;
-
-        }
 
         return $this;
 
