@@ -331,6 +331,7 @@ class LocationApiTest extends TestCase
         $location = Location::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
+            'country_id' => '840',
         ]);
 
         $response = $this->withHeaders([

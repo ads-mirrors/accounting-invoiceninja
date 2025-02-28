@@ -24,8 +24,8 @@ class LocationObserver
     public function created(Location $location)
     {
        
-        if ($location->client->country_id == 840 && $location->client->company->calculate_taxes && !$location->client->company->account->isFreeHostedClient()) {
-            UpdateLocationTaxData::dispatch($location, $location->client->company);
+        if ($location->country_id == 840 && $location->company->calculate_taxes && !$location->company->account->isFreeHostedClient()) {
+            UpdateLocationTaxData::dispatch($location, $location->company);
         }
 
     }
@@ -39,8 +39,8 @@ class LocationObserver
     public function updated(Location $location)
     {
         
-        if ($location->getOriginal('postal_code') != $location->postal_code && $location->country_id == 840 && $location->client->company->calculate_taxes && !$location->client->company->account->isFreeHostedClient()) {
-            UpdateLocationTaxData::dispatch($location, $location->client->company);
+        if ($location->getOriginal('postal_code') != $location->postal_code && $location->country_id == 840 && $location->company->calculate_taxes && !$location->company->account->isFreeHostedClient()) {
+            UpdateLocationTaxData::dispatch($location, $location->company);
         }
 
     }
