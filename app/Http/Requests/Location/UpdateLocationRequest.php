@@ -45,14 +45,20 @@ class UpdateLocationRequest extends Request
             $rules['name'] = Rule::unique('locations')->where('company_id', $user->company()->id)->ignore($this->location->id);
         }
 
+            
+        $rules['client_id'] = 'required_without:vendor_id|nullable|integer|bail|exists:clients,id,company_id,'.$user->companyId();
+        $rules['vendor_id'] = 'required_without:client_id|nullable|integer|bail|exists:vendors,id,company_id,'.$user->companyId();
+
         $rules['country_id'] = 'integer|exists:countries,id';
 
-        return $rules;
+        return $this->globalRules($rules);
     }
 
     public function prepareForValidation()
     {
         $input = $this->all();
+
+        $input = $this->decodePrimaryKeys($input);
 
         $this->replace($input);
     }

@@ -90,6 +90,8 @@ class Location extends BaseModel
         'custom_value4',
         'is_deleted',
         'is_shipping_location',
+        'client_id',
+        'vendor_id',
        ];
 
     protected $casts = [

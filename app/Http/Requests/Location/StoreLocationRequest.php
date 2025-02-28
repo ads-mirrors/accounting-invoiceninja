@@ -38,8 +38,12 @@ class StoreLocationRequest extends Request
 
         $rules = [];
 
-        $rules['name'] = 'required|unique:expense_categories,name,null,null,company_id,'.$user->companyId();
-        $rules['country_id'] = 'integer|exists:countries,id';
+        $rules['name'] = 'required|unique:locations,name,null,null,company_id,'.$user->companyId();
+
+        $rules['client_id'] = 'required_without:vendor_id|nullable|integer|bail|exists:clients,id,company_id,'.$user->companyId();
+        $rules['vendor_id'] = 'required_without:client_id|nullable|integer|bail|exists:vendors,id,company_id,'.$user->companyId();
+
+        $rules['country_id'] = 'integer|bail|exists:countries,id';
         
         return $this->globalRules($rules);
     }
