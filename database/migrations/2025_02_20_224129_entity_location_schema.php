@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->string('postal_code')->nullable();
+            $table->boolean('is_shipping_location')->default(false);
             $table->boolean('is_deleted')->default(false);
             $table->unsignedInteger('country_id')->nullable();
 
@@ -32,6 +33,8 @@ return new class extends Migration
             $table->text('custom_value2')->nullable();
             $table->text('custom_value3')->nullable();
             $table->text('custom_value4')->nullable();
+
+            $table->mediumText('tax_data')->nullable();
 
             $table->softDeletes('deleted_at', 6);
             $table->timestamps(6);

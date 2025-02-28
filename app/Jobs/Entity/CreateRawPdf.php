@@ -121,7 +121,8 @@ class CreateRawPdf
         $blankPdfSize = 12 * 1024; 
         $tolerance = 100; 
 
-        nlog("PDF EXCEPTION:: size: {$size}, blank PDF size: {$blankPdfSize}, tolerance: {$tolerance}");
+        if($size <= $blankPdfSize) 
+            nlog("PDF EXCEPTION:: size: {$size}, blank PDF size: {$blankPdfSize}, tolerance: {$tolerance}");
 
         return abs($size) <= $blankPdfSize;
 

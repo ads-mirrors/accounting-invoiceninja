@@ -307,7 +307,7 @@ class Expense extends BaseModel
     public function getNetAmount()
     {
 
-        $precision = $expense->currency->precision ?? 2;
+        $precision = $this->currency->precision ?? 2;
 
         if ($this->calculate_tax_by_amount) {
 
@@ -340,7 +340,7 @@ class Expense extends BaseModel
     public function getTaxAmount(): float
     {
 
-         $precision = $expense->currency->precision ?? 2;
+         $precision = $this->currency->precision ?? 2;
 
         if ($this->calculate_tax_by_amount) {
 
