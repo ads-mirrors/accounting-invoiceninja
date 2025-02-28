@@ -882,7 +882,13 @@ class Company extends BaseModel
 
     public function notification(Notification $notification)
     {
-        return new NotificationService($this, $notification);
+        try{
+            return new NotificationService($this, $notification);
+        } catch(\Throwable $th){
+            nlog("Could not access notification service");
+            nlog($th->getMessage());
+            return null;
+        }
     }
 
     public function routeNotificationForSlack($notification): string

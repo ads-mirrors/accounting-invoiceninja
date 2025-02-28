@@ -227,6 +227,7 @@ class Peppol extends AbstractService
             $this->setOrderReference()
                  ->setTaxBreakdown()
                  ->setPaymentTerms()
+                 ->addAttachments()
                  ->standardPeppolRules();
 
             //isolate this class to only peppol changes
@@ -416,6 +417,42 @@ class Peppol extends AbstractService
 
         return $this;
 
+    }
+
+    private function addAttachments(): self
+    {
+
+        // Only the invoice itself to start with:
+        $filename = $this->invoice->getFileName();
+        $pdf = $this->invoice->service()->getInvoicePdf();
+        $mime_code = 'application/pdf';
+
+        $adr = new \InvoiceNinja\EInvoice\Models\Peppol\DocumentReferenceType\AdditionalDocumentReference();
+        
+        // Set ID
+        $id = new \InvoiceNinja\EInvoice\Models\Peppol\IdentifierType\ID();
+        $id->value = $filename;
+        $adr->ID = $id;
+
+        // Create EmbeddedDocumentBinaryObject
+        $attachment = new \InvoiceNinja\EInvoice\Models\Peppol\AttachmentType\Attachment();
+        
+        $binary = new \InvoiceNinja\EInvoice\Models\Peppol\EmbeddedDocumentBinaryObjectType\EmbeddedDocumentBinaryObject();
+        $binary->value = base64_encode($pdf);
+        $binary->mimeCode = $mime_code;
+        $binary->filename = $filename;
+        $attachment->EmbeddedDocumentBinaryObject = $binary;
+        
+        $adr->Attachment = $attachment;
+
+        // Add to invoice
+        if (!isset($this->p_invoice->AdditionalDocumentReference)) {
+            $this->p_invoice->AdditionalDocumentReference = [];
+        }
+        
+        $this->p_invoice->AdditionalDocumentReference[] = $adr;
+
+        return $this;
     }
 
     /**

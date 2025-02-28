@@ -5507,9 +5507,6 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'unlock_invoice_documents_after_payment' => 'Débloquer les documents après le paiement',
     'unlock_invoice_documents_after_payment_help' => 'Permet au client d\'accéder aux documents de facturation lorsqu\'une facture a été payée',
     'quickbooks' => 'Quickbooks',
-    'disable_emails' => 'Désactiver les e-mails',
-    'disable_emails_error' => 'Vous n\'êtes pas autorisé à envoyer des e-mails',
-    'disable_emails_help' => 'Empêche un utilisateur d\'envoyer des e-mails depuis le système',
 );
 
 return $lang;
