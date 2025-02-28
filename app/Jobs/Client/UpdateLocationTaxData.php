@@ -53,7 +53,7 @@ class UpdateLocationTaxData implements ShouldQueue
     {
         MultiDB::setDb($this->company->db);
 
-        if ($this->company->account->isFreeHostedClient() || (isset($this->location->client) && $this->location->client->country_id != 840)) {
+        if ($this->company->account->isFreeHostedClient() || $this->location->vendor || $this->location->country_id != 840) {
             return;
         }
 
@@ -70,11 +70,11 @@ class UpdateLocationTaxData implements ShouldQueue
             $tax_provider = new \App\Services\Tax\Providers\TaxProvider($this->company, $this->location->client);
 
             $location_address = [
-                'address2' => $this->location->address2,
-                'address1' => $this->location->address1,
-                'city' => $this->location->city,
-                'state' => $this->location->state,
-                'postal_code' => $this->location->postal_code,
+                'address2' => $this->location->address2 ?? '',
+                'address1' => $this->location->address1 ?? '',
+                'city' => $this->location->city ?? '',
+                'state' => $this->location->state ?? '',
+                'postal_code' => $this->location->postal_code ?? '',
                 'country' => $this->location->country()->exists() ? $this->location->country->name : $this->company->country()->name,
             ];
 

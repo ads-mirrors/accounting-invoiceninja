@@ -144,9 +144,11 @@ class TaxProvider
 
     public function updateLocationTaxData(Location $location): self
     {
-        $this->configureProvider($this->provider, $location->country->iso_3166_2); //hard coded for now to one provider, but we'll be able to swap these out later
+        $this->configureProvider($this->provider, $location->country->iso_3166_2); 
 
         $tax_provider = new $this->provider($this->getBillingAddress());
+
+        $tax_provider->setApiCredentials($this->api_credentials);
 
         $tax_data = $tax_provider->run();
 

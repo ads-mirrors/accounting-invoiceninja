@@ -56,8 +56,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $deleted_at
  * @property-read mixed $hashed_id
  * @property-read \App\Models\User $user
- * @property-read \App\Models\Client $client
- * @property-read \App\Models\Vendor $vendor
+ * @property-read \App\Models\Client|null $client
+ * @property-read \App\Models\Vendor|null $vendor
  * @property-read \App\Models\Company $company
  * @property-read \App\Models\Country|null $country
  * 
