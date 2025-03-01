@@ -171,7 +171,6 @@ class LocationData extends AbstractService
 
         return $str;
 
-
     }
     
     private function getBusinessAddress1(): string
