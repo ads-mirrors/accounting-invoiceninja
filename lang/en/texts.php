@@ -5513,6 +5513,9 @@ $lang = array(
     'add_location' => 'Add Location',
     'updated_location' => 'Updated Location',
     'created_location' => 'Created Location',
+    'sync_send_time' => 'Sync Send Time',
+    'sync_send_time_help' => 'Update all reminders / recurring invoices to use this new send time',
+    'edit_location' => 'Edit Location',
 );
 
 return $lang;
