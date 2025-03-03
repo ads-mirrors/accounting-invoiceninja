@@ -1822,6 +1822,10 @@ class PdfBuilder
 
         $variables = $this->service->config->pdf_variables['client_details'];
 
+        if(strlen($this->service->config->client->name ?? '') == 0 && in_array('$client.name', $variables) && in_array('$contact.full_name', $variables)) {         
+            $variables = array_diff($variables, ['$contact.full_name']);
+        }
+
         foreach ($variables as $variable) {
             $elements[] = ['element' => 'div', 'content' => $variable, 'show_empty' => false, 'properties' => ['data-ref' => 'client_details-' . substr($variable, 1)]];
         }
