@@ -71,7 +71,10 @@ info:
   license:
     name: 'Elastic License'
     url: 'https://www.elastic.co/licensing/elastic-license'
-  version: 5.10.53
+  externalDocs:
+    description: 'Invoice Ninja Documentation'
+    url: 'https://invoiceninja.github.io'
+  version: 5.11.48
 
 servers:
   - url: 'https://demo.invoiceninja.com'
@@ -1094,7 +1097,7 @@ paths:
           description: 'Server error'
         default:
           $ref: "#/components/responses/default"
-  /api/v1/bank_transactions/bulk:
+  /api/v1/bank_transations/bulk:
     post:
       tags:
         - bank_transactions
@@ -1138,7 +1141,7 @@ paths:
           description: 'Server error'
         default:
           $ref: "#/components/responses/default"
-  /api/v1/bank_transactions/match:
+  /api/v1/bank_transations/match:
     post:
       tags:
         - bank_transactions
