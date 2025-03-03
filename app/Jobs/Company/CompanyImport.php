@@ -669,10 +669,16 @@ class CompanyImport implements ShouldQueue
 
     private function importLogo()
     {
+        $logo_path = "{$this->root_file_path}company_logo.png";
 
-        if(file_exists("{$this->root_file_path}company_logo.png")) {
-            $logo = @file_get_contents("{$this->root_file_path}company_logo.png");
+        // Check for null bytes in path
+        if (strpos($logo_path, "\0") !== false) {
+            nlog("Logo path contains null bytes - skipping logo import");
+            return $this;
+        }
 
+        if(file_exists($logo_path)) {
+            $logo = @file_get_contents($logo_path);
 
             if(!$logo) {
                 return $this;
@@ -1019,6 +1025,7 @@ class CompanyImport implements ShouldQueue
             'recurring_invoice_invitations',
             'key'
         );
+
 
         return $this;
     }
