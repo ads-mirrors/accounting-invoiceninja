@@ -23,7 +23,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 class UploadAvatar implements ShouldQueue
 {
     use Dispatchable;
-use InteractsWithQueue;
+    use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
 
