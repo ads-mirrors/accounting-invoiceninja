@@ -1094,7 +1094,7 @@ paths:
           description: 'Server error'
         default:
           $ref: "#/components/responses/default"
-  /api/v1/bank_transations/bulk:
+  /api/v1/bank_transactions/bulk:
     post:
       tags:
         - bank_transactions
@@ -1138,7 +1138,7 @@ paths:
           description: 'Server error'
         default:
           $ref: "#/components/responses/default"
-  /api/v1/bank_transations/match:
+  /api/v1/bank_transactions/match:
     post:
       tags:
         - bank_transactions
