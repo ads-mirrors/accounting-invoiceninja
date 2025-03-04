@@ -180,7 +180,7 @@ class LicenseController extends BaseController
             nlog("Ninja Server Response");
             nlog($payload);
 
-            if ($response->successful()) {
+            if ($response->successful() && is_array($payload)) {
 
                 $account = auth()->user()->account;
 
