@@ -285,26 +285,19 @@ class ZugferdEDocument extends AbstractService
         $base_taxable_amount = $this->calc->getTaxMap()->sum('base_amount');
 
         $subtotal = $this->document->uses_inclusive_taxes ? ($this->calc->getTotal() - $total_tax - $this->calc->getTotalNetSurcharges() + $this->calc->getTotalDiscount()) : ($this->calc->getSubTotal());
-
-        // nlog($this->calc->getTotalTaxes());
-        // nlog($this->calc->getSubTotal());
-        // nlog($this->calc->getTotalSurcharges());
-
-        // nlog($this->calc->getSubTotal() - $this->calc->getTotalSurcharges() - $this->calc->getTotalTaxes());
-        // nlog($this->document->total_taxes);
         
-        nlog([
-             $this->document->amount,                    // Total amount with VAT
-            $this->document->balance,                   // Amount due
-            $subtotal,                                  // Sum before tax
-            $this->calc->getTotalSurcharges(),         // Total charges
-            $document_discount,                         // Total allowances
-            $taxable_amount,                           // Tax basis total (net)
-            $total_tax,                                // Total tax amount
-            0,
-            // round($this->document->amount - ($base_taxable_amount+$total_tax),2),                                       // Total prepaid amount
-            $this->document->amount - $this->document->balance, 
-        ]);
+        // nlog([
+        //      $this->document->amount,                    // Total amount with VAT
+        //     $this->document->balance,                   // Amount due
+        //     $subtotal,                                  // Sum before tax
+        //     $this->calc->getTotalSurcharges(),         // Total charges
+        //     $document_discount,                         // Total allowances
+        //     $taxable_amount,                           // Tax basis total (net)
+        //     $total_tax,                                // Total tax amount
+        //     0,
+        //     // round($this->document->amount - ($base_taxable_amount+$total_tax),2),                                       // Total prepaid amount
+        //     $this->document->amount - $this->document->balance, 
+        // ]);
         
         $this->xdocument->setDocumentSummation(
             $this->document->amount,                    // Total amount with VAT
