@@ -206,7 +206,7 @@ class SelfUpdateController extends BaseController
 
         $this->version = $this->checkVersion();
 
-        return "https://github.com/invoiceninja/invoiceninja/releases/download/v{$this->version}/invoiceninja.tar";
+        return "https://github.com/invoiceninja/invoiceninja/releases/download/v{$this->version}/invoiceninja.tar.gz";
 
     }
 }
