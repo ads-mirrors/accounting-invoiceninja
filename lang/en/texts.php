@@ -5516,6 +5516,10 @@ $lang = array(
     'sync_send_time' => 'Sync Send Time',
     'sync_send_time_help' => 'Update all reminders / recurring invoices to use this new send time',
     'edit_location' => 'Edit Location',
+    'add_card_reminder' => 'You can add a card again at any time.',
+    'free_trial_then' => 'Free trial, then',
+    'days_left' => ':days days left',
+    'days_trial' => ':days day trial',
 );
 
 return $lang;
