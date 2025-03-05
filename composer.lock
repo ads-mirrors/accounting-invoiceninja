@@ -101,16 +101,16 @@
         },
         {
             "name": "apimatic/core",
-            "version": "0.3.13",
+            "version": "0.3.14",
             "source": {
                 "type": "git",
                 "url": "https://github.com/apimatic/core-lib-php.git",
-                "reference": "944678aa7017457daacd9750b96962fb693ea81a"
+                "reference": "c3eaad6cf0c00b793ce6d9bee8b87176247da582"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/apimatic/core-lib-php/zipball/944678aa7017457daacd9750b96962fb693ea81a",
-                "reference": "944678aa7017457daacd9750b96962fb693ea81a",
+                "url": "https://api.github.com/repos/apimatic/core-lib-php/zipball/c3eaad6cf0c00b793ce6d9bee8b87176247da582",
+                "reference": "c3eaad6cf0c00b793ce6d9bee8b87176247da582",
                 "shasum": ""
             },
             "require": {
@@ -149,9 +149,9 @@
             ],
             "support": {
                 "issues": "https://github.com/apimatic/core-lib-php/issues",
-                "source": "https://github.com/apimatic/core-lib-php/tree/0.3.13"
+                "source": "https://github.com/apimatic/core-lib-php/tree/0.3.14"
             },
-            "time": "2024-12-18T08:29:12+00:00"
+            "time": "2025-02-27T06:03:30+00:00"
         },
         {
             "name": "apimatic/core-interfaces",

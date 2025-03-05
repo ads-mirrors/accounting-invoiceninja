@@ -5516,6 +5516,9 @@ $lang = array(
     'sync_send_time' => 'Sync Send Time',
     'sync_send_time_help' => 'Update all reminders / recurring invoices to use this new send time',
     'edit_location' => 'Edit Location',
+    'downgrade' => 'Downgrade',
+    'downgrade_to_free' => 'Downgrade to Free Plan',
+    'downgrade_to_free_description' => 'Downgrade to the free plan, note this will remove all paid features from your account.',
 );
 
 return $lang;
