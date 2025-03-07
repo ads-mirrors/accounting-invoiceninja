@@ -12,6 +12,7 @@
 
 namespace App\PaymentDrivers;
 
+use App\PaymentDrivers\Common\SupportsHeadlessInterface;
 use Exception;
 use Stripe\Stripe;
 use Stripe\Account;
@@ -62,7 +63,7 @@ use App\PaymentDrivers\Stripe\Jobs\PaymentIntentFailureWebhook;
 use App\PaymentDrivers\Stripe\Jobs\PaymentIntentProcessingWebhook;
 use App\PaymentDrivers\Stripe\Jobs\PaymentIntentPartiallyFundedWebhook;
 
-class StripePaymentDriver extends BaseDriver
+class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterface
 {
     use MakesHash;
     use Utilities;
@@ -1056,4 +1057,13 @@ class StripePaymentDriver extends BaseDriver
 
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function setHeadless(bool $headless): self 
+    {
+        $this->headless = $headless;
+
+        return $this;
+    }
 }
