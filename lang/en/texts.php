@@ -5519,6 +5519,8 @@ $lang = array(
     'downgrade' => 'Downgrade',
     'downgrade_to_free' => 'Downgrade to Free Plan',
     'downgrade_to_free_description' => 'Downgrade to the free plan, note this will remove all paid features from your account.',
+    'delete_location' => 'Delete Location',
+    'delete_location_confirmation' => 'This will remove the location from the clients record.',
 );
 
 return $lang;
