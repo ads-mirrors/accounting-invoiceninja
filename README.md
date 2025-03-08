@@ -67,6 +67,7 @@ git clone --depth 1 -b v5.11.53 https://github.com/invoiceninja/invoiceninja.git
 cp .env.example .env
 composer i -o --no-dev
 ```
+
 **Note** replace v5.11.53 with the latest tag version, you will also want to ensure that when performing updates, you use the latest tag version rather than a particular branch, ie v5-develop. This will ensure that you are not pulling in work in progress code.
 
 Please Note: 
