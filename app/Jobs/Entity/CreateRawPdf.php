@@ -99,8 +99,7 @@ class CreateRawPdf
 
     public function handle()
     {
-        nlog("Generating PDF for {$this->entity_string}");
-
+        
         $pdf = $this->generatePdf();
 
         if($this->isBlankPdf($pdf)) {
