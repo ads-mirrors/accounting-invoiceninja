@@ -24,14 +24,52 @@ return new class extends Migration
                     $pdf_variables = $settings->pdf_variables;
 
                     $ss =  [
-                                    '$payment.number',
-                                    '$payment.date',
-                                    '$payment.amount',
-                                    '$payment.payment_balance',
-                                ];
-
+                        '$payment.number',
+                        '$payment.date',
+                        '$payment.amount',
+                        '$payment.payment_balance',
+                    ];
 
                     $pdf_variables->statement_unapplied_columns = $ss;
+
+
+                    $ss =  [
+                        '$invoice.number',
+                        '$payment.date',
+                        '$method',
+                        '$statement_amount',
+                    ];
+
+                    $pdf_variables->statement_payment_columns = $ss;
+
+                    $ss =  [
+                        '$credit.number',
+                        '$credit.date',
+                        '$total',
+                        '$credit.balance',
+                    ];
+
+                    $pdf_variables->statement_credit_columns = $ss;
+
+
+                    $ss =  [
+                        '$statement_date',
+                        '$balance'
+                    ];
+
+                    $pdf_variables->statement_details = $ss;
+
+
+
+                    $ss =  [
+                        '$invoice.number',
+                        '$invoice.date',
+                        '$due_date',
+                        '$total',
+                        '$balance',
+                    ];
+
+                    $pdf_variables->statement_invoice_columns = $ss;
 
                     $settings->pdf_variables = $pdf_variables;
                     $c->settings = $settings;
