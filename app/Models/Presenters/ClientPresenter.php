@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -157,29 +157,6 @@ class ClientPresenter extends EntityPresenter
 
         return $str;
     }
-
-    // public function getCityState()
-    // {
-    //     $settings = $this->entity->getMergedSettings();
-
-    //     $country = false;
-
-    //     if ($settings->country_id) {
-    //         $country = Country::find($settings->country_id);
-    //     }
-
-    //     $swap = $country && $country->swap_postal_code;
-
-    //     $city = e($settings->city ?: '');
-    //     $state = e($settings->state ?: '');
-    //     $postalCode = e($settings->postal_code ?: '');
-
-    //     if ($city || $state || $postalCode) {
-    //         return $this->cityStateZip($city, $state, $postalCode, $swap);
-    //     } else {
-    //         return false;
-    //     }
-    // }
 
     public function getCityState()
     {

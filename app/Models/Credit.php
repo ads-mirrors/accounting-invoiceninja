@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -175,6 +175,7 @@ class Credit extends BaseModel
         'exchange_rate',
         'subscription_id',
         'vendor_id',
+        'location_id',
     ];
 
     protected $casts = [
@@ -250,6 +251,11 @@ class Credit extends BaseModel
     public function assigned_user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_user_id', 'id')->withTrashed();
+    }
+
+    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Location::class)->withTrashed();
     }
 
     public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo

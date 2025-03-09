@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -73,6 +73,7 @@ class InvoiceItemFactory
             $item->tax_name1 = 'GST';
             $item->tax_rate1 = 10.00;
             $item->type_id = '1';
+            $item->tax_id = '1';
 
             $data[] = $item;
         }
@@ -93,6 +94,7 @@ class InvoiceItemFactory
         $item->tax_name1 = 'GST';
         $item->tax_rate1 = 10.00;
         $item->type_id = '2';
+        $item->tax_id = '2';
 
         $data[] = $item;
 
@@ -127,7 +129,7 @@ class InvoiceItemFactory
             $item->tax_name1 = '';
             $item->tax_rate1 = 0;
             $item->type_id = '1';
-
+            $item->tax_id = '1';
             $data[] = $item;
         }
 

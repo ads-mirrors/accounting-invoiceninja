@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -17,6 +17,7 @@ use App\Models\Client;
 use App\Models\RecurringInvoice;
 use App\Utils\Traits\CleanLineItems;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Validation\Rule;
 
 class StoreRecurringInvoiceRequest extends Request
 {
@@ -78,8 +79,8 @@ class StoreRecurringInvoiceRequest extends Request
         $rules['due_date_days'] = 'bail|sometimes|string';
         $rules['exchange_rate'] = 'bail|sometimes|numeric';
         $rules['next_send_date'] = 'bail|required|date|after:yesterday';
-
         $rules['amount'] = ['sometimes', 'bail', 'numeric', 'max:99999999999999'];
+        $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
 
         return $rules;
     }

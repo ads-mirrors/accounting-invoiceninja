@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -55,6 +55,13 @@ class BaseDriver extends AbstractPaymentDriver
 
     /* The Invitation */
     public $invitation;
+
+    /**
+     * Indicates if returning responses should be headless or classic redirect.
+     * 
+     * @var bool
+     */
+    public bool $headless = false;
 
     /**
      * The Client
@@ -171,6 +178,14 @@ class BaseDriver extends AbstractPaymentDriver
         }
 
         return $fields;
+    }
+
+
+    public function setHeadless(bool $headless): self 
+    {
+        $this->headless = $headless;
+
+        return $this;
     }
 
     /**
@@ -602,7 +617,7 @@ class BaseDriver extends AbstractPaymentDriver
             $invoices = Invoice::query()->whereIn('id', $this->transformKeys(array_column($this->payment_hash->invoices(), 'invoice_id')))->withTrashed()->get();
 
             $invoices->first()->invitations->each(function ($invitation) use ($nmo) {
-                if ((bool) $invitation->contact->send_email !== false && $invitation->contact->email) {
+                if ((bool) $invitation->contact->send_email !== false && $invitation->contact->email && !$invitation->contact->is_locked) {
                     $nmo->to_user = $invitation->contact;
                     NinjaMailerJob::dispatch($nmo);
                 }

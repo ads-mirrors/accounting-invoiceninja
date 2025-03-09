@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -15,6 +15,9 @@ namespace App\Services\PdfMaker;
 use App\Services\Template\TemplateService;
 use League\CommonMark\CommonMarkConverter;
 
+/**
+ * @deprecated 2025-02-04
+ */
 class PdfMaker
 {
     use PdfMakerUtilities;

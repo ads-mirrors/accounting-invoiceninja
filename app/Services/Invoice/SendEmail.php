@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -44,7 +44,7 @@ class SendEmail extends AbstractService
         $this->invoice->service()->markSent()->save();
 
         $this->invoice->invitations->filter(function ($invitation){
-            return (! $invitation->contact->trashed() && $invitation->contact->email);
+            return (! $invitation->contact->trashed() && $invitation->contact->email && !$invitation->contact->is_locked);
         })->each(function ($invitation) use($base_template) {
             
                 $mo = new EmailObject();
