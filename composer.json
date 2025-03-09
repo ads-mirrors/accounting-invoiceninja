@@ -225,7 +225,7 @@
         },
         {
             "type": "path",
-            "url": "../admin-api"
+            "url": "https://github.com/invoiceninja/admin-api"
             
         }
     ],
