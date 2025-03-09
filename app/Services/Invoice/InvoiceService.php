@@ -4,28 +4,29 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
-use App\Events\Invoice\InvoiceWasArchived;
-use App\Jobs\EDocument\CreateEDocument;
-use App\Jobs\Entity\CreateRawPdf;
-use App\Jobs\Inventory\AdjustProductInventory;
-use App\Libraries\Currency\Conversion\CurrencyApi;
-use App\Models\CompanyGateway;
+use App\Models\Task;
+use App\Utils\Ninja;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Subscription;
-use App\Models\Task;
-use App\Utils\Ninja;
-use App\Utils\Traits\MakesHash;
+use App\Models\CompanyGateway;
 use Illuminate\Support\Carbon;
+use App\Utils\Traits\MakesHash;
+use App\Jobs\Entity\CreateRawPdf;
+use App\Services\Invoice\LocationData;
+use App\Jobs\EDocument\CreateEDocument;
 use Illuminate\Support\Facades\Storage;
+use App\Events\Invoice\InvoiceWasArchived;
+use App\Jobs\Inventory\AdjustProductInventory;
+use App\Libraries\Currency\Conversion\CurrencyApi;
 
 class InvoiceService
 {
@@ -243,7 +244,7 @@ class InvoiceService
 
     public function markDeleted()
     {
-        $this->removeUnpaidGatewayFees();
+        // $this->removeUnpaidGatewayFees();
 
         $this->invoice = (new MarkInvoiceDeleted($this->invoice))->run();
 
@@ -484,7 +485,8 @@ class InvoiceService
             ->ledger()
             ->updateInvoiceBalance($adjustment * -1, 'Adjustment for removing gateway fee');
 
-            $this->invoice->client->service()->calculateBalance();
+            $this->invoice->client->service()->updateBalance($adjustment * -1);
+            // $this->invoice->client->service()->calculateBalance();
 
         }
 
@@ -566,6 +568,18 @@ class InvoiceService
         return $this;
     }
 
+    public function unlockDocuments(): self
+    {
+
+        //2025-02-20 ** Feature to allow documents to be visible / attachable after payment **
+        if ($this->invoice->status_id == Invoice::STATUS_PAID && $this->invoice->client->getSetting('unlock_invoice_documents_after_payment')) {
+            $this->invoice->documents()->update(['is_public' => true]);
+        }
+
+        return $this;
+
+    }
+
     public function fillDefaults(bool $is_recurring = false)
     {
         $this->invoice->load('client.company');
@@ -602,6 +616,11 @@ class InvoiceService
         }
 
         return $this;
+    }
+
+    public function location(): array
+    {
+        return (new LocationData($this->invoice))->run();       
     }
 
     public function workFlow()

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -183,6 +183,7 @@ class PurchaseOrder extends BaseModel
         'vendor_id',
         'last_viewed',
         'currency_id',
+        'location_id',
     ];
 
     protected $casts = [
@@ -305,6 +306,11 @@ class PurchaseOrder extends BaseModel
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
+    }
+
+    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Location::class)->withTrashed();
     }
 
     public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo

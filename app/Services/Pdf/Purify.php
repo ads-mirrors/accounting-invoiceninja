@@ -18,7 +18,7 @@ class Purify
 
         // Text Elements
         'span', 'strong', 'em', 'b', 'i', 'u', 'small',
-        'sub', 'sup', 'del', 'ins',
+        'sub', 'sup', 'del', 'ins', 
 
         // Line Breaks
         'br', 'hr',
@@ -114,7 +114,7 @@ class Purify
         'charset' => ['*'],
         'name' => ['*'],
         'content' => ['*'],
-        'http-equiv' => ['*'],
+        'http-equiv' => ['cache-control'],
         'viewport' => ['*'],
         'xmlns' => ['http://www.w3.org/2000/svg'],
 
@@ -243,10 +243,9 @@ class Purify
 
         $html = str_replace('%24', '$', $html);
         libxml_use_internal_errors(true);
-        libxml_disable_entity_loader(true);
-
+        
         $document = new \DOMDocument();
-        @$document->loadHTML(htmlspecialchars_decode(htmlspecialchars($html, ENT_QUOTES, 'UTF-8')));
+        @$document->loadHTML(htmlspecialchars_decode(htmlspecialchars($html, ENT_QUOTES, 'UTF-8')), LIBXML_NONET);
 
         // Function to recursively check nodes
         $cleanNodes = function ($node) use (&$cleanNodes) {
@@ -417,12 +416,10 @@ if ($node instanceof \DOMElement) {
 
             nlog('Error cleaning HTML: ' . $e->getMessage());
 
-            libxml_disable_entity_loader(false);
             libxml_clear_errors();
             
             throw new \RuntimeException('HTML sanitization failed');
         } finally {
-            libxml_disable_entity_loader(false);
             libxml_clear_errors();
         }
 

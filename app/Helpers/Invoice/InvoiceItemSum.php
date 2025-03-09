@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -347,7 +347,7 @@ class InvoiceItemSum
     private function getPeppolSurchargeTaxes(): self
     {
 
-        if (!($this->client->getSetting('e_invoice_type') == 'PEPPOL')) {
+        if (!$this->client->getSetting('enable_e_invoice')) {
             return $this;
         }
         
@@ -399,6 +399,10 @@ class InvoiceItemSum
         $group_tax = [];
 
         $key = str_replace(' ', '', $tax_name.$tax_rate);
+
+        //Handles an edge case where a blank line is entered.
+        if($tax_rate > 0 && $amount == 0)
+            return;
 
         $group_tax = ['key' => $key, 'total' => $tax_total, 'tax_name' => $tax_name.' '.Number::formatValueNoTrailingZeroes(floatval($tax_rate), $this->client).'%', 'tax_id' => $tax_id, 'tax_rate' => $tax_rate, 'base_amount' => $amount];
 

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2024. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -280,6 +280,7 @@ class SearchController extends Controller
     {
 
         $clients =  Client::query()
+                     ->withTrashed()
                      ->company()
                      ->where('is_deleted', 0)
                      ->when(!$user->hasPermission('view_all') || !$user->hasPermission('view_client'), function ($query) use ($user) {
@@ -314,6 +315,7 @@ class SearchController extends Controller
     {
 
         $invoices = Invoice::query()
+                     ->withTrashed()
                      ->company()
                      ->with('client')
                      ->where('is_deleted', 0)
