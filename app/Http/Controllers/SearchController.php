@@ -72,6 +72,8 @@ class SearchController extends Controller
         $user = auth()->user();
         $company = $user->company();
 
+        $search = trim($search);
+
         \Illuminate\Support\Facades\App::setLocale($company->locale());
 
         $elastic = ClientBuilder::fromConfig(config('elastic.client.connections.default'));
@@ -109,7 +111,6 @@ class SearchController extends Controller
             'client_contacts' => $this->client_contacts,
             'invoices' => $this->invoices,
             'quotes' => $this->quotes,
-
             'expenses' => $this->expenses,
             'credits' => $this->credits,
             'recurring_invoices' => $this->recurring_invoices,
