@@ -171,9 +171,9 @@ class ClientContact extends Authenticatable implements HasLocalePreference
     public function toSearchableArray()
     {
         return [
-            'id' => $this->id,
+            'id' => $this->company->db.":".$this->id,
             'name' => $this->present()->search_display(),
-            'hashed_id' => $this->company->db.":".$this->hashed_id,
+            'hashed_id' => $this->hashed_id,
             'email' => $this->email,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
@@ -189,12 +189,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
 
     public function getScoutKey()
     {
-        return $this->company->db.":".$this->hashed_id;
-    }
-
-    public function getScoutKeyName(): mixed
-    {
-        return 'hashed_id';
+        return $this->company->db.":".$this->id;
     }
 
     /*
