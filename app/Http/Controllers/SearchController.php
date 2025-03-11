@@ -165,7 +165,7 @@ class SearchController extends Controller
                         'name' => $result['_source']['name'],
                         'type' => '/client',
                         'id' => $result['_source']['hashed_id'],
-                        'path' => "/clients/{$result['_source']['hashed_id']}"
+                        'path' => "/clients/{$result['_source']['client_id']}"
                     ];
                     break;
                 case 'quotes':
@@ -251,9 +251,9 @@ class SearchController extends Controller
 
                     $this->vendor_contacts[] = [
                         'name' => $result['_source']['name'],
-                        'type' => '/client',
+                        'type' => '/vendor',
                         'id' => $result['_source']['hashed_id'],
-                        'path' => "/clients/{$result['_source']['hashed_id']}"
+                        'path' => "/vendors/{$result['_source']['vendor_id']}"
                     ];
 
                     break;

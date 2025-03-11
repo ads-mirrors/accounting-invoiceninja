@@ -130,7 +130,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
         return [
             'id' => $this->id,
             'name' => $this->present()->search_display(),
-            'hashed_id' => $this->vendor ->hashed_id,
+            'hashed_id' => $this->company->db.":".$this->hashed_id,
             'email' => $this->email,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
@@ -140,12 +140,18 @@ class VendorContact extends Authenticatable implements HasLocalePreference
             'custom_value3' => $this->custom_value3,
             'custom_value4' => $this->custom_value4,
             'company_key' => $this->company->company_key,
+            'vendor_id' => $this->vendor->hashed_id,
         ];
     }
 
     public function getScoutKey()
     {
-        return $this->hashed_id;
+        return $this->company->db.":".$this->hashed_id;
+    }
+
+    public function getScoutKeyName(): mixed
+    {
+        return 'hashed_id';
     }
 
     public function avatar()

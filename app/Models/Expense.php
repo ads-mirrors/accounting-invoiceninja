@@ -174,7 +174,7 @@ class Expense extends BaseModel
         return [
             'id' => $this->id,
             'name' => ctrans('texts.expense') . " " . ($this->number ?? '') . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
-            'hashed_id' => $this->hashed_id,
+            'hashed_id' => $this->company->db.":".$this->hashed_id,
             'number' => $this->number,
             'is_deleted' => $this->is_deleted,
             'amount' => (float) $this->amount,
@@ -189,9 +189,14 @@ class Expense extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->hashed_id;
+        return $this->company->db.":".$this->hashed_id;
     }
     
+    public function getScoutKeyName(): mixed
+    {
+        return 'hashed_id';
+    }
+
     public function getEntityType()
     {
         return self::class;

@@ -157,7 +157,7 @@ class Vendor extends BaseModel
             'id' => $this->id,
             'name' => $name,
             'is_deleted' => $this->is_deleted,
-            'hashed_id' => $this->hashed_id,
+            'hashed_id' => $this->company->db.":".$this->hashed_id,
             'number' => $this->number,
             'id_number' => $this->id_number,
             'vat_number' => $this->vat_number,
@@ -180,7 +180,12 @@ class Vendor extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->hashed_id;
+        return $this->company->db.":".$this->hashed_id;
+    }
+
+    public function getScoutKeyName(): mixed
+    {
+        return 'hashed_id';
     }
 
     protected $presenter = VendorPresenter::class;

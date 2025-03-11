@@ -107,6 +107,12 @@ class CreateRawPdf
             nlog("Blank PDF detected, generating again");
             $pdf = $this->generatePdf();
         }
+        
+        if ($this->isBlankPdf($pdf)) {
+
+            nlog("Blank PDF detected, generating again!!! :: {$this->entity_string} {$this->entity->id}");
+            $pdf = $this->generatePdf();
+        }
 
         return $pdf;
 

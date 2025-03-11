@@ -252,7 +252,7 @@ class Client extends BaseModel implements HasLocalePreference
             'id' => $this->id,
             'name' => $name,
             'is_deleted' => $this->is_deleted,
-            'hashed_id' => $this->hashed_id,
+            'hashed_id' => $this->company->db.":".$this->hashed_id,
             'number' => $this->number,
             'id_number' => $this->id_number,
             'vat_number' => $this->vat_number,
@@ -282,13 +282,13 @@ class Client extends BaseModel implements HasLocalePreference
 
     public function getScoutKey()
     {
-        return $this->hashed_id;
+        return $this->company->db.":".$this->hashed_id;
     }
 
-    // public function getScoutKeyName()
-    // {
-    //     return 'hashed_id';
-    // }
+    public function getScoutKeyName()
+    {
+        return 'hashed_id';
+    }
 
     public function getEntityType()
     {
