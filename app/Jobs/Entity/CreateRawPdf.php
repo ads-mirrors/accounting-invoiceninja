@@ -155,9 +155,10 @@ class CreateRawPdf
         return $pdf;
     }
 
-
-
-    public function failed($e)
+    public function failed($exception = null)
     {
+        if ($exception) {
+            nlog("CREATERAWPDF:: " . $exception->getMessage());
+        }
     }
 }
