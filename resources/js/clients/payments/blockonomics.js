@@ -5,13 +5,13 @@
  *
  * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
  *
- * @license https://www.elastic.co/licensing/elastic-license 
+ * @license https://www.elastic.co/licensing/elastic-license
  */
 
 import { wait, instant } from '../wait';
 
 class Blockonomics {
-    
+
     constructor() {
         // Bind the method to the instance
         this.copyToClipboard = this.copyToClipboard.bind(this);
@@ -20,7 +20,7 @@ class Blockonomics {
     }
 
      copyToClipboard(elementId, passedElement, shouldGrabNextElementSibling) {
-        
+
         const element = shouldGrabNextElementSibling ? passedElement.nextElementSibling : passedElement;
         const originalIcon = element.src;  // Store the original icon
 
@@ -52,6 +52,21 @@ class Blockonomics {
         const refreshIcon = document.querySelector('.icon-refresh');
         refreshIcon.classList.add('rotating');
         document.getElementsByClassName("btc-value")[0].innerHTML = "Refreshing...";
+
+        const getBTCPrice = async () => {
+            try {
+                const currency = document.querySelector('meta[name="currency"]').content;
+                const response = await fetch(`/api/v1/get-btc-price?currency=${currency}`); // New endpoint to call server-side function
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                return data.price;
+            } catch (error) {
+                console.error('There was a problem with the BTC price fetch operation:', error);
+                // Handle error appropriately
+            }
+        }
 
         try {
             const newPrice = await getBTCPrice();
@@ -117,21 +132,6 @@ class Blockonomics {
             window.countdownInterval = setInterval(updateCountdown, 1000);
         }
 
-        const getBTCPrice = async () => {
-            try {
-                const currency = document.querySelector('meta[name="currency"]').content;
-                const response = await fetch(`/api/v1/get-btc-price?currency=${currency}`); // New endpoint to call server-side function
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const data = await response.json();
-                return data.price;
-            } catch (error) {
-                console.error('There was a problem with the BTC price fetch operation:', error);
-                // Handle error appropriately
-            }
-        }
-
     const connectToWebsocket = () => {
         const btcAddress = document.querySelector('meta[name="btc_address"]').content;
         const webSocketUrl = `wss://www.blockonomics.co/payment/${btcAddress}`;
@@ -172,7 +172,7 @@ class Blockonomics {
     connectToWebsocket();
     fetchAndDisplayQRCode();
 
-    
+
     }
 
 }
