@@ -447,4 +447,14 @@ class ProcessPostmarkWebhook implements ShouldQueue
         return [new \Illuminate\Queue\Middleware\WithoutOverlapping($this->request['Tag'])];
     }
 
+    public function failed($exception = null)
+    {
+        
+        if($exception) {
+            nlog("PROCESSPOSTMARKWEBHOOK:: ". $exception->getMessage());
+        }
+
+        config(['queue.failed.driver' => null]);
+
+    }
 }
