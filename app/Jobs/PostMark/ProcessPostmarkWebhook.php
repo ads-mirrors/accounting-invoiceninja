@@ -444,7 +444,8 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
     public function middleware()
     {
-        return [new \Illuminate\Queue\Middleware\WithoutOverlapping($this->request['Tag'])];
+        $key = $this->request['MessageID'] ?? '' . $this->request['Tag'] ?? '';
+        return [(new \Illuminate\Queue\Middleware\WithoutOverlapping($key))->releaseAfter(60)];
     }
 
     public function failed($exception = null)
