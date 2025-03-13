@@ -1035,25 +1035,25 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         }, $string);
     }
 
-    public function auth(): bool
+    public function auth(): string
     {
         $this->init();
 
         try {
             $this->verifyConnect();
-            return true;
+            return 'ok';
         } catch (\Exception $e) {
 
         }
 
-        return false;
+        return 'error';
 
     }
 
     /**
      * @inheritDoc
      */
-    public function setHeadless(bool $headless): self 
+    public function setHeadless(bool $headless): self
     {
         $this->headless = $headless;
 
