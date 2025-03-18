@@ -92,12 +92,13 @@ class BlockonomicsPaymentDriver extends BaseDriver
 
         $company = $request->getCompany();
 
-        $url_callback_secret = $request->secret;
-        $db_callback_secret = $this->company_gateway->getConfigField('callbackSecret');
+        // Re-introduce secret in a later stage if needed.
+        // $url_callback_secret = $request->secret;
+        // $db_callback_secret = $this->company_gateway->getConfigField('callbackSecret');
 
-        if ($url_callback_secret != $db_callback_secret) {
-            throw new PaymentFailed('Secret does not match');
-        }
+        // if ($url_callback_secret != $db_callback_secret) {
+        //     throw new PaymentFailed('Secret does not match');
+        // }
 
         $txid = $request->txid;
         $value = $request->value;
