@@ -168,9 +168,8 @@ class BlockonomicsPaymentDriver extends BaseDriver
 
     public function checkStores($stores): string
     {
-
-        if (empty($stores->data)) {
-            return 'Please add a store to your Blockonomics account';
+        if (empty($stores['data'])) {
+            return "Please add a store to your Blockonomics' account";
         }
 
         $invoice_ninja_callback_url = $this->company_gateway->webhookUrl();
@@ -179,17 +178,17 @@ class BlockonomicsPaymentDriver extends BaseDriver
         $store_without_callback = null;
         $partial_match_store = null;
 
-        foreach ($stores->data as $store) {
-            if ($store->http_callback === $invoice_ninja_callback_url) {
+        foreach ($stores['data'] as $store) {
+            if ($store['http_callback'] === $invoice_ninja_callback_url) {
                 $matching_store = $store;
                 break;
             }
-            if (empty($store->http_callback)) {
+            if (empty($store['http_callback'])) {
                 $store_without_callback = $store;
                 continue;
             }
             // Check for partial match - only secret or protocol differs
-            $store_base_url = preg_replace('/https?:\/\//', '', $store->http_callback);
+            $store_base_url = preg_replace('/https?:\/\//', '', $store['http_callback']);
             if (strpos($store_base_url, $invoice_ninja_callback_url) === 0) {
                 $partial_match_store = $store;
             }
@@ -198,7 +197,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
         if ($matching_store) {
             return 'ok';
         }
-
+        return 'No matching store found';
     }
 
     public function auth(): string
