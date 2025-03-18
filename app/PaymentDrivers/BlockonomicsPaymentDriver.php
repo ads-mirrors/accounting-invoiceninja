@@ -49,7 +49,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
     public $BASE_URL = 'https://www.blockonomics.co';
     public $NEW_ADDRESS_URL = 'https://www.blockonomics.co/api/new_address';
     public $PRICE_URL = 'https://www.blockonomics.co/api/price';
-    public $STORES_URL = 'https://www.blockonomics.co/api/v2/stores';
+    public $STORES_URL = 'https://www.blockonomics.co/api/v2/stores?wallets=true';
 
     public function init()
     {
@@ -147,21 +147,60 @@ class BlockonomicsPaymentDriver extends BaseDriver
         return $this->payment_method->refund($payment, $amount); //this is your custom implementation from here
     }
 
+    public function checkStores($stores): string
+    {
+        $invoice_ninja_callback_url = $this->company_gateway->webhookUrl();
+
+
+        $matching_store = null;
+        $store_without_callback = null;
+        $partial_match_store = null;
+
+        foreach ($stores->data as $store) {
+            if ($store->http_callback === $invoice_ninja_callback_url) {
+                $matching_store = $store;
+                break;
+            }
+            if (empty($store->http_callback)) {
+                $store_without_callback = $store;
+                continue;
+            }
+            // Check for partial match - only secret or protocol differs
+            $store_base_url = preg_replace('/https?:\/\//', '', $store->http_callback);
+            if (strpos($store_base_url, $invoice_ninja_callback_url) === 0) {
+                $partial_match_store = $store;
+            }
+        }
+
+    }
+
     public function auth(): string
     {
         try {
             $api_key = $this->company_gateway->getConfigField('apiKey');
+
             if(!$api_key) {
                 return 'No API Key';
             }
             $get_stores_response = Http::withToken($api_key)
                 ->get($this->STORES_URL, []);
-            if($get_stores_response->status() == 401) {
+            $get_stores_response_status = $get_stores_response->status();
+
+            if($get_stores_response_status == 401) {
                 return 'API Key is incorrect';
             }
+
             if($get_stores_response->successful()) {
                 return 'ok';
             }
+
+            if (!$get_stores_response || $get_stores_response_status !== 200) {
+                return 'Could not connect to Blockonomics API';
+            }
+
+            $stores = $get_stores_response->json();
+            $stores_check_result = $this->checkStores($stores);
+
             return 'error';
         } catch (\Exception $e) {
             return $e->getMessage();
