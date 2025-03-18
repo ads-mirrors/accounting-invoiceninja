@@ -1930,7 +1930,7 @@ class PdfBuilder
     {
         foreach ($items as $key => $item) {
             foreach ($item as $variable => $value) {
-                $item[$variable] = str_replace("\n", '<br>', $value);
+                $item[$variable] = str_replace("\n", '<br/>', $value);
             }
 
             $items[$key] = $item;
@@ -2096,17 +2096,21 @@ class PdfBuilder
 
             if ($this->service->company->markdown_enabled && $this->isMarkdown($child['content'])) {
 
-                // $child['content'] = str_ireplace(['<br>', '<br/>', '<br />'], "\r", $child['content']); //13-05-2025 - testing whether /r or <br/> can work
+                $child['content'] = str_ireplace(['<br>', '<br/>', '<br />'], "\r", $child['content']); //13-05-2025 - testing whether /r or <br/> can work
 
-                $child['content'] = str_ireplace(['<br>', '<br/>', '<br />'], "<br/>", $child['content']); //13-05-2025 - testing whether /r or <br/> can work
+                // $child['content'] = str_ireplace(['<br>', '<br/>', '<br />'], "<br/>", $child['content']); //13-05-2025 - testing whether /r or <br/> can work
                 $child['content'] = $this->commonmark->convert($child['content']); //@phpstan-ignore-line
             }
 
             $contains_html = str_contains($child['content'], '<') && str_contains($child['content'], '>');
 
+            nlog((string)$child['content']);
+
             if ($contains_html) {
                 // Encode any HTML elements now so that DOMDocument doesn't throw any errors,
                 // Later we can decode specific elements.
+
+                $child['content'] = str_replace("\n", "<br/>", $child['content']);
 
                 $_child = $this->document->createElement($child['element'], '');
                 $_child->setAttribute('data-state', 'encoded-html');
