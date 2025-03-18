@@ -49,6 +49,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
     public $BASE_URL = 'https://www.blockonomics.co';
     public $NEW_ADDRESS_URL = 'https://www.blockonomics.co/api/new_address';
     public $PRICE_URL = 'https://www.blockonomics.co/api/price';
+    public $STORES_URL = 'https://www.blockonomics.co/api/v2/stores';
 
     public function init()
     {
@@ -153,13 +154,12 @@ class BlockonomicsPaymentDriver extends BaseDriver
             if(!$api_key) {
                 return 'No API Key';
             }
-            $url = $this->NEW_ADDRESS_URL . '?reset=1';
-            $response = Http::withToken($api_key)
-                ->post($url, []);
-            if($response->status() == 401) {
+            $get_stores_response = Http::withToken($api_key)
+                ->get($this->STORES_URL, []);
+            if($get_stores_response->status() == 401) {
                 return 'API Key is incorrect';
             }
-            if($response->successful()) {
+            if($get_stores_response->successful()) {
                 return 'ok';
             }
             return 'error';
