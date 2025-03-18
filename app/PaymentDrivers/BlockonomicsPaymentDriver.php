@@ -150,6 +150,9 @@ class BlockonomicsPaymentDriver extends BaseDriver
     {
         try {
             $api_key = $this->company_gateway->getConfigField('apiKey');
+            if(!$api_key) {
+                return 'No API Key';
+            }
             $url = $this->NEW_ADDRESS_URL . '?reset=1';
             $response = Http::withToken($api_key)
                 ->post($url, []);
