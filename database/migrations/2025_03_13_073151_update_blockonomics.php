@@ -27,14 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        $gateway = Gateway::find(65);
-        if ($gateway) {
-            // Optionally restore the original state
-            $fields = json_decode($gateway->fields);
-            $fields->callbackSecret = ""; // Adding it back if needed
-            $gateway->fields = json_encode($fields);
-            $gateway->site_url = 'https://blockonomics.co';
-            $gateway->save();
-        }
+        //
     }
 };
