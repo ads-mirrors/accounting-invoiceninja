@@ -49,7 +49,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
     public $BASE_URL = 'https://www.blockonomics.co';
     public $NEW_ADDRESS_URL = 'https://www.blockonomics.co/api/new_address';
     public $PRICE_URL = 'https://www.blockonomics.co/api/price';
-    public $STORES_URL = 'https://www.blockonomics.co/api/v2/stores?wallets=true';
+    public $STORES_URL = 'https://www.blockonomics.co/api/v2/stores';
 
     public function init()
     {
@@ -147,10 +147,33 @@ class BlockonomicsPaymentDriver extends BaseDriver
         return $this->payment_method->refund($payment, $amount); //this is your custom implementation from here
     }
 
+    public function testNewAddressGen($crypto = 'btc', $response): string
+    {
+        $api_key = $this->company_gateway->getConfigField('apiKey');
+        $new_address_reset_url = $this->NEW_ADDRESS_URL . '?reset=1';
+        $new_address_response = Http::withToken($api_key)
+            ->post($new_address_reset_url, []);
+        if ($new_address_response->response_code != 200) {
+            return isset($new_address_response->response_message) && $new_address_response->response_message
+                ? $new_address_response->response_message
+                : 'Could not generate new address';
+        }
+
+        if (empty($new_address_response->address)) {
+            return 'No address returned from Blockonomics API';
+        }
+
+        return 'ok';
+    }
+
     public function checkStores($stores): string
     {
-        $invoice_ninja_callback_url = $this->company_gateway->webhookUrl();
 
+        if (empty($stores->data)) {
+            return 'Please add a store to your Blockonomics account';
+        }
+
+        $invoice_ninja_callback_url = $this->company_gateway->webhookUrl();
 
         $matching_store = null;
         $store_without_callback = null;
@@ -172,6 +195,10 @@ class BlockonomicsPaymentDriver extends BaseDriver
             }
         }
 
+        if ($matching_store) {
+            return 'ok';
+        }
+
     }
 
     public function auth(): string
@@ -182,17 +209,15 @@ class BlockonomicsPaymentDriver extends BaseDriver
             if(!$api_key) {
                 return 'No API Key';
             }
+            $store_url_with_wallets = $this->STORES_URL . '?wallets=true';
             $get_stores_response = Http::withToken($api_key)
-                ->get($this->STORES_URL, []);
+                ->get($store_url_with_wallets, []);
             $get_stores_response_status = $get_stores_response->status();
 
             if($get_stores_response_status == 401) {
                 return 'API Key is incorrect';
             }
 
-            if($get_stores_response->successful()) {
-                return 'ok';
-            }
 
             if (!$get_stores_response || $get_stores_response_status !== 200) {
                 return 'Could not connect to Blockonomics API';
@@ -201,7 +226,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
             $stores = $get_stores_response->json();
             $stores_check_result = $this->checkStores($stores);
 
-            return 'error';
+            return $stores_check_result;
         } catch (\Exception $e) {
             return $e->getMessage();
         }
