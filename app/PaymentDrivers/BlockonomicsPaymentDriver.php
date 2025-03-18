@@ -156,6 +156,9 @@ class BlockonomicsPaymentDriver extends BaseDriver
             $url = $this->NEW_ADDRESS_URL . '?reset=1';
             $response = Http::withToken($api_key)
                 ->post($url, []);
+            if($response->status() == 401) {
+                return 'API Key is incorrect';
+            }
             if($response->successful()) {
                 return 'ok';
             }
