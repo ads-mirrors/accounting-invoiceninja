@@ -59,12 +59,12 @@ class PdfBuilder
 
         $this->commonmark = new CommonMarkConverter([
             'allow_unsafe_links' => false,
-            'renderer' => [
-                'block_separator' => "\n",
-                'inner_separator' => "\n",
-                'soft_break'      => "\n",
-            ],
-            'html_input' => 'escape',
+            // 'renderer' => [
+            //     'block_separator' => "\n",
+            //     'inner_separator' => "\n",
+            //     'soft_break'      => "\n",
+            // ],
+            // 'html_input' => 'escape',
         ]);
     }
 
