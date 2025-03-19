@@ -195,9 +195,14 @@ class BlockonomicsPaymentDriver extends BaseDriver
         }
 
         if ($matching_store) {
+            $matching_store_wallet = $matching_store['wallets'];
+            // stringify matching store wallets
+            if (empty($matching_store_wallet)) {
+                return 'Please add a wallet to your Blockonomics store';
+            }
             return 'ok';
         }
-        return 'No matching store found';
+        return "No callback URL from your Blockonomics stores matches your Invoice Ninja webhook.";
     }
 
     public function auth(): string
@@ -208,9 +213,8 @@ class BlockonomicsPaymentDriver extends BaseDriver
             if(!$api_key) {
                 return 'No API Key';
             }
-            $store_url_with_wallets = $this->STORES_URL . '?wallets=true';
             $get_stores_response = Http::withToken($api_key)
-                ->get($store_url_with_wallets, []);
+                ->get($this->STORES_URL, ['wallets' => 'true']);
             $get_stores_response_status = $get_stores_response->status();
 
             if($get_stores_response_status == 401) {
