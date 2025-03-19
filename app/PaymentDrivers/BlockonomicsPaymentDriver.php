@@ -188,6 +188,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
                 continue;
             }
             // Check for partial match - only secret or protocol differs
+            // TODO: Implement logic for updating partial matches
             $store_base_url = preg_replace('/https?:\/\//', '', $store['http_callback']);
             if (strpos($store_base_url, $invoice_ninja_callback_url) === 0) {
                 $partial_match_store = $store;
@@ -196,7 +197,6 @@ class BlockonomicsPaymentDriver extends BaseDriver
 
         if ($matching_store) {
             $matching_store_wallet = $matching_store['wallets'];
-            // stringify matching store wallets
             if (empty($matching_store_wallet)) {
                 return 'Please add a wallet to your Blockonomics store';
             }
