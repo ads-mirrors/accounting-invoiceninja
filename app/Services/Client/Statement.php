@@ -454,12 +454,16 @@ class Statement
             ->where('is_deleted', 0);
 
         if ($range == '0') {
+            nlog("rrrrr");
             $query->where(function ($q) use ($to, $from) {
-                $q->whereBetween('due_date', [$to, $from])->orWhereNull('due_date');
+                $q->where('due_date','>=', now())->orWhereNull('due_date');
+                // $q->whereBetween('due_date', [$to, $from])->orWhereNull('due_date');
             });
         } else {
             $query->whereBetween('due_date', [$to, $from]);
         }
+
+        nlog($query->toRawSql());
 
         $amount = $query->sum('balance');
 
