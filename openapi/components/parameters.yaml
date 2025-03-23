@@ -70,7 +70,6 @@
         Usage:
 
         ```html
-
         /api/v1/clients?include=contacts,documents,activities
         ```
       required: false
