@@ -347,6 +347,7 @@ class TemplateService
                 throw ($e);
             }
 
+            // nlog($template->getSourceContext()->getCode()); //this is a nice way to access the twig template
             $template = $template->render($this->data);
 
             $f = $this->document->createDocumentFragment();
