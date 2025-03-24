@@ -85,7 +85,7 @@ class ProjectReport extends BaseExport
         }
 
         $data = [
-            'projects' => $query->get()->toArray(),
+            'projects' => $query->get(),
             'company_logo' => $this->company->present()->logo(),
             'company_name' => $this->company->present()->name(),
             'created_on' => $this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale()),
@@ -96,14 +96,15 @@ class ProjectReport extends BaseExport
         $ts = new TemplateService();
 
         $ts_instance = $ts->setCompany($this->company)
-                    ->setData($data)
+                    // ->setData($data)
+                    ->processData($data)
                     ->setRawTemplate(file_get_contents(resource_path($this->template)))
                     ->addGlobal(['currency_code' => $query->first()->client->company->currency()->code])
                     ->setGlobals()
                     ->parseNinjaBlocks()
                     ->save();
 
-                    // nlog($ts_instance->getHtml());
+        nlog($ts_instance->getHtml());
 
         return $ts_instance->getPdf();
     }

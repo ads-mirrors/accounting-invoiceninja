@@ -162,6 +162,8 @@
         <h6>{{ project.current_hours }} / {{ project.budgeted_hours }}: (Hours / Budgeted Hours @ {{ project.task_rate
             }}) -
             Report generated on {{ "now"|date('Y-m-d') }}</h6>
+
+        {% if project.tasks is not empty %}
         <table>
             <thead>
                 <tr>
@@ -192,7 +194,8 @@
                 {% endfor %}
             </tbody>
         </table>
-
+        {% endif %}
+        
         {% if project.invoices %}
         <div style="text-align: center;">
             <h2>{{ t('invoices') }}</h2>
