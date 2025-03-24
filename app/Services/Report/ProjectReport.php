@@ -63,8 +63,7 @@ class ProjectReport extends BaseExport
 
         $user_name = $user ? $user->present()->name() : '';
 
-
-        $projects = \App\Models\Project::where('company_id', $this->company->id)
+        $projects = \App\Models\Project::with(['invoices','expenses','tasks'])->where('company_id', $this->company->id)
                                             ->whereIn('id', $this->transformKeys($this->input['projects']))
                                             ->get();
 
@@ -83,6 +82,7 @@ class ProjectReport extends BaseExport
         $ts_instance = $ts->setCompany($this->company)
                     ->setData($data)
                     ->setRawTemplate(file_get_contents(resource_path($this->template)))
+                    ->setGlobals()
                     ->parseNinjaBlocks()
                     ->save();
 
