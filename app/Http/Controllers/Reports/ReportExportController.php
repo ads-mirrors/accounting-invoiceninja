@@ -37,12 +37,9 @@ class ReportExportController extends BaseController
 
         // Check if the content starts with PDF signature (%PDF-)
         $isPdf = str_starts_with(trim($report), '%PDF-');
-
-        nlog($isPdf);
         
         $attachment_name = $isPdf ? 'report.pdf' : 'report.csv';
 
-        nlog($attachment_name);
         $headers = [
             'Content-Disposition' => "attachment; filename=\"{$attachment_name}\"",
             'Content-Type' => $isPdf ? 'application/pdf' : 'text/csv',
@@ -59,7 +56,7 @@ class ReportExportController extends BaseController
 
             echo $report;
 
-        }, 'reportx.pdf', ['Content-Type' => 'application/pdf']);
+        }, $attachment_name, $headers);
 
     }
 }
