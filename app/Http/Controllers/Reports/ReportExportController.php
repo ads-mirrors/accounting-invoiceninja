@@ -42,12 +42,7 @@ class ReportExportController extends BaseController
 
         $headers = [
             'Content-Disposition' => "attachment; filename=\"{$attachment_name}\"",
-            'Content-Type' => $isPdf ? 'application/pdf' : 'text/csv',
-            'Content-length' => strlen($report),
-            'Cache-Control' => 'no-transform',
-            'CF-Cache-Status' => 'DYNAMIC',
-            'Pragma' => 'no-cache',
-            'Expires' => 'Sun, 02 Jan 1990 00:00:00 GMT'
+            'Content-Type' => $isPdf ? 'application/pdf' : 'text/csv'
         ];
 
         // Set appropriate filename extension

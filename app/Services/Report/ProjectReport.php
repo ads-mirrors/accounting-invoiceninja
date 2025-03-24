@@ -103,6 +103,8 @@ class ProjectReport extends BaseExport
                     ->parseNinjaBlocks()
                     ->save();
 
+                    // nlog($ts_instance->getHtml());
+
         return $ts_instance->getPdf();
     }
 
