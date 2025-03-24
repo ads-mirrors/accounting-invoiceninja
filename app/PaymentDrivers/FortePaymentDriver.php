@@ -210,7 +210,9 @@ class FortePaymentDriver extends BaseDriver
                     ->withHeaders(['X-Forte-Auth-Organization-Id' => $forte_organization_id])
                     ->get("{$forte_base_uri}/organizations/{$forte_organization_id}/locations/{$forte_location_id}/customers/");
 
-        return $response->successful() ? 'ok' : 'error';
+        $error = $response->json()['response']['response_desc'] ?? 'error';
+        
+        return $response->successful() ? 'ok' : $error;
 
     }
 
@@ -274,6 +276,12 @@ class FortePaymentDriver extends BaseDriver
             "last_name" => $this->client->present()->last_name()
             ],
         ];
+
+        if($cgt->gateway_type_id == GatewayType::BANK_TRANSFER) {
+            $data["echeck"] = [
+                "sec_code" => "WEB",
+            ];
+        }
 
         if ($fee_total > 0) {
             $data["service_fee_amount"] = $fee_total;

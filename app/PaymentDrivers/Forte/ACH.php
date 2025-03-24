@@ -61,21 +61,63 @@ class ACH implements LivewireMethodInterface
 
     public function authorizeResponse(Request $request)
     {
-        $payment_meta = new \stdClass();
-        $payment_meta->brand = (string)ctrans('texts.ach');
-        $payment_meta->last4 = (string) $request->last_4;
-        $payment_meta->exp_year = '-';
-        $payment_meta->type = GatewayType::BANK_TRANSFER;
+        $cst = $this->forte->findOrCreateCustomer();
+
+        $name = $request->account_holder_name;
 
         $data = [
-            'payment_meta' => $payment_meta,
-            'token' => $request->one_time_token,
-            'payment_method_id' => $request->gateway_type_id,
+            "notes" => $request->account_holder_name,
+            "echeck" => [
+                "one_time_token" => $request->one_time_token,
+                "account_holder" => $request->account_holder_name,
+                "account_type" => "checking"
+                ],
         ];
 
-        $this->forte->storeGatewayToken($data);
+        $response = $this->forte->stubRequest()
+            ->post("{$this->forte->baseUri()}/organizations/{$this->forte->getOrganisationId()}/locations/{$this->forte->getLocationId()}/customers/{$cst}/paymethods", $data);
 
-        return redirect()->route('client.payment_methods.index')->withSuccess('Payment Method added.');
+        if ($response->successful()) {
+
+            $token = $response->object();
+
+            $payment_meta = new \stdClass();
+            $payment_meta->exp_month = (string) '';
+            $payment_meta->exp_year = (string) '';
+            $payment_meta->brand = (string) 'ACH';
+            $payment_meta->last4 = (string) $request->last_4;
+            $payment_meta->type = GatewayType::BANK_TRANSFER;
+
+            $data = [
+                'payment_meta' => $payment_meta,
+                'token' => $token->paymethod_token,
+                'payment_method_id' => GatewayType::BANK_TRANSFER,
+            ];
+
+            $this->forte->storeGatewayToken($data, ['gateway_customer_reference' => $cst]);
+
+            return redirect()->route('client.payment_methods.index')->withSuccess('Payment Method added.');
+
+        }
+
+        $error = $response->object();
+        $message = [
+            'server_message' => $error->response->response_desc,
+            'server_response' => $response->json(),
+            'data' => $data,
+        ];
+
+        SystemLogger::dispatch(
+            $message,
+            SystemLog::CATEGORY_GATEWAY_RESPONSE,
+            SystemLog::EVENT_GATEWAY_FAILURE,
+            SystemLog::TYPE_FORTE,
+            $this->forte->client,
+            $this->forte->client->company,
+        );
+
+        throw new \App\Exceptions\PaymentFailed("Unable to store payment method: {$error->response->response_desc}", 400);
+
     }
 
     public function paymentView(array $data)
