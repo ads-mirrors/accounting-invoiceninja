@@ -288,7 +288,7 @@ class FortePaymentDriver extends BaseDriver
         }
 
         $response = $this->stubRequest()
-        ->post("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}/transactions", $data);
+                        ->post("{$this->baseUri()}/organizations/{$this->getOrganisationId()}/locations/{$this->getLocationId()}/transactions", $data);
 
         $forte_response = $response->object();
 

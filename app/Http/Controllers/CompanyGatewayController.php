@@ -255,6 +255,7 @@ class CompanyGatewayController extends BaseController
 
                 $company_gateway->setConfig($config);
                 $company_gateway->save();
+
                 dispatch(function () use ($company_gateway) {
                     MultiDB::setDb($company_gateway->company->db);
                     $company_gateway->driver()->updateFees();
@@ -263,6 +264,7 @@ class CompanyGatewayController extends BaseController
                 break;
 
             case $this->cbapowerboard_key:
+                
                 dispatch(function () use ($company_gateway) {
                     MultiDB::setDb($company_gateway->company->db);
                     $company_gateway->driver()->init()->settings()->updateSettings();

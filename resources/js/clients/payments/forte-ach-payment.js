@@ -43,7 +43,8 @@ class ForteAuthorizeACH {
 
     successResponseHandler = (response) => {
         document.getElementById('payment_token').value = response.onetime_token;
-
+        document.getElementById('last_4').value = response.last_4;
+        document.getElementById('account_holder_name').value = document.getElementById('account-holder-name').value;
         document.getElementById('server_response').submit();
 
         return false;
@@ -62,11 +63,65 @@ class ForteAuthorizeACH {
         return false;
     };
 
+
+    completePaymentUsingToken() {
+        
+        let payNowButton = document.getElementById('pay-now');
+        this.payNowButton = payNowButton;
+
+        this.payNowButton.disabled = true;
+
+        this.payNowButton.querySelector('svg').classList.remove('hidden');
+        this.payNowButton.querySelector('span').classList.add('hidden');
+
+        document.getElementById('server_response').submit();
+
+        return false;
+    }
+
     handle = () => {
+
+
+        Array.from(
+            document.getElementsByClassName('toggle-payment-with-token')
+        ).forEach((element) =>
+            element.addEventListener('click', (element) => {
+                document
+                    .getElementById('forte-payment-container')
+                    .classList.add('hidden');
+
+                    
+                document.querySelector('input[name=token]').value =
+                    element.target.dataset.token;
+            })
+        );
+
+        document
+            .getElementById('toggle-payment-with-new-bank-account')
+            .addEventListener('click', (element) => {
+                document
+                    .getElementById('forte-payment-container')
+                    .classList.remove('hidden');
+               
+                document.querySelector('input[name=token]').value = '';
+            });
+
         let payNowButton = document.getElementById('pay-now');
 
         if (payNowButton) {
             payNowButton.addEventListener('click', (e) => {
+
+                let tokenInput =
+                    document.querySelector('input[name=token]');
+
+                console.log(tokenInput.value);
+
+                if (tokenInput.value) {
+                    return this.completePaymentUsingToken();
+                }
+
+                console.log("whoopsie");
+
                 this.handleAuthorization();
             });
         }
