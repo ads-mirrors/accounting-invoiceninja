@@ -16,6 +16,8 @@ class ForteAuthorizeACH {
     }
 
     handleAuthorization = () => {
+        document.getElementById('forte_errors').innerHTML = '';
+
         var account_number = document.getElementById('account-number').value;
         var routing_number = document.getElementById('routing-number').value;
 
@@ -33,7 +35,7 @@ class ForteAuthorizeACH {
             document.querySelector('#pay-now > svg').classList.remove('hidden');
             document.querySelector('#pay-now > span').classList.add('hidden');
         }
-        // console.log(data);
+
         forte
             .createToken(data)
             .success(this.successResponseHandler)
@@ -81,7 +83,6 @@ class ForteAuthorizeACH {
 
     handle = () => {
 
-
         Array.from(
             document.getElementsByClassName('toggle-payment-with-token')
         ).forEach((element) =>
@@ -90,7 +91,6 @@ class ForteAuthorizeACH {
                     .getElementById('forte-payment-container')
                     .classList.add('hidden');
 
-                    
                 document.querySelector('input[name=token]').value =
                     element.target.dataset.token;
             })
@@ -114,13 +114,52 @@ class ForteAuthorizeACH {
                 let tokenInput =
                     document.querySelector('input[name=token]');
 
-                console.log(tokenInput.value);
-
                 if (tokenInput.value) {
                     return this.completePaymentUsingToken();
                 }
 
-                console.log("whoopsie");
+                // Validate required fields
+                const accountHolderName = document.getElementById('account-holder-name');
+                const routingNumber = document.getElementById('routing-number');
+                const accountNumber = document.getElementById('account-number');
+
+                let isValid = true;
+                let errors = [];
+
+                if (!accountHolderName.value.trim()) {
+                    isValid = false;
+                    errors.push('Account holder name is required');
+                    accountHolderName.classList.add('border-red-500');
+                }
+                else {
+                    accountHolderName.classList.remove('border-red-500');
+                }
+
+                if (!routingNumber.value.trim() || !/^\d{9}$/.test(routingNumber.value)) {
+                    isValid = false;
+                    errors.push('Valid 9-digit routing number is required');
+                    routingNumber.classList.add('border-red-500');
+                }
+                else {
+                    routingNumber.classList.remove('border-red-500');
+                }
+
+                if (!accountNumber.value.trim() || !/^\d{4,17}$/.test(accountNumber.value)) {
+                    isValid = false;
+                    errors.push('Valid account number is required (4-17 digits)');
+                    accountNumber.classList.add('border-red-500');
+                }
+                else {
+                    accountNumber.classList.remove('border-red-500');
+                }
+
+                if (!isValid) {
+                    const errorHtml = '<div class="alert alert-failure mb-4"><ul>' +
+                        errors.map(error => '<li>' + error + '</li>').join('') +
+                        '</ul></div>';
+                    document.getElementById('forte_errors').innerHTML = errorHtml;
+                    return false;
+                }
 
                 this.handleAuthorization();
             });

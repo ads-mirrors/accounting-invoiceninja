@@ -126,7 +126,7 @@
     "src": "resources/js/clients/payments/eway-credit-card.js"
   },
   "resources/js/clients/payments/forte-ach-payment.js": {
-    "file": "assets/forte-ach-payment-4cd2417c.js",
+    "file": "assets/forte-ach-payment-864ff883.js",
     "imports": [
       "_wait-8f4ae121.js"
     ],
