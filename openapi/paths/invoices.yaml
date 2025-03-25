@@ -215,6 +215,8 @@
             'client_id' => 'AxP7K9nY5z',
             'date' => '2022-01-01',
             'due_date' => '2022-01-31',
+            'frequency_id' => '1',
+            'remaining_cycles' => '5',
             'private_notes' => 'super secret',
             'public_notes' => 'public notes',
             'custom_value1' => 'custom value 1',
@@ -259,6 +261,8 @@
               "public_notes": "public notes",
               "custom_value1": "custom value 1",
               "custom_value2": "custom value 2",
+              "frequency_id": "1",
+              "remaining_cycles": "5",
               "line_items": [
                 {
                   "quantity": 1,
