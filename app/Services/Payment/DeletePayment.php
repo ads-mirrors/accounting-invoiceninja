@@ -110,7 +110,7 @@ class DeletePayment
                     $this->payment
                          ->client
                          ->service()
-                         ->updatePaidToDate(($net_deletable * -1) > 0 ? 0 : ($net_deletable * -1))
+                         ->updatePaidToDate(($net_deletable * -1) > 0 ? 0 : ($net_deletable * -1)) // if negative, set to 0, the paid to date will be reduced further down.
                          ->save();
 
                     if ($is_trashed) {
