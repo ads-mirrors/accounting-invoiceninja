@@ -107,6 +107,8 @@ class DeletePayment
                                         ->updatePaidToDate($net_deletable * -1)
                                         ->save();
 
+                    // 2025-03-26 - If we are deleting a negative payment, then there is an edge case where the paid to date will be reduced further down.
+                    // for this scenario, we skip the update to the client paid to date at this point.
                     $this->payment
                          ->client
                          ->service()
@@ -129,7 +131,9 @@ class DeletePayment
                                         ->updateInvoiceBalance($net_deletable, "Adjusting invoice {$paymentable_invoice->number} due to deletion of Payment {$this->payment->number}")
                                         ->save();
 
-                    //@todo refactor
+                                        
+                    // 2025-03-26 - If we are deleting a negative payment, then there is an edge case where the paid to date will be reduced further down.
+                    // for this scenario, we skip the update to the client paid to date at this point.
                     $this->payment
                          ->client
                          ->service()
