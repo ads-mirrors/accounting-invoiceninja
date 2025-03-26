@@ -110,7 +110,7 @@ class DeletePayment
                     $this->payment
                          ->client
                          ->service()
-                         ->updatePaidToDate(abs($net_deletable) * -1)
+                         ->updatePaidToDate(($net_deletable * -1) > 0 ? 0 : ($net_deletable * -1))
                          ->save();
 
                     if ($is_trashed) {
@@ -133,7 +133,7 @@ class DeletePayment
                     $this->payment
                          ->client
                          ->service()
-                         ->updateBalanceAndPaidToDate($net_deletable, $net_deletable * -1)
+                         ->updateBalanceAndPaidToDate($net_deletable, ($net_deletable * -1) > 0 ? 0 : ($net_deletable * -1)) // if negative, set to 0, the paid to date will be reduced further down.
                          ->save();
 
                     if ($paymentable_invoice->balance == $paymentable_invoice->amount) {
@@ -155,16 +155,16 @@ class DeletePayment
         }
 
         //sometimes the payment is NOT created properly, this catches the payment and prevents the paid to date reducing inappropriately.
-        // if ($this->update_client_paid_to_date) {
+        if ($this->update_client_paid_to_date) {
 
-        //     $reduced_paid_to_date = $this->payment->amount < 0 ? $this->payment->amount * -1 : min(0, ($this->payment->amount - $this->payment->refunded - $this->_paid_to_date_deleted) * -1);
+            $reduced_paid_to_date = $this->payment->amount < 0 ? $this->payment->amount * -1 : min(0, ($this->payment->amount - $this->payment->refunded - $this->_paid_to_date_deleted) * -1);
 
-        //     $this->payment
-        //         ->client
-        //         ->service()
-        //         ->updatePaidToDate($reduced_paid_to_date)
-        //         ->save();
-        // }
+            $this->payment
+                ->client
+                ->service()
+                ->updatePaidToDate($reduced_paid_to_date)
+                ->save();
+        }
 
         return $this;
     }
