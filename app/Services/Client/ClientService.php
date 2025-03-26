@@ -139,6 +139,8 @@ class ClientService
 
         // }
 
+        nlog("incrementing paid_to_date by {$amount}");
+        
         $this->client->increment('paid_to_date', $amount);
 
         return $this;
