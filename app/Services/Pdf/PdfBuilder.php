@@ -1641,7 +1641,8 @@ class PdfBuilder
      */
     public function statementDetails(): array
     {
-        $s_date = $this->translateDate(now(), $this->service->config->date_format, $this->service->config->locale);
+
+        $s_date = $this->translateDate($this->service->options['start_date'], $this->service->config->date_format, $this->service->config->locale) . " - " . $this->translateDate($this->service->options['end_date'], $this->service->config->date_format, $this->service->config->locale);
 
         return [
             ['element' => 'tr', 'properties' => ['data-ref' => 'statement-label'], 'elements' => [
