@@ -2380,7 +2380,7 @@ $lang = array(
     'contact_custom2' => 'Contact Second Custom',
     'currency' => 'Currency',
     'ofx_help' => 'To troubleshoot check for comments on :ofxhome_link and test with :ofxget_link.',
-    'comments' => 'comments',
+    'comments' => 'Comments',
 
     'item_product' => 'Item Product',
     'item_notes' => 'Item Notes',
@@ -2887,7 +2887,7 @@ $lang = array(
     'reopened' => 'Reopened',
     'priority' => 'Priority',
     'last_updated' => 'Last Updated',
-    'comment' => 'Comments',
+    'comment' => 'Comment',
     'tags' => 'Tags',
     'linked_objects' => 'Linked Objects',
     'low' => 'Low',
