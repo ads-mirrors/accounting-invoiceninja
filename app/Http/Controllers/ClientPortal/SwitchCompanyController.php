@@ -26,25 +26,11 @@ class SwitchCompanyController extends Controller
                                        ->where('email', auth()->user()->email)
                                        ->where('id', $this->transformKeys($contact))
                                        ->firstOrFail();
-                               
-/* 2025-04-04 - Session resets - Stage 1
-auth()->guard('contact')->loginUsingId($client_contact->id, true);
-request()->session()->regenerate();
-return redirect('/client/dashboard');
-*/
-    
-        request()->session()->invalidate();
-                                       
+
         auth()->guard('contact')->loginUsingId($client_contact->id, true);
 
         request()->session()->regenerate();
 
-        if(\App\Utils\Ninja::isHosted()){
-            $domain = $client_contact->company->domain()."/client/dashboard";
-            return redirect($domain);
-        }
-        else{
-            return redirect('/client/dashboard');
-        }
+        return redirect('/client/dashboard');
     }
 }
