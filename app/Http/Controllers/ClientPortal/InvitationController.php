@@ -104,27 +104,29 @@ class InvitationController extends Controller
 
         if (request()->has('client_hash') && request()->input('client_hash') == $invitation->contact->client->client_hash) {
             request()->session()->invalidate();
+            request()->session()->regenerate(true);
             request()->session()->regenerateToken();
+
             auth()->guard('contact')->loginUsingId($client_contact->id, true);
         } elseif ((bool) $invitation->contact->client->getSetting('enable_client_portal_password') !== false) {
+            //if no contact password has been set - allow user to set password - then continue to view entity
             if (empty($invitation->contact->password)) {
-                request()->session()->invalidate();
-                request()->session()->regenerateToken();
                 return $this->render('view_entity.set_password', [
-                    'root' => 'themes',
-                    'entity_type' => $entity,
-                    'invitation_key' => $invitation_key
-                ]);
+                            'root' => 'themes',
+                            'entity_type' => $entity,
+                            'invitation_key' => $invitation_key
+                        ]);
             }
 
             if (!auth()->guard('contact')->check()) {
-                request()->session()->invalidate();
-                request()->session()->regenerateToken();
                 $this->middleware('auth:contact');
+                /** @var \App\Models\InvoiceInvitation | \App\Models\QuoteInvitation | \App\Models\CreditInvitation | \App\Models\RecurringInvoiceInvitation $invitation */
                 return redirect()->route('client.login', ['intended' => route('client.'.$entity.'.show', [$entity => $this->encodePrimaryKey($invitation->{$key}), 'silent' => $is_silent])]);
             }
+
         } else {
             request()->session()->invalidate();
+            request()->session()->regenerate(true);
             request()->session()->regenerateToken();
             auth()->guard('contact')->loginUsingId($client_contact->id, true);
         }
