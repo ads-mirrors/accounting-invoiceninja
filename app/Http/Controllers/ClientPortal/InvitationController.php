@@ -75,7 +75,7 @@ class InvitationController extends Controller
         }
 
         $is_silent = 'false';
-
+        $session_is_silent = session()->get('is_silent') ?? false;
         $key = $entity.'_id';
 
         $entity_obj = 'App\Models\\'.ucfirst(Str::camel($entity)).'Invitation';
@@ -134,11 +134,11 @@ class InvitationController extends Controller
         if (auth()->guard('contact')->user() && ! request()->has('silent') && ! $invitation->viewed_date) {
             $invitation->markViewed();
 
-            if (!session()->get('is_silent')) {
+            if (! $session_is_silent) {
                 event(new InvitationWasViewed($invitation->{$entity}, $invitation, $invitation->{$entity}->company, Ninja::eventVars()));
             }
 
-            if (!session()->get('is_silent')) {
+            if (! $session_is_silent) {
                 $this->fireEntityViewedEvent($invitation, $entity);
             }
         } else {
