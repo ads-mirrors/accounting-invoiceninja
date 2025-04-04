@@ -237,17 +237,21 @@ class InvitationController extends Controller
         $contact->password = Hash::make($request->password);
         $contact->save();
 
+        $is_silent = session()->get('is_silent') ?? false;
+
         $request->session()->invalidate();
+        request()->session()->regenerate(true);
+        request()->session()->regenerateToken();
         auth()->guard('contact')->loginUsingId($contact->id, true);
 
         if (! $invitation->viewed_date) {
             $invitation->markViewed();
 
-            if (! session()->get('is_silent')) {
+            if (! $is_silent) {
                 event(new InvitationWasViewed($invitation->{$request->entity_type}, $invitation, $invitation->{$request->entity_type}->company, Ninja::eventVars()));
             }
 
-            if (! session()->get('is_silent')) {
+            if (! $is_silent) {
                 $this->fireEntityViewedEvent($invitation, $request->entity_type);
             }
         }
@@ -268,6 +272,7 @@ class InvitationController extends Controller
         }
 
         request()->session()->invalidate();
+        request()->session()->regenerate(true);
         request()->session()->regenerateToken();
         auth()->guard('contact')->loginUsingId($contact->id, true);
 
@@ -286,7 +291,10 @@ class InvitationController extends Controller
             $invitation->contact->restore();
         }
 
+        $is_silent = session()->get('is_silent') ?? false;
+
         request()->session()->invalidate();
+        request()->session()->regenerate(true);
         request()->session()->regenerateToken();
         auth()->guard('contact')->loginUsingId($invitation->contact->id, true);
 
@@ -295,14 +303,14 @@ class InvitationController extends Controller
         if (! $invitation->viewed_date) {
             $invitation->markViewed();
 
-            if (!session()->get('is_silent')) {
+            if (! $is_silent) {
                 event(new InvitationWasViewed($invitation->invoice, $invitation, $invitation->invoice->company, Ninja::eventVars()));
                 $this->fireEntityViewedEvent($invitation, $invoice);
             }
 
         }
 
-        if (!session()->get('is_silent')) {
+        if (! $is_silent) {
             event(new ContactLoggedIn($invitation->contact, $invitation->contact->company, Ninja::eventVars()));
         }
 
