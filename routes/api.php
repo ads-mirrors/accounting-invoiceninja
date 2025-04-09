@@ -499,3 +499,10 @@ Route::get('quickbooks/authorize/{token}', [ImportQuickbooksController::class, '
 Route::get('quickbooks/authorized', [ImportQuickbooksController::class, 'onAuthorized'])->name('quickbooks.authorized');
 
 Route::fallback([BaseController::class, 'notFound'])->middleware('throttle:404');
+
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'message' => 'API is healthy',
+    ]);
+})->middleware('throttle:20,1');
