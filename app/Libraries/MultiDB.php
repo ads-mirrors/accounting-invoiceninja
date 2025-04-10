@@ -331,9 +331,10 @@ class MultiDB
         foreach (self::$dbs as $db) {
 
             if($ct = CompanyToken::on($db)->with([
-                        'user' => [
-                            'account',
-                        ], 'company'])->where('token', $token)->first()) {
+                'user.account',
+                'company',
+                'account', 
+            ])->where('token', $token)->first()) {
 
                         self::setDB($db);
 

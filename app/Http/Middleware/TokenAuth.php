@@ -36,9 +36,10 @@ class TokenAuth
         ($company_token = MultiDB::getCompanyToken($request->header('X-API-TOKEN')))){
         }
         elseif ($request->header('X-API-TOKEN') && ($company_token = CompanyToken::with([
-            'user' => [
-                'account',
-            ], 'company'])->where('token', $request->header('X-API-TOKEN'))->first())) {
+            'user.account',
+            'company',
+            'account', 
+            ])->where('token', $request->header('X-API-TOKEN'))->first())) {
         }
         else {
             return response()->json(['message' => 'Invalid token'], 403);
