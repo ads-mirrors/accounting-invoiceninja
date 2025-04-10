@@ -162,7 +162,7 @@ class InvoiceTransformer extends BaseTransformer
                     ),
                 ],
             ];
-        } elseif ($status === 'paid') {
+        } elseif ($status === 'paid' || $transformed['status_id'] === Invoice::STATUS_PAID) {
             $transformed['payments'] = [
                 [
                     'date' => isset($invoice_data['payment.date'])
