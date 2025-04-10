@@ -621,6 +621,7 @@ class TemplateService
                         'payments' => $payments,
                         'total_tax_map' => $invoice->calc()->getTotalTaxMap(),
                         'line_tax_map' => $invoice->calc()->getTaxMap()->toArray(),
+                        'project' => $invoice->project ? $this->transformProject($invoice->project, true) : [],
                     ];
 
                 });
@@ -1172,7 +1173,7 @@ class TemplateService
             'client' => $this->getClient($project),
             'user' => $this->userInfo($project->user),
             'assigned_user' => $project->assigned_user ? $this->userInfo($project->assigned_user) : [],
-            'invoices' => $this->processInvoices($project->invoices),
+            'invoices' => !$nested ? $this->processInvoices($project->invoices) : [],
             'expenses' => ($project->expenses && !$nested) ? $this->processExpenses($project->expenses, true) : [],
         ];
 
