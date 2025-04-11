@@ -39,6 +39,7 @@ use App\Transformers\TaskTransformer;
 use App\Transformers\PaymentTransformer;
 use Illuminate\Database\Eloquent\Builder;
 use League\Fractal\Serializer\ArraySerializer;
+use Str;
 
 class BaseExport
 {
@@ -1367,7 +1368,7 @@ class BaseExport
 
         $header = [];
         // nlog("header");
-        foreach ($this->input['report_keys'] as $value) {
+        foreach ($this->input['report_keys'] as &$value) {
 
             $key = array_search($value, $this->entity_keys);
             $original_key = $key;
@@ -1460,7 +1461,11 @@ class BaseExport
             $key = str_replace('product.', '', $key);
             $key = str_replace('task.', '', $key);
 
-            if (stripos($value, 'custom_value') !== false) {
+            if (stripos($value, 'tax.') !== false) {
+                $value = Str::after($value, 'tax.');
+                $header[] = $value;
+            }
+            elseif (stripos($value, 'custom_value') !== false) {
                 $parts = explode(".", $value);
 
                 if (count($parts) == 2 && in_array($parts[0], ['credit','quote','invoice','purchase_order','recurring_invoice'])) {
