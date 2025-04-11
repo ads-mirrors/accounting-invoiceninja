@@ -151,7 +151,14 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
 
         $account = $this->nordigen->getAccount($this->bank_integration->nordigen_account_id);
 
-        if (isset($account['error'])) {
+        if(isset($account['error']) && isset($account['requisition'])){
+            
+            $this->nordigen->disabledAccountEmail($this->bank_integration);
+            $this->bank_integration->bank_account_status = "Error:: " . $account['error'];
+            $this->bank_integration->save();
+            return;
+        }
+        elseif (isset($account['error'])) {
 
             $this->bank_integration->bank_account_status = "Error:: " . $account['error'];
             $this->bank_integration->save();
