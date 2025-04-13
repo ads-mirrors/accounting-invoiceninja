@@ -2380,7 +2380,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'contact_custom2' => 'kontakti toinen muokattu',
     'currency' => 'Valuutta',
     'ofx_help' => 'To troubleshoot tarkista  comments on :ofxhome_link ja test with :ofxget_link.',
-    'comments' => 'comments',
+    'comments' => 'Comments',
 
     'item_product' => 'Tuote nimike',
     'item_notes' => 'Item Notes',
@@ -2887,7 +2887,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'reopened' => 'Reopened',
     'priority' => 'Priority',
     'last_updated' => 'viime päivitetty',
-    'comment' => 'Comments',
+    'comment' => 'Comment',
     'tags' => 'Tags',
     'linked_objects' => 'Linked Objects',
     'low' => 'Low',
@@ -5570,6 +5570,7 @@ Kun saat summat, palaa tälle maksutapasivulle ja klikkaa "Saata loppuun todenta
     'invalid_date_create_syntax' => 'Invalid date syntax',
     'start_and_end_date_required' => 'Start and end date are required',
     'project_value' => 'Project Value',
+    'invalid_csv_data' => 'Invalid CSV data, your import was cancelled.',
 );
 
 return $lang;
