@@ -139,7 +139,7 @@ Route::group(['middleware' => ['throttle:login', 'api_secret_check', 'email_db']
     Route::post('api/v1/reset_password', [ForgotPasswordController::class, 'sendResetLinkEmail']);
 });
 
-Route::group(['middleware' => ['throttle:api', 'token_auth', 'locale'], 'prefix' => 'api/v1', 'as' => 'api.'], function () {
+Route::group(['middleware' => ['throttle:api', 'token_auth', 'valid_json','locale'], 'prefix' => 'api/v1', 'as' => 'api.'], function () {
 
     Route::post('password_timeout', PasswordTimeoutController::class)->name('password_timeout');
     Route::put('accounts/{account}', [AccountController::class, 'update'])->name('account.update');
@@ -188,7 +188,6 @@ Route::group(['middleware' => ['throttle:api', 'token_auth', 'locale'], 'prefix'
     Route::post('reactivate_email/{bounce_id}', [ClientController::class, 'reactivateEmail'])->name('clients.reactivate_email');
 
     Route::post('filters/{entity}', [FilterController::class, 'index'])->name('filters');
-
 
     Route::resource('client_gateway_tokens', ClientGatewayTokenController::class);
     Route::post('client_gateway_tokens/{client_gateway_token}/setAsDefault', [ClientGatewayTokenController::class, 'setAsDefault'])->name('client_gateway_tokens.set_as_default');
