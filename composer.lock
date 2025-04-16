@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "393b485823ad662720d7421a65368e6f",
+    "content-hash": "3469affb27a6e61c80c53267c6ca2889",
     "packages": [
         {
             "name": "adrienrn/php-mimetyper",
@@ -16333,25 +16333,26 @@
         },
         {
             "name": "turbo124/beacon",
-            "version": "v2.0.3",
+            "version": "v2.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/turbo124/beacon.git",
-                "reference": "eb7ff81a49b2aa75d62459f36ad06b88181e1e00"
+                "reference": "17769e5b29b9a5e9db5fabd896e0af9e64738dbb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/turbo124/beacon/zipball/eb7ff81a49b2aa75d62459f36ad06b88181e1e00",
-                "reference": "eb7ff81a49b2aa75d62459f36ad06b88181e1e00",
+                "url": "https://api.github.com/repos/turbo124/beacon/zipball/17769e5b29b9a5e9db5fabd896e0af9e64738dbb",
+                "reference": "17769e5b29b9a5e9db5fabd896e0af9e64738dbb",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^7",
-                "illuminate/support": "^9.0|^10.0|^11",
-                "php": "^8"
+                "illuminate/support": "^9.0|^10.0|^11|^12",
+                "php": "^8",
+                "turbo124/waffy": "^1.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^9.0"
+                "phpunit/phpunit": "^10.0"
             },
             "type": "library",
             "extra": {
@@ -16389,22 +16390,22 @@
                 "turbo124"
             ],
             "support": {
-                "source": "https://github.com/turbo124/beacon/tree/v2.0.3"
+                "source": "https://github.com/turbo124/beacon/tree/v2.0.4"
             },
-            "time": "2024-10-12T06:57:20+00:00"
+            "time": "2025-04-16T10:54:18+00:00"
         },
         {
             "name": "turbo124/waffy",
-            "version": "v0.1.1",
+            "version": "v1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/turbo124/waffy.git",
-                "reference": "ee008b6ada87002289c52db0f9746b93d53301db"
+                "reference": "9b8a10bc4f49b49615cddd322f62f28fd7a95089"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/turbo124/waffy/zipball/ee008b6ada87002289c52db0f9746b93d53301db",
-                "reference": "ee008b6ada87002289c52db0f9746b93d53301db",
+                "url": "https://api.github.com/repos/turbo124/waffy/zipball/9b8a10bc4f49b49615cddd322f62f28fd7a95089",
+                "reference": "9b8a10bc4f49b49615cddd322f62f28fd7a95089",
                 "shasum": ""
             },
             "require": {
@@ -16437,9 +16438,9 @@
             "description": "Nginx denylist package",
             "support": {
                 "issues": "https://github.com/turbo124/waffy/issues",
-                "source": "https://github.com/turbo124/waffy/tree/v0.1.1"
+                "source": "https://github.com/turbo124/waffy/tree/v1.0.1"
             },
-            "time": "2025-04-16T07:27:48+00:00"
+            "time": "2025-04-16T08:03:22+00:00"
         },
         {
             "name": "twig/extra-bundle",
