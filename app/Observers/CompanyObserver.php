@@ -43,8 +43,8 @@ class CompanyObserver
         if(Ninja::isHosted()){
             
             $property = 'name';
-            $original = data_get($this->getOriginal('settings'), $property);
-            $current = data_get($this->settings, $property);
+            $original = data_get($company->getOriginal('settings'), $property);
+            $current = data_get($company->settings, $property);
 
             if($original !== $current){
                 try {
