@@ -40,6 +40,22 @@ class CompanyObserver
             \Modules\Admin\Jobs\Domain\CustomDomain::dispatch($company->getOriginal('portal_domain'), $company)->onQueue('domain');
         }
 
+        if(Ninja::isHosted()){
+            
+            $property = 'name';
+            $original = data_get($this->getOriginal('settings'), $property);
+            $current = data_get($this->settings, $property);
+
+            if($original !== $current){
+                try {
+                    (new \Modules\Admin\Jobs\Account\FieldQuality())->checkCompanyName($current, $company);
+                } catch (\Throwable $e) {
+                    nlog(['company_name_check', $e->getMessage()]);
+                }
+            }
+
+        }
+
     }
 
     /**
