@@ -93,7 +93,7 @@ class ForteCustomerFactory
 
     private function getBillingAddress(array $customer): array
     {
-        nlog($customer);
+        
         if (isset($customer['default_billing_address_token']) && isset($customer['addresses'])) {
 
             foreach ($customer['addresses'] as $address) {
@@ -141,7 +141,7 @@ class ForteCustomerFactory
     private function getShippingAddress(array $customer): array
     {
 
-        if (isset($customer['default_shipping_address_token'])) {
+        if (isset($customer['default_shipping_address_token']) && isset($customer['addresses'])) {
 
             foreach ($customer['addresses'] as $address) {
 

@@ -241,7 +241,7 @@ abstract class QueryFilters
 
     /**
      *
-     * @param string $value
+     * @param ?string $value
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function is_deleted($value = 'true')

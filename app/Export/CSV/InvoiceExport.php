@@ -125,11 +125,13 @@ class InvoiceExport extends BaseExport
         if ($tax_amount_position = array_search('invoice.total_taxes', $this->input['report_keys'])) {
             $first_part = array_slice($this->input['report_keys'], 0, $tax_amount_position + 1);
             $second_part = array_slice($this->input['report_keys'], $tax_amount_position + 1);
+            $labels = [];
             
                     $this->tax_names = $query->get()
                         ->flatMap(function ($invoice) {
                             $taxes = [];
 
+                            /** @var \App\Models\Invoice $invoice */
                             // Invoice level taxes
                             if (!empty($invoice->tax_name1) && !empty($invoice->tax_rate1)) {
                                 $taxes[] = trim($invoice->tax_name1) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate1), $invoice->client) . '%';

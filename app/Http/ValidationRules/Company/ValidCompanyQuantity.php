@@ -22,6 +22,7 @@ class ValidCompanyQuantity implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+
         $message = ctrans('texts.company_limit_reached', ['limit' => Ninja::isSelfHost() ? 10 : auth()->user()->company()->account->hosted_company_count]);
 
         $test = Ninja::isSelfHost() ?
