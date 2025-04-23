@@ -647,9 +647,7 @@ class ExpenseController extends BaseController
         $user = auth()->user();
 
         //Handle single - or - array of uploaded files
-        $files = $request->file('documents');
-
-        $files = $files instanceof \Illuminate\Http\UploadedFile ? [$files] : (array) $files;
+        $files = $request->file('documents') instanceof \Illuminate\Http\UploadedFile ? [$request->file('documents')] : (array) $request->file('documents');
 
         foreach ($files as $file) {
             $extension = $file->getClientOriginalExtension();

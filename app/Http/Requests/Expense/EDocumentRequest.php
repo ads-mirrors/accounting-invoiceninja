@@ -24,11 +24,8 @@ class EDocumentRequest extends Request
     {
         $rules = [];
 
-        if ($this->file('documents') && is_array($this->file('documents'))) {
-            $rules['documents.*'] = 'required|file|max:1000000';
-        } elseif ($this->file('documents')) {
-            $rules['documents'] = 'required|file|max:1000000';
-        }
+        $rules['documents.*'] = 'required|file|max:1000000';
+
         return $rules;
     }
 
@@ -36,6 +33,10 @@ class EDocumentRequest extends Request
     {
         $input = $this->all();
 
+        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+            $this->files->set('documents', [$this->file('documents')]);
+        }
+        
         $this->replace($input);
 
     }
