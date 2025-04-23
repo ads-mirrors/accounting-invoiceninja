@@ -5572,6 +5572,7 @@ $lang = array(
     'project_value' => 'Project Value',
     'invalid_csv_data' => 'Invalid CSV data, your import was cancelled.',
     'selected_products' => 'Selected Products',
+    'create_company_error_unauthorized' => 'You are not authorized to create a company. Only the account owner can create a company.',
 );
 
 return $lang;
