@@ -83,6 +83,7 @@ class AccountTransformer implements AccountTransformerInterface
     {
         $current_balance = 0;
         $account_currency = '';
+        $update_eligible = '';
 
         if (property_exists($account, 'currentBalance')) {
             $current_balance = $account->currentBalance->amount ?? 0;

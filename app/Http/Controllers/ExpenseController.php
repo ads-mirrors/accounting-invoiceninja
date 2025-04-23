@@ -646,8 +646,12 @@ class ExpenseController extends BaseController
     {
         $user = auth()->user();
 
-        foreach ($request->file("documents") as $file) {
-                
+        //Handle single - or - array of uploaded files
+        $files = $request->file('documents');
+
+        $files = $files instanceof \Illuminate\Http\UploadedFile ? [$files] : (array) $files;
+
+        foreach ($files as $file) {
             $extension = $file->getClientOriginalExtension();
 
             $parsed_filename = sprintf(
