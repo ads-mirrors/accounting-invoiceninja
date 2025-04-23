@@ -34,9 +34,7 @@ class Statement
     use MakesHash;
     use MakesDates;
 
-    /**
-     * @var ?Invoice
-     */
+    /** @var Invoice|null */
     protected $entity;
 
     private array $variables = [];
@@ -216,7 +214,7 @@ class Statement
             $this->client->settings = $settings;
 
             $this->entity = \App\Models\Invoice::factory()->make(); //@phpstan-ignore-line
-            $this->entity->client =$this->client;
+            $this->entity->client =$this->client;//@phpstan-ignore-line
             $ii = \App\Models\InvoiceInvitation::factory()->make(); //@phpstan-ignore-line
             $ii->setRelation('invoice', $this->entity); //@phpstan-ignore-line
             $ii->setRelation('contact', $this->client->contacts->first()); //@phpstan-ignore-line

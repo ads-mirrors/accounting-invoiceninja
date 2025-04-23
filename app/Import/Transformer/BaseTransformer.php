@@ -40,6 +40,8 @@ class BaseTransformer
 {
     protected $company;
 
+    public array $error_array = [];
+    
     public function __construct($company)
     {
         $this->company = $company;

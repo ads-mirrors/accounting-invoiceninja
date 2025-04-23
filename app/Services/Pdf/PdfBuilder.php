@@ -1651,7 +1651,7 @@ class PdfBuilder
             ]],
             ['element' => 'tr', 'properties' => [], 'elements' => [
                 ['element' => 'th', 'properties' => [], 'content' => ctrans('texts.statement_date')],
-                ['element' => 'th', 'properties' => [], 'content' => $s_date ?? ''],
+                ['element' => 'th', 'properties' => [], 'content' => $s_date],
             ]],
             ['element' => 'tr', 'properties' => [], 'elements' => [
                 ['element' => 'th', 'properties' => [], 'content' => '$balance_due_label'],

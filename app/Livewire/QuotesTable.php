@@ -34,6 +34,8 @@ class QuotesTable extends Component
 
     public string $db;
 
+    public string $sort_field = 'date';
+    
     public function mount()
     {
         MultiDB::setDb($this->db);
