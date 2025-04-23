@@ -54,6 +54,7 @@ class StorePaymentRequest extends Request
             'amount' => ['bail', 'numeric', new PaymentAmountsBalanceRule(), 'max:99999999999999'],
             'number' => ['bail', 'nullable',  Rule::unique('payments')->where('company_id', $user->company()->id)],
             'idempotency_key' => ['nullable', 'bail', 'string','max:64', Rule::unique('payments')->where('company_id', $user->company()->id)],
+            'date' => ['bail','nullable', 'sometimes', 'date:Y-m-d'],
         ];
 
         if ($this->file('documents') && is_array($this->file('documents'))) {
