@@ -492,7 +492,7 @@ class Quote extends BaseModel
                 break;
             case 'email_quote_template_reminder1':
             case 'reminder1':
-                event(new QuoteReminderWasEmailed($invitation, $invitation->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), $reminder_template));
+                event(new QuoteReminderWasEmailed($invitation, $invitation->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), 'email_quote_template_reminder1'));
                 break;
             case 'custom1':
             case 'custom2':
