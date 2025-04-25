@@ -2,6 +2,10 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
+use RobRichards\XMLSecLibs\XMLSecurityDSig;
+use RobRichards\XMLSecLibs\XMLSecurityKey;
+use Illuminate\Support\Facades\Log;
+
 class Invoice extends BaseXmlModel
 {
     protected string $idVersion;
@@ -36,6 +40,9 @@ class Invoice extends BaseXmlModel
     protected string $huella;
     protected ?string $signature = null;
     protected ?FacturaRectificativa $facturaRectificativa = null;
+    protected ?string $privateKeyPath = null;
+    protected ?string $publicKeyPath = null;
+    protected ?string $certificatePath = null;
 
     public function __construct()
     {
@@ -411,6 +418,117 @@ class Invoice extends BaseXmlModel
         $this->facturaRectificativa = $facturaRectificativa;
     }
 
+    public function setPrivateKeyPath(string $path): self
+    {
+        $this->privateKeyPath = $path;
+        return $this;
+    }
+
+    public function setPublicKeyPath(string $path): self
+    {
+        $this->publicKeyPath = $path;
+        return $this;
+    }
+
+    public function setCertificatePath(string $path): self
+    {
+        $this->certificatePath = $path;
+        return $this;
+    }
+
+    protected function signXml(\DOMDocument $doc): void
+    {
+        if (!$this->privateKeyPath || !file_exists($this->privateKeyPath)) {
+            throw new \RuntimeException('Private key not found or not set');
+        }
+
+        if (!$this->certificatePath || !file_exists($this->certificatePath)) {
+            throw new \RuntimeException('Certificate not found or not set');
+        }
+
+        Log::info('Starting XML signing process');
+        Log::debug('XML before signing: ' . $doc->saveXML());
+
+        try {
+            // Create a new Security object
+            Log::debug('Creating XMLSecurityDSig object');
+            $objDSig = new XMLSecurityDSig();
+            
+            // Set canonicalization method
+            Log::debug('Setting canonicalization method');
+            $objDSig->setCanonicalMethod(XMLSecurityDSig::EXC_C14N);
+            
+            // Create a new Security key
+            Log::debug('Creating XMLSecurityKey object');
+            $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, ['type' => 'private']);
+            
+            // Load the private key
+            Log::debug('Loading private key from: ' . $this->privateKeyPath);
+            $objKey->loadKey($this->privateKeyPath, true);
+            
+            // Add reference
+            Log::debug('Adding reference to document');
+            $objDSig->addReference(
+                $doc,
+                XMLSecurityDSig::SHA256,
+                ['http://www.w3.org/2000/09/xmldsig#enveloped-signature']
+            );
+            Log::debug('Added reference to document');
+            
+            // Add the certificate
+            Log::debug('Adding certificate');
+            $objDSig->add509Cert(file_get_contents($this->certificatePath));
+            
+            // Sign the XML document
+            Log::debug('Signing document');
+            $objDSig->sign($objKey);
+            
+            // Append the signature to the XML
+            Log::debug('Appending signature');
+            $objDSig->appendSignature($doc->documentElement);
+            
+            Log::debug('XML after signing: ' . $doc->saveXML());
+        } catch (\Exception $e) {
+            Log::error('Error during XML signing: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
+        }
+    }
+
+    public function verifySignature(\DOMDocument $doc): bool
+    {
+        if (!$this->publicKeyPath || !file_exists($this->publicKeyPath)) {
+            throw new \RuntimeException('Public key not found or not set');
+        }
+
+        // Get the signature node
+        $objXMLSecDSig = new XMLSecurityDSig();
+        
+        // Locate the signature
+        $objDSig = $objXMLSecDSig->locateSignature($doc);
+        if (!$objDSig) {
+            throw new \RuntimeException('Signature not found in document');
+        }
+        
+        // Canonicalize the signed info
+        $objXMLSecDSig->canonicalizeSignedInfo();
+        
+        // Validate references
+        $objXMLSecDSig->validateReference();
+        
+        // Get the key from the certificate
+        $objKey = $objXMLSecDSig->locateKey();
+        if (!$objKey) {
+            throw new \RuntimeException('Key not found in signature');
+        }
+        
+        // Load the public key
+        $objKey->loadKey($this->publicKeyPath, false, true);
+        
+        // Verify the signature
+        return $objXMLSecDSig->verify($objKey) === 1;
+    }
+
     public function toXml(): string
     {
         // Validate required fields first, outside of try-catch
@@ -439,8 +557,8 @@ class Invoice extends BaseXmlModel
             $doc->formatOutput = true;
 
             // Create root element with proper namespaces
-            $root = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':RegistroAlta');
-            $root->setAttribute('xmlns:ds', self::XML_DS_NAMESPACE);
+            $root = $doc->createElementNS(parent::XML_NAMESPACE, parent::XML_NAMESPACE_PREFIX . ':RegistroAlta');
+            $root->setAttribute('xmlns:ds', parent::XML_DS_NAMESPACE);
             $doc->appendChild($root);
 
             // Add required elements in exact order according to schema
@@ -617,12 +735,19 @@ class Invoice extends BaseXmlModel
                 $root->appendChild($signatureElement);
             }
 
-            $xml = $doc->saveXML($root);
-            // error_log("Generated XML: " . $xml);
-            return $xml;
+            // Sign the document if private key is set
+            if ($this->privateKeyPath !== null) {
+                try {
+                    $this->signXml($doc);
+                } catch (\Exception $e) {
+                    throw new \RuntimeException('Failed to sign XML: ' . $e->getMessage());
+                }
+            }
+
+            return $doc->saveXML();
         } catch (\Exception $e) {
             error_log("Error in toXml: " . $e->getMessage());
-            throw $e;
+            throw new \RuntimeException("Error in toXml: " . $e->getMessage(), 0, $e);
         }
     }
 

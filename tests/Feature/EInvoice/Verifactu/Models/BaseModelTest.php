@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\EInvoice\Verifactu\Models;
 
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 use App\Services\EDocument\Standards\Verifactu\Models\BaseXmlModel;
 
 abstract class BaseModelTest extends TestCase
