@@ -10,10 +10,17 @@ class Desglose extends BaseXmlModel
     protected ?array $desgloseIGIC = null;
     protected ?array $desgloseIRPF = null;
     protected ?array $desgloseIS = null;
+    protected ?DetalleDesglose $detalleDesglose = null;
 
     public function toXml(\DOMDocument $doc): \DOMElement
     {
         $root = $this->createElement($doc, 'Desglose');
+
+        // If we have a DetalleDesglose object, use it
+        if ($this->detalleDesglose !== null) {
+            $root->appendChild($this->detalleDesglose->toXml($doc));
+            return $root;
+        }
 
         // Create DetalleDesglose element
         $detalleDesglose = $this->createElement($doc, 'DetalleDesglose');
@@ -30,13 +37,9 @@ class Desglose extends BaseXmlModel
                 $detalleDesglose->appendChild($this->createElement($doc, 'ClaveRegimen', $this->desgloseFactura['ClaveRegimen']));
             }
 
-            // Add either CalificacionOperacion or OperacionExenta
-            if (isset($this->desgloseFactura['OperacionExenta'])) {
-                $detalleDesglose->appendChild($this->createElement($doc, 'OperacionExenta', $this->desgloseFactura['OperacionExenta']));
-            } else {
-                $detalleDesglose->appendChild($this->createElement($doc, 'CalificacionOperacion', 
-                    $this->desgloseFactura['CalificacionOperacion'] ?? 'S1'));
-            }
+            // Add CalificacionOperacion
+            $detalleDesglose->appendChild($this->createElement($doc, 'CalificacionOperacion', 
+                $this->desgloseFactura['CalificacionOperacion'] ?? 'S1'));
 
             // Add TipoImpositivo if present
             if (isset($this->desgloseFactura['TipoImpositivo'])) {
@@ -44,22 +47,24 @@ class Desglose extends BaseXmlModel
                     number_format($this->desgloseFactura['TipoImpositivo'], 2, '.', '')));
             }
 
-            // Add BaseImponibleOimporteNoSujeto (required)
-            if (isset($this->desgloseFactura['BaseImponibleOimporteNoSujeto'])) {
+            // Convert BaseImponible to BaseImponibleOimporteNoSujeto if needed
+            $baseImponible = isset($this->desgloseFactura['BaseImponible']) 
+                ? $this->desgloseFactura['BaseImponible'] 
+                : ($this->desgloseFactura['BaseImponibleOimporteNoSujeto'] ?? null);
+
+            if ($baseImponible !== null) {
                 $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', 
-                    number_format($this->desgloseFactura['BaseImponibleOimporteNoSujeto'], 2, '.', '')));
+                    number_format($baseImponible, 2, '.', '')));
             }
 
-            // Add BaseImponibleACoste if present
-            if (isset($this->desgloseFactura['BaseImponibleACoste'])) {
-                $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleACoste', 
-                    number_format($this->desgloseFactura['BaseImponibleACoste'], 2, '.', '')));
-            }
+            // Convert Cuota to CuotaRepercutida if needed
+            $cuota = isset($this->desgloseFactura['Cuota']) 
+                ? $this->desgloseFactura['Cuota'] 
+                : ($this->desgloseFactura['CuotaRepercutida'] ?? null);
 
-            // Add CuotaRepercutida if present
-            if (isset($this->desgloseFactura['CuotaRepercutida'])) {
+            if ($cuota !== null) {
                 $detalleDesglose->appendChild($this->createElement($doc, 'CuotaRepercutida', 
-                    number_format($this->desgloseFactura['CuotaRepercutida'], 2, '.', '')));
+                    number_format($cuota, 2, '.', '')));
             }
 
             // Add TipoRecargoEquivalencia if present
@@ -73,41 +78,98 @@ class Desglose extends BaseXmlModel
                 $detalleDesglose->appendChild($this->createElement($doc, 'CuotaRecargoEquivalencia', 
                     number_format($this->desgloseFactura['CuotaRecargoEquivalencia'], 2, '.', '')));
             }
+
+            // Only add DetalleDesglose if it has child elements
+            if ($detalleDesglose->hasChildNodes()) {
+                $root->appendChild($detalleDesglose);
+            }
         }
         
         // Handle simplified invoice desglose (IVA)
         if ($this->desgloseIVA !== null) {
-            // Add Impuesto (required for IVA)
-            $detalleDesglose->appendChild($this->createElement($doc, 'Impuesto', '01'));
+            // If desgloseIVA is an array of arrays, handle multiple tax rates
+            if (is_array(reset($this->desgloseIVA))) {
+                foreach ($this->desgloseIVA as $desglose) {
+                    $detalleDesglose = $this->createElement($doc, 'DetalleDesglose');
 
-            // Add ClaveRegimen (required for simplified invoices)
-            $detalleDesglose->appendChild($this->createElement($doc, 'ClaveRegimen', '02'));
+                    // Add Impuesto (required for IVA)
+                    $detalleDesglose->appendChild($this->createElement($doc, 'Impuesto', $desglose['Impuesto'] ?? '01'));
 
-            // Add CalificacionOperacion (required)
-            $detalleDesglose->appendChild($this->createElement($doc, 'CalificacionOperacion', 'S2'));
+                    // Add ClaveRegimen
+                    $detalleDesglose->appendChild($this->createElement($doc, 'ClaveRegimen', $desglose['ClaveRegimen'] ?? '01'));
 
-            // Add TipoImpositivo if present
-            if (isset($this->desgloseIVA['TipoImpositivo'])) {
-                $detalleDesglose->appendChild($this->createElement($doc, 'TipoImpositivo', 
-                    number_format($this->desgloseIVA['TipoImpositivo'], 2, '.', '')));
+                    // Add CalificacionOperacion
+                    $detalleDesglose->appendChild($this->createElement($doc, 'CalificacionOperacion', $desglose['CalificacionOperacion'] ?? 'S1'));
+
+                    // Add TipoImpositivo if present
+                    if (isset($desglose['TipoImpositivo'])) {
+                        $detalleDesglose->appendChild($this->createElement($doc, 'TipoImpositivo', 
+                            number_format($desglose['TipoImpositivo'], 2, '.', '')));
+                    }
+
+                    // Convert BaseImponible to BaseImponibleOimporteNoSujeto if needed
+                    $baseImponible = isset($desglose['BaseImponible']) 
+                        ? $desglose['BaseImponible'] 
+                        : ($desglose['BaseImponibleOimporteNoSujeto'] ?? null);
+
+                    if ($baseImponible !== null) {
+                        $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', 
+                            number_format($baseImponible, 2, '.', '')));
+                    }
+
+                    // Convert Cuota to CuotaRepercutida if needed
+                    $cuota = isset($desglose['Cuota']) 
+                        ? $desglose['Cuota'] 
+                        : ($desglose['CuotaRepercutida'] ?? null);
+
+                    if ($cuota !== null) {
+                        $detalleDesglose->appendChild($this->createElement($doc, 'CuotaRepercutida', 
+                            number_format($cuota, 2, '.', '')));
+                    }
+
+                    $root->appendChild($detalleDesglose);
+                }
+            } else {
+                // Single tax rate
+                $detalleDesglose = $this->createElement($doc, 'DetalleDesglose');
+
+                // Add Impuesto (required for IVA)
+                $detalleDesglose->appendChild($this->createElement($doc, 'Impuesto', $this->desgloseIVA['Impuesto'] ?? '01'));
+
+                // Add ClaveRegimen
+                $detalleDesglose->appendChild($this->createElement($doc, 'ClaveRegimen', $this->desgloseIVA['ClaveRegimen'] ?? '01'));
+
+                // Add CalificacionOperacion
+                $detalleDesglose->appendChild($this->createElement($doc, 'CalificacionOperacion', $this->desgloseIVA['CalificacionOperacion'] ?? 'S1'));
+
+                // Add TipoImpositivo if present
+                if (isset($this->desgloseIVA['TipoImpositivo'])) {
+                    $detalleDesglose->appendChild($this->createElement($doc, 'TipoImpositivo', 
+                        number_format($this->desgloseIVA['TipoImpositivo'], 2, '.', '')));
+                }
+
+                // Convert BaseImponible to BaseImponibleOimporteNoSujeto if needed
+                $baseImponible = isset($this->desgloseIVA['BaseImponible']) 
+                    ? $this->desgloseIVA['BaseImponible'] 
+                    : ($this->desgloseIVA['BaseImponibleOimporteNoSujeto'] ?? null);
+
+                if ($baseImponible !== null) {
+                    $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', 
+                        number_format($baseImponible, 2, '.', '')));
+                }
+
+                // Convert Cuota to CuotaRepercutida if needed
+                $cuota = isset($this->desgloseIVA['Cuota']) 
+                    ? $this->desgloseIVA['Cuota'] 
+                    : ($this->desgloseIVA['CuotaRepercutida'] ?? null);
+
+                if ($cuota !== null) {
+                    $detalleDesglose->appendChild($this->createElement($doc, 'CuotaRepercutida', 
+                        number_format($cuota, 2, '.', '')));
+                }
+
+                $root->appendChild($detalleDesglose);
             }
-
-            // Add BaseImponibleOimporteNoSujeto (required)
-            if (isset($this->desgloseIVA['BaseImponibleOimporteNoSujeto'])) {
-                $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', 
-                    number_format($this->desgloseIVA['BaseImponibleOimporteNoSujeto'], 2, '.', '')));
-            }
-
-            // Add CuotaRepercutida if present
-            if (isset($this->desgloseIVA['CuotaRepercutida'])) {
-                $detalleDesglose->appendChild($this->createElement($doc, 'CuotaRepercutida', 
-                    number_format($this->desgloseIVA['CuotaRepercutida'], 2, '.', '')));
-            }
-        }
-
-        // Only add DetalleDesglose if it has child elements
-        if ($detalleDesglose->hasChildNodes()) {
-            $root->appendChild($detalleDesglose);
         }
 
         return $root;
@@ -256,5 +318,16 @@ class Desglose extends BaseXmlModel
     {
         $this->desgloseIS = $desgloseIS;
         return $this;
+    }
+
+    public function setDetalleDesglose(?DetalleDesglose $detalleDesglose): self
+    {
+        $this->detalleDesglose = $detalleDesglose;
+        return $this;
+    }
+
+    public function getDetalleDesglose(): ?DetalleDesglose
+    {
+        return $this->detalleDesglose;
     }
 } 

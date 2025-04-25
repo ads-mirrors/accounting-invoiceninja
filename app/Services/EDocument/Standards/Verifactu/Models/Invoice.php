@@ -127,6 +127,10 @@ class Invoice extends BaseXmlModel
 
     public function setTipoFactura(string $tipoFactura): self
     {
+        $validTypes = ['F1', 'F2', 'F3', 'R1', 'R2', 'R3', 'R4', 'R5'];
+        if (!in_array($tipoFactura, $validTypes, true)) {
+            throw new \InvalidArgumentException('Invalid TipoFactura value. Must be one of: ' . implode(', ', $validTypes));
+        }
         $this->tipoFactura = $tipoFactura;
         return $this;
     }
@@ -138,6 +142,12 @@ class Invoice extends BaseXmlModel
 
     public function setTipoRectificativa(?string $tipoRectificativa): self
     {
+        if ($tipoRectificativa !== null) {
+            $validTypes = ['S', 'I'];
+            if (!in_array($tipoRectificativa, $validTypes, true)) {
+                throw new \InvalidArgumentException('Invalid TipoRectificativa value. Must be one of: ' . implode(', ', $validTypes));
+            }
+        }
         $this->tipoRectificativa = $tipoRectificativa;
         return $this;
     }
@@ -283,6 +293,9 @@ class Invoice extends BaseXmlModel
 
     public function setCupon(?string $cupon): self
     {
+        if ($cupon !== null && !in_array($cupon, ['S', 'N'])) {
+            throw new \InvalidArgumentException('Cupon must be either "S" or "N"');
+        }
         $this->cupon = $cupon;
         return $this;
     }
@@ -314,9 +327,18 @@ class Invoice extends BaseXmlModel
         return $this->importeTotal;
     }
 
-    public function setImporteTotal(float $importeTotal): self
+    public function setImporteTotal($importeTotal): self
     {
-        $this->importeTotal = $importeTotal;
+        if (!is_numeric($importeTotal)) {
+            throw new \InvalidArgumentException('ImporteTotal must be a numeric value');
+        }
+
+        $formatted = number_format((float)$importeTotal, 2, '.', '');
+        if (!preg_match('/^(\+|-)?\d{1,12}(\.\d{0,2})?$/', $formatted)) {
+            throw new \InvalidArgumentException('ImporteTotal must be a number with up to 12 digits and 2 decimal places');
+        }
+
+        $this->importeTotal = (float)$importeTotal;
         return $this;
     }
 
@@ -349,6 +371,9 @@ class Invoice extends BaseXmlModel
 
     public function setFechaHoraHusoGenRegistro(string $fechaHoraHusoGenRegistro): self
     {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $fechaHoraHusoGenRegistro)) {
+            throw new \InvalidArgumentException('Invalid date format for FechaHoraHusoGenRegistro. Expected format: YYYY-MM-DDThh:mm:ss');
+        }
         $this->fechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
         return $this;
     }
@@ -592,27 +617,25 @@ class Invoice extends BaseXmlModel
         
         $root->appendChild($this->createElement($doc, 'TipoFactura', $this->tipoFactura));
 
-        // Add TipoRectificativa and related elements for rectification invoices
         if ($this->tipoFactura === 'R1' && $this->facturaRectificativa !== null) {
             $root->appendChild($this->createElement($doc, 'TipoRectificativa', $this->facturaRectificativa->getTipoRectificativa()));
-            
-            // Add FacturasRectificadas
             $facturasRectificadas = $this->createElement($doc, 'FacturasRectificadas');
             $facturasRectificadas->appendChild($this->facturaRectificativa->toXml($doc));
             $root->appendChild($facturasRectificadas);
-
-            // Add ImporteRectificacion
             if ($this->importeRectificacion !== null) {
                 $root->appendChild($this->createElement($doc, 'ImporteRectificacion', (string)$this->importeRectificacion));
             }
         }
 
-        // Add other optional elements
-        if ($this->fechaOperacion !== null) {
-            $root->appendChild($this->createElement($doc, 'FechaOperacion', $this->fechaOperacion));
+        if ($this->fechaOperacion) {
+            $root->appendChild($this->createElement($doc, 'FechaOperacion', date('d-m-Y', strtotime($this->fechaOperacion))));
         }
 
         $root->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->descripcionOperacion));
+
+        if ($this->cupon !== null) {
+            $root->appendChild($this->createElement($doc, 'Cupon', $this->cupon));
+        }
 
         if ($this->facturaSimplificadaArt7273 !== null) {
             $root->appendChild($this->createElement($doc, 'FacturaSimplificadaArt7273', $this->facturaSimplificadaArt7273));
@@ -724,6 +747,10 @@ class Invoice extends BaseXmlModel
             }
         }
 
+        // Enable user error handling for XML operations
+        $previousErrorSetting = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
         try {
             $doc = new \DOMDocument('1.0', 'UTF-8');
             $doc->preserveWhiteSpace = false;
@@ -738,12 +765,59 @@ class Invoice extends BaseXmlModel
                 $this->signXml($doc);
             }
 
-            return $doc->saveXML();
-        } catch (\Exception $e) {
-            Log::error('Error generating XML: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            throw $e;
+            $xml = $doc->saveXML();
+            if ($xml === false) {
+                throw new \DOMException('Failed to generate XML');
+            }
+
+            return $xml;
+        } catch (\ErrorException $e) {
+            // Convert any libxml errors to DOMException
+            $errors = libxml_get_errors();
+            libxml_clear_errors();
+            if (!empty($errors)) {
+                throw new \DOMException($errors[0]->message);
+            }
+            throw new \DOMException($e->getMessage());
+        } finally {
+            // Restore previous error handling setting
+            libxml_use_internal_errors($previousErrorSetting);
+            libxml_clear_errors();
         }
+    }
+
+    protected function validateXml(\DOMDocument $doc): void
+    {
+        $xsdPath = $this->getXsdPath();
+        if (!file_exists($xsdPath)) {
+            throw new \DOMException("Schema file not found at: $xsdPath");
+        }
+
+        // Enable user error handling
+        $previousErrorSetting = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        try {
+            if (!@$doc->schemaValidate($xsdPath)) {
+                $errors = libxml_get_errors();
+                if (!empty($errors)) {
+                    throw new \DOMException($errors[0]->message);
+                }
+                throw new \DOMException('XML does not validate against schema');
+            }
+        } catch (\ErrorException $e) {
+            // Convert ErrorException to DOMException
+            throw new \DOMException($e->getMessage());
+        } finally {
+            // Restore previous error handling setting and clear any remaining errors
+            libxml_use_internal_errors($previousErrorSetting);
+            libxml_clear_errors();
+        }
+    }
+
+    protected function getXsdPath(): string
+    {
+        return __DIR__ . '/../xsd/SuministroInformacion.xsd';
     }
 
     public static function fromXml($xml): self
@@ -804,6 +878,18 @@ class Invoice extends BaseXmlModel
             $invoice->setNombreRazonEmisor($nombreRazonEmisorElement->nodeValue);
         }
 
+        // Parse Subsanacion
+        $subsanacion = self::getElementText($element, 'Subsanacion');
+        if ($subsanacion !== null) {
+            $invoice->setSubsanacion($subsanacion);
+        }
+
+        // Parse RechazoPrevio
+        $rechazoPrevio = self::getElementText($element, 'RechazoPrevio');
+        if ($rechazoPrevio !== null) {
+            $invoice->setRechazoPrevio($rechazoPrevio);
+        }
+
         // Parse EmitidaPorTerceroODestinatario
         $emitidaPorTerceroElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'EmitidaPorTerceroODestinatario')->item(0);
         if ($emitidaPorTerceroElement) {
@@ -814,6 +900,12 @@ class Invoice extends BaseXmlModel
         $tipoFacturaElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'TipoFactura')->item(0);
         if ($tipoFacturaElement) {
             $invoice->setTipoFactura($tipoFacturaElement->nodeValue);
+        }
+
+        // Parse FechaOperacion
+        $fechaOperacionElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'FechaOperacion')->item(0);
+        if ($fechaOperacionElement) {
+            $invoice->setFechaOperacion($fechaOperacionElement->nodeValue);
         }
 
         // Parse TipoRectificativa
@@ -828,10 +920,14 @@ class Invoice extends BaseXmlModel
             $invoice->setDescripcionOperacion($descripcionOperacionElement->nodeValue);
         }
 
-        // Parse FacturaSimplificadaArt7273
-        $facturaSimplificadaElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'FacturaSimplificadaArt7273')->item(0);
-        if ($facturaSimplificadaElement) {
-            $invoice->setFacturaSimplificadaArt7273($facturaSimplificadaElement->nodeValue);
+        $cupon = self::getElementText($element, 'Cupon');
+        if ($cupon !== null) {
+            $invoice->setCupon($cupon);
+        }
+
+        $facturaSimplificadaArt7273 = self::getElementText($element, 'FacturaSimplificadaArt7273');
+        if ($facturaSimplificadaArt7273 !== null) {
+            $invoice->setFacturaSimplificadaArt7273($facturaSimplificadaArt7273);
         }
 
         // Parse FacturaSinIdentifDestinatarioArt61d
@@ -902,6 +998,18 @@ class Invoice extends BaseXmlModel
             $invoice->setFechaHoraHusoGenRegistro($fechaHoraElement->nodeValue);
         }
 
+        // Parse NumRegistroAcuerdoFacturacion
+        $numRegistroElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'NumRegistroAcuerdoFacturacion')->item(0);
+        if ($numRegistroElement) {
+            $invoice->setNumRegistroAcuerdoFacturacion($numRegistroElement->nodeValue);
+        }
+
+        // Parse IdAcuerdoSistemaInformatico
+        $idAcuerdoElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'IdAcuerdoSistemaInformatico')->item(0);
+        if ($idAcuerdoElement) {
+            $invoice->setIdAcuerdoSistemaInformatico($idAcuerdoElement->nodeValue);
+        }
+
         // Parse TipoHuella
         $tipoHuellaElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'TipoHuella')->item(0);
         if ($tipoHuellaElement) {
@@ -957,5 +1065,11 @@ class Invoice extends BaseXmlModel
         }
 
         return $invoice;
+    }
+
+    protected static function getElementText(\DOMElement $element, string $tagName): ?string
+    {
+        $node = $element->getElementsByTagNameNS(self::XML_NAMESPACE, $tagName)->item(0);
+        return $node ? $node->nodeValue : null;
     }
 } 

@@ -22,6 +22,9 @@ class PersonaFisicaJuridica extends BaseXmlModel
 
     public function setNif(?string $nif): self
     {
+        if ($nif !== null && strlen($nif) !== 9) {
+            throw new \InvalidArgumentException('NIF must be exactly 9 characters long');
+        }
         $this->nif = $nif;
         return $this;
     }

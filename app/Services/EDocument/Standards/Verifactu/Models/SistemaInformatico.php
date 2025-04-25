@@ -15,6 +15,16 @@ class SistemaInformatico extends BaseXmlModel
     protected string $tipoUsoPosibleMultiOT = 'S';
     protected string $indicadorMultiplesOT = 'S';
 
+    public function __construct()
+    {
+        // Initialize required properties with default values
+        $this->nombreRazon = '';
+        $this->nombreSistemaInformatico = '';
+        $this->idSistemaInformatico = '';
+        $this->version = '';
+        $this->numeroInstalacion = '';
+    }
+
     public function toXml(\DOMDocument $doc): \DOMElement
     {
         $root = $this->createElement($doc, 'SistemaInformatico');
