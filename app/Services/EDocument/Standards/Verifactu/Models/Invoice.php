@@ -436,61 +436,66 @@ class Invoice extends BaseXmlModel
         return $this;
     }
 
-    protected function signXml(\DOMDocument $doc): void
+    public function signXml(\DOMDocument $doc): void
     {
-        if (!$this->privateKeyPath || !file_exists($this->privateKeyPath)) {
-            throw new \RuntimeException('Private key not found or not set');
+        if (!file_exists($this->certificatePath)) {
+            throw new \RuntimeException("Certificate file not found at: " . $this->certificatePath);
         }
-
-        if (!$this->certificatePath || !file_exists($this->certificatePath)) {
-            throw new \RuntimeException('Certificate not found or not set');
+        if (!file_exists($this->privateKeyPath)) {
+            throw new \RuntimeException("Private key file not found at: " . $this->privateKeyPath);
         }
-
-        Log::info('Starting XML signing process');
-        Log::debug('XML before signing: ' . $doc->saveXML());
 
         try {
-            // Create a new Security object
-            Log::debug('Creating XMLSecurityDSig object');
+            $xmlContent = $doc->saveXML();
+            Log::debug("XML before signing:", ['xml' => $xmlContent]);
+
             $objDSig = new XMLSecurityDSig();
-            
-            // Set canonicalization method
-            Log::debug('Setting canonicalization method');
             $objDSig->setCanonicalMethod(XMLSecurityDSig::EXC_C14N);
             
-            // Create a new Security key
-            Log::debug('Creating XMLSecurityKey object');
-            $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, ['type' => 'private']);
+            // Create a new security key
+            $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, array('type' => 'private'));
             
             // Load the private key
-            Log::debug('Loading private key from: ' . $this->privateKeyPath);
             $objKey->loadKey($this->privateKeyPath, true);
             
-            // Add reference
-            Log::debug('Adding reference to document');
+            // Add the reference
             $objDSig->addReference(
-                $doc,
+                $doc, 
                 XMLSecurityDSig::SHA256,
-                ['http://www.w3.org/2000/09/xmldsig#enveloped-signature']
+                [
+                    'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+                    'http://www.w3.org/2001/10/xml-exc-c14n#'
+                ],
+                ['force_uri' => true]
             );
-            Log::debug('Added reference to document');
-            
-            // Add the certificate
-            Log::debug('Adding certificate');
+
+            // Add the certificate to the security object
             $objDSig->add509Cert(file_get_contents($this->certificatePath));
             
-            // Sign the XML document
-            Log::debug('Signing document');
+            // Append the signature
             $objDSig->sign($objKey);
             
             // Append the signature to the XML
-            Log::debug('Appending signature');
             $objDSig->appendSignature($doc->documentElement);
             
-            Log::debug('XML after signing: ' . $doc->saveXML());
+            // Verify the signature
+            $objKey = new XMLSecurityKey(XMLSecurityKey::RSA_SHA256, array('type' => 'public'));
+            $objKey->loadKey($this->publicKeyPath, true, true);
+            
+            if ($objDSig->verify($objKey) === 1) {
+                Log::debug("Signature verification successful");
+            } else {
+                Log::error("Signature verification failed");
+            }
+
+            $xmlContent = $doc->saveXML();
+            Log::debug("XML after signing:", ['xml' => $xmlContent]);
+
         } catch (\Exception $e) {
-            Log::error('Error during XML signing: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error("Error during XML signing: " . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
             throw $e;
         }
     }
@@ -501,35 +506,203 @@ class Invoice extends BaseXmlModel
             throw new \RuntimeException('Public key not found or not set');
         }
 
-        // Get the signature node
-        $objXMLSecDSig = new XMLSecurityDSig();
-        
-        // Locate the signature
-        $objDSig = $objXMLSecDSig->locateSignature($doc);
-        if (!$objDSig) {
-            throw new \RuntimeException('Signature not found in document');
+        try {
+            Log::info('Starting signature verification');
+            Log::debug('XML to verify: ' . $doc->saveXML());
+
+            // Get the signature node
+            $objXMLSecDSig = new XMLSecurityDSig();
+            
+            // Locate the signature
+            Log::debug('Locating signature');
+            $objDSig = $objXMLSecDSig->locateSignature($doc);
+            if (!$objDSig) {
+                throw new \RuntimeException('Signature not found in document');
+            }
+            
+            // Canonicalize the signed info
+            Log::debug('Canonicalizing SignedInfo');
+            $objXMLSecDSig->canonicalizeSignedInfo();
+            
+            // Validate references
+            Log::debug('Validating references');
+            try {
+                $objXMLSecDSig->validateReference();
+            } catch (\Exception $e) {
+                Log::error('Reference validation failed: ' . $e->getMessage());
+                throw $e;
+            }
+            
+            // Get the key from the certificate
+            Log::debug('Locating key');
+            $objKey = $objXMLSecDSig->locateKey();
+            if (!$objKey) {
+                throw new \RuntimeException('Key not found in signature');
+            }
+            
+            // Load the public key
+            Log::debug('Loading public key from: ' . $this->publicKeyPath);
+            $objKey->loadKey($this->publicKeyPath, false, true);
+            
+            // Verify the signature
+            Log::debug('Verifying signature');
+            $result = $objXMLSecDSig->verify($objKey) === 1;
+            
+            Log::info('Signature verification ' . ($result ? 'succeeded' : 'failed'));
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Error during signature verification: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
         }
-        
-        // Canonicalize the signed info
-        $objXMLSecDSig->canonicalizeSignedInfo();
-        
-        // Validate references
-        $objXMLSecDSig->validateReference();
-        
-        // Get the key from the certificate
-        $objKey = $objXMLSecDSig->locateKey();
-        if (!$objKey) {
-            throw new \RuntimeException('Key not found in signature');
-        }
-        
-        // Load the public key
-        $objKey->loadKey($this->publicKeyPath, false, true);
-        
-        // Verify the signature
-        return $objXMLSecDSig->verify($objKey) === 1;
     }
 
-    public function toXml(): string
+    public function toXml(\DOMDocument $doc): \DOMElement
+    {
+        // Create root element with proper namespaces
+        $root = $doc->createElementNS(parent::XML_NAMESPACE, parent::XML_NAMESPACE_PREFIX . ':RegistroAlta');
+        
+        // Add namespaces
+        $root->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' . parent::XML_NAMESPACE_PREFIX, parent::XML_NAMESPACE);
+        $root->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' . parent::XML_DS_NAMESPACE_PREFIX, parent::XML_DS_NAMESPACE);
+
+        // Add required elements in exact order according to schema
+        $root->appendChild($this->createElement($doc, 'IDVersion', $this->idVersion));
+
+        // Create IDFactura structure
+        $idFactura = $this->createElement($doc, 'IDFactura');
+        $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->tercero?->getNif() ?? 'B12345678'));
+        $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->idFactura));
+        $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', date('d-m-Y')));
+        $root->appendChild($idFactura);
+        
+        if ($this->refExterna !== null) {
+            $root->appendChild($this->createElement($doc, 'RefExterna', $this->refExterna));
+        }
+        
+        $root->appendChild($this->createElement($doc, 'NombreRazonEmisor', $this->nombreRazonEmisor));
+        
+        if ($this->subsanacion !== null) {
+            $root->appendChild($this->createElement($doc, 'Subsanacion', $this->subsanacion));
+        }
+        
+        if ($this->rechazoPrevio !== null) {
+            $root->appendChild($this->createElement($doc, 'RechazoPrevio', $this->rechazoPrevio));
+        }
+        
+        $root->appendChild($this->createElement($doc, 'TipoFactura', $this->tipoFactura));
+
+        // Add TipoRectificativa and related elements for rectification invoices
+        if ($this->tipoFactura === 'R1' && $this->facturaRectificativa !== null) {
+            $root->appendChild($this->createElement($doc, 'TipoRectificativa', $this->facturaRectificativa->getTipoRectificativa()));
+            
+            // Add FacturasRectificadas
+            $facturasRectificadas = $this->createElement($doc, 'FacturasRectificadas');
+            $facturasRectificadas->appendChild($this->facturaRectificativa->toXml($doc));
+            $root->appendChild($facturasRectificadas);
+
+            // Add ImporteRectificacion
+            if ($this->importeRectificacion !== null) {
+                $root->appendChild($this->createElement($doc, 'ImporteRectificacion', (string)$this->importeRectificacion));
+            }
+        }
+
+        // Add other optional elements
+        if ($this->fechaOperacion !== null) {
+            $root->appendChild($this->createElement($doc, 'FechaOperacion', $this->fechaOperacion));
+        }
+
+        $root->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->descripcionOperacion));
+
+        if ($this->facturaSimplificadaArt7273 !== null) {
+            $root->appendChild($this->createElement($doc, 'FacturaSimplificadaArt7273', $this->facturaSimplificadaArt7273));
+        }
+
+        if ($this->facturaSinIdentifDestinatarioArt61d !== null) {
+            $root->appendChild($this->createElement($doc, 'FacturaSinIdentifDestinatarioArt61d', $this->facturaSinIdentifDestinatarioArt61d));
+        }
+
+        if ($this->macrodato !== null) {
+            $root->appendChild($this->createElement($doc, 'Macrodato', $this->macrodato));
+        }
+
+        if ($this->emitidaPorTerceroODestinatario !== null) {
+            $root->appendChild($this->createElement($doc, 'EmitidaPorTerceroODestinatario', $this->emitidaPorTerceroODestinatario));
+        }
+
+        // Add Tercero if set
+        if ($this->tercero !== null) {
+            $terceroElement = $this->createElement($doc, 'Tercero');
+            $terceroElement->appendChild($this->createElement($doc, 'NombreRazon', $this->tercero->getRazonSocial()));
+            $terceroElement->appendChild($this->createElement($doc, 'NIF', $this->tercero->getNif()));
+            $root->appendChild($terceroElement);
+        }
+
+        // Add Destinatarios if set
+        if ($this->destinatarios !== null && count($this->destinatarios) > 0) {
+            $destinatariosElement = $this->createElement($doc, 'Destinatarios');
+            foreach ($this->destinatarios as $destinatario) {
+                $idDestinatarioElement = $this->createElement($doc, 'IDDestinatario');
+                
+                // Add NombreRazon
+                $idDestinatarioElement->appendChild($this->createElement($doc, 'NombreRazon', $destinatario->getNombreRazon()));
+                
+                // Add either NIF or IDOtro
+                if ($destinatario->getNif() !== null) {
+                    $idDestinatarioElement->appendChild($this->createElement($doc, 'NIF', $destinatario->getNif()));
+                } else {
+                    $idOtroElement = $this->createElement($doc, 'IDOtro');
+                    $idOtroElement->appendChild($this->createElement($doc, 'CodigoPais', $destinatario->getPais()));
+                    $idOtroElement->appendChild($this->createElement($doc, 'IDType', $destinatario->getTipoIdentificacion()));
+                    $idOtroElement->appendChild($this->createElement($doc, 'ID', $destinatario->getIdOtro()));
+                    $idDestinatarioElement->appendChild($idOtroElement);
+                }
+                
+                $destinatariosElement->appendChild($idDestinatarioElement);
+            }
+            $root->appendChild($destinatariosElement);
+        }
+
+        // Add Desglose
+        if ($this->desglose !== null) {
+            $root->appendChild($this->desglose->toXml($doc));
+        }
+
+        // Add CuotaTotal and ImporteTotal
+        $root->appendChild($this->createElement($doc, 'CuotaTotal', (string)$this->cuotaTotal));
+        $root->appendChild($this->createElement($doc, 'ImporteTotal', (string)$this->importeTotal));
+
+        // Add Encadenamiento
+        if ($this->encadenamiento !== null) {
+            $root->appendChild($this->encadenamiento->toXml($doc));
+        }
+
+        // Add SistemaInformatico
+        if ($this->sistemaInformatico !== null) {
+            $root->appendChild($this->sistemaInformatico->toXml($doc));
+        }
+
+        // Add FechaHoraHusoGenRegistro
+        $root->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->fechaHoraHusoGenRegistro));
+
+        // Add NumRegistroAcuerdoFacturacion
+        if ($this->numRegistroAcuerdoFacturacion !== null) {
+            $root->appendChild($this->createElement($doc, 'NumRegistroAcuerdoFacturacion', $this->numRegistroAcuerdoFacturacion));
+        }
+
+        // Add IdAcuerdoSistemaInformatico
+        if ($this->idAcuerdoSistemaInformatico !== null) {
+            $root->appendChild($this->createElement($doc, 'IdAcuerdoSistemaInformatico', $this->idAcuerdoSistemaInformatico));
+        }
+
+        // Add TipoHuella and Huella
+        $root->appendChild($this->createElement($doc, 'TipoHuella', $this->tipoHuella));
+        $root->appendChild($this->createElement($doc, 'Huella', $this->huella));
+
+        return $root;
+    }
+
+    public function toXmlString(): string
     {
         // Validate required fields first, outside of try-catch
         $requiredFields = [
@@ -556,198 +729,20 @@ class Invoice extends BaseXmlModel
             $doc->preserveWhiteSpace = false;
             $doc->formatOutput = true;
 
-            // Create root element with proper namespaces
-            $root = $doc->createElementNS(parent::XML_NAMESPACE, parent::XML_NAMESPACE_PREFIX . ':RegistroAlta');
-            $root->setAttribute('xmlns:ds', parent::XML_DS_NAMESPACE);
+            // Create root element using toXml method
+            $root = $this->toXml($doc);
             $doc->appendChild($root);
 
-            // Add required elements in exact order according to schema
-            $root->appendChild($this->createElement($doc, 'IDVersion', $this->idVersion));
-
-            // Create IDFactura structure
-            $idFactura = $this->createElement($doc, 'IDFactura');
-            $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->tercero?->getNif() ?? 'B12345678'));
-            $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->idFactura));
-            $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', date('d-m-Y')));
-            $root->appendChild($idFactura);
-            
-            if ($this->refExterna !== null) {
-                $root->appendChild($this->createElement($doc, 'RefExterna', $this->refExterna));
-            }
-            
-            $root->appendChild($this->createElement($doc, 'NombreRazonEmisor', $this->nombreRazonEmisor));
-            
-            if ($this->subsanacion !== null) {
-                $root->appendChild($this->createElement($doc, 'Subsanacion', $this->subsanacion));
-            }
-            
-            if ($this->rechazoPrevio !== null) {
-                $root->appendChild($this->createElement($doc, 'RechazoPrevio', $this->rechazoPrevio));
-            }
-            
-            $root->appendChild($this->createElement($doc, 'TipoFactura', $this->tipoFactura));
-
-            // Add TipoRectificativa and related elements for rectification invoices
-            if ($this->tipoFactura === 'R1' && $this->facturaRectificativa !== null) {
-                $root->appendChild($this->createElement($doc, 'TipoRectificativa', $this->facturaRectificativa->getTipoRectificativa()));
-                
-                // Add FacturasRectificadas
-                $facturasRectificadas = $this->createElement($doc, 'FacturasRectificadas');
-                $facturasRectificadas->appendChild($this->facturaRectificativa->toXml($doc));
-                $root->appendChild($facturasRectificadas);
-
-                // Add ImporteRectificacion
-                $importeRectificacion = $this->createElement($doc, 'ImporteRectificacion');
-                $importeRectificacion->appendChild($this->createElement($doc, 'BaseRectificada', 
-                    number_format($this->facturaRectificativa->getBaseRectificada(), 2, '.', '')));
-                $importeRectificacion->appendChild($this->createElement($doc, 'CuotaRectificada', 
-                    number_format($this->facturaRectificativa->getCuotaRectificada(), 2, '.', '')));
-                
-                if ($this->facturaRectificativa->getCuotaRecargoRectificado() !== null) {
-                    $importeRectificacion->appendChild($this->createElement($doc, 'CuotaRecargoRectificado', 
-                        number_format($this->facturaRectificativa->getCuotaRecargoRectificado(), 2, '.', '')));
-                }
-                
-                $root->appendChild($importeRectificacion);
-            }
-
-            $root->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->descripcionOperacion));
-
-            if ($this->facturaSimplificadaArt7273 !== null) {
-                $root->appendChild($this->createElement($doc, 'FacturaSimplificadaArt7273', $this->facturaSimplificadaArt7273));
-            }
-
-            if ($this->facturaSinIdentifDestinatarioArt61d !== null) {
-                $root->appendChild($this->createElement($doc, 'FacturaSinIdentifDestinatarioArt61d', $this->facturaSinIdentifDestinatarioArt61d));
-            }
-
-            if ($this->macrodato !== null) {
-                $root->appendChild($this->createElement($doc, 'Macrodato', $this->macrodato));
-            }
-
-            if ($this->emitidaPorTerceroODestinatario !== null) {
-                $root->appendChild($this->createElement($doc, 'EmitidaPorTerceroODestinatario', $this->emitidaPorTerceroODestinatario));
-            }
-
-            // Add tercero if present
-            if ($this->tercero !== null) {
-                $terceroElement = $this->createElement($doc, 'Tercero');
-                $terceroElement->appendChild($this->createElement($doc, 'NombreRazon', $this->tercero->getRazonSocial()));
-                $terceroElement->appendChild($this->createElement($doc, 'NIF', $this->tercero->getNif()));
-                $root->appendChild($terceroElement);
-            }
-
-            // Add destinatarios if present
-            if ($this->destinatarios !== null && count($this->destinatarios) > 0) {
-                $destinatariosElement = $this->createElement($doc, 'Destinatarios');
-                foreach ($this->destinatarios as $destinatario) {
-                    $idDestinatarioElement = $this->createElement($doc, 'IDDestinatario');
-                    $idDestinatarioElement->appendChild($this->createElement($doc, 'NombreRazon', $destinatario->getNombreRazon() ?? $destinatario->getRazonSocial()));
-                    
-                    // Handle either NIF or IDOtro
-                    if ($destinatario->getNif() !== null) {
-                        $idDestinatarioElement->appendChild($this->createElement($doc, 'NIF', $destinatario->getNif()));
-                    } else {
-                        $idOtroElement = $this->createElement($doc, 'IDOtro');
-                        if ($destinatario->getPais() !== null) {
-                            $idOtroElement->appendChild($this->createElement($doc, 'CodigoPais', $destinatario->getPais()));
-                        }
-                        $idOtroElement->appendChild($this->createElement($doc, 'IDType', $destinatario->getTipoIdentificacion()));
-                        $idOtroElement->appendChild($this->createElement($doc, 'ID', $destinatario->getIdOtro()));
-                        $idDestinatarioElement->appendChild($idOtroElement);
-                    }
-                    
-                    $destinatariosElement->appendChild($idDestinatarioElement);
-                }
-                $root->appendChild($destinatariosElement);
-            }
-
-            // Add desglose
-            try {
-                $desgloseXml = $this->desglose->toXml();
-                $desgloseDoc = new \DOMDocument();
-                if (!$desgloseDoc->loadXML($desgloseXml)) {
-                    error_log("Failed to load desglose XML");
-                    throw new \DOMException('Failed to load desglose XML');
-                }
-                $desgloseNode = $doc->importNode($desgloseDoc->documentElement, true);
-                // Remove any existing namespace declarations
-                foreach (['xmlns:sf', 'xmlns:ds'] as $attr) {
-                    if ($desgloseNode->hasAttribute($attr)) {
-                        $desgloseNode->removeAttribute($attr);
-                    }
-                }
-                $root->appendChild($desgloseNode);
-            } catch (\Exception $e) {
-                error_log("Error in desglose: " . $e->getMessage());
-                throw $e;
-            }
-
-            // Add CuotaTotal and ImporteTotal
-            $root->appendChild($this->createElement($doc, 'CuotaTotal', number_format($this->cuotaTotal, 2, '.', '')));
-            $root->appendChild($this->createElement($doc, 'ImporteTotal', number_format($this->importeTotal, 2, '.', '')));
-
-            // Add encadenamiento
-            try {
-                $encadenamientoXml = $this->encadenamiento->toXml();
-                $encadenamientoDoc = new \DOMDocument();
-                if (!$encadenamientoDoc->loadXML($encadenamientoXml)) {
-                    error_log("Failed to load encadenamiento XML");
-                    throw new \DOMException('Failed to load encadenamiento XML');
-                }
-                $encadenamientoNode = $doc->importNode($encadenamientoDoc->documentElement, true);
-                $root->appendChild($encadenamientoNode);
-            } catch (\Exception $e) {
-                error_log("Error in encadenamiento: " . $e->getMessage());
-                throw $e;
-            }
-
-            // Add sistema informatico
-            $sistemaElement = $this->createElement($doc, 'SistemaInformatico');
-            $sistemaElement->appendChild($this->createElement($doc, 'NombreRazon', $this->sistemaInformatico->getNombreRazon()));
-            $sistemaElement->appendChild($this->createElement($doc, 'NIF', $this->sistemaInformatico->getNif()));
-            $sistemaElement->appendChild($this->createElement($doc, 'NombreSistemaInformatico', $this->sistemaInformatico->getNombreSistemaInformatico()));
-            $sistemaElement->appendChild($this->createElement($doc, 'IdSistemaInformatico', $this->sistemaInformatico->getIdSistemaInformatico()));
-            $sistemaElement->appendChild($this->createElement($doc, 'Version', $this->sistemaInformatico->getVersion()));
-            $sistemaElement->appendChild($this->createElement($doc, 'NumeroInstalacion', $this->sistemaInformatico->getNumeroInstalacion()));
-            $sistemaElement->appendChild($this->createElement($doc, 'TipoUsoPosibleSoloVerifactu', $this->sistemaInformatico->getTipoUsoPosibleSoloVerifactu()));
-            $sistemaElement->appendChild($this->createElement($doc, 'TipoUsoPosibleMultiOT', $this->sistemaInformatico->getTipoUsoPosibleMultiOT()));
-            $sistemaElement->appendChild($this->createElement($doc, 'IndicadorMultiplesOT', $this->sistemaInformatico->getIndicadorMultiplesOT()));
-            $root->appendChild($sistemaElement);
-
-            // Add remaining required fields
-            $root->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->fechaHoraHusoGenRegistro));
-            
-            if ($this->numRegistroAcuerdoFacturacion !== null) {
-                $root->appendChild($this->createElement($doc, 'NumRegistroAcuerdoFacturacion', $this->numRegistroAcuerdoFacturacion));
-            }
-
-            if ($this->idAcuerdoSistemaInformatico !== null) {
-                $root->appendChild($this->createElement($doc, 'IDAcuerdoSistemaInformatico', $this->idAcuerdoSistemaInformatico));
-            }
-
-            $root->appendChild($this->createElement($doc, 'TipoHuella', $this->tipoHuella));
-            $root->appendChild($this->createElement($doc, 'Huella', $this->huella));
-
-            // Add signature if present
-            if ($this->signature !== null) {
-                $signatureElement = $this->createDsElement($doc, 'Signature', $this->signature);
-                $root->appendChild($signatureElement);
-            }
-
-            // Sign the document if private key is set
-            if ($this->privateKeyPath !== null) {
-                try {
-                    $this->signXml($doc);
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('Failed to sign XML: ' . $e->getMessage());
-                }
+            // Sign the document if certificates are set
+            if ($this->privateKeyPath && $this->certificatePath) {
+                $this->signXml($doc);
             }
 
             return $doc->saveXML();
         } catch (\Exception $e) {
-            error_log("Error in toXml: " . $e->getMessage());
-            throw new \RuntimeException("Error in toXml: " . $e->getMessage(), 0, $e);
+            Log::error('Error generating XML: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
         }
     }
 

@@ -15,13 +15,9 @@ class SistemaInformatico extends BaseXmlModel
     protected string $tipoUsoPosibleMultiOT = 'S';
     protected string $indicadorMultiplesOT = 'S';
 
-    public function toXml(): string
+    public function toXml(\DOMDocument $doc): \DOMElement
     {
-        $doc = new \DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput = true;
-
         $root = $this->createElement($doc, 'SistemaInformatico');
-        $doc->appendChild($root);
 
         // Add nombreRazon
         $root->appendChild($this->createElement($doc, 'NombreRazon', $this->nombreRazon));
@@ -42,7 +38,7 @@ class SistemaInformatico extends BaseXmlModel
         $root->appendChild($this->createElement($doc, 'TipoUsoPosibleMultiOT', $this->tipoUsoPosibleMultiOT));
         $root->appendChild($this->createElement($doc, 'IndicadorMultiplesOT', $this->indicadorMultiplesOT));
 
-        return $doc->saveXML();
+        return $root;
     }
 
     /**

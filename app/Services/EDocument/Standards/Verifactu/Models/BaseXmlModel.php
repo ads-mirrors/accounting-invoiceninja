@@ -13,7 +13,8 @@ abstract class BaseXmlModel
     {
         $element = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':' . $name);
         if ($value !== null) {
-            $element->nodeValue = $value;
+            $textNode = $doc->createTextNode($value);
+            $element->appendChild($textNode);
         }
         foreach ($attributes as $attrName => $attrValue) {
             $element->setAttribute($attrName, $attrValue);
@@ -25,7 +26,8 @@ abstract class BaseXmlModel
     {
         $element = $doc->createElementNS(self::XML_DS_NAMESPACE, self::XML_DS_NAMESPACE_PREFIX . ':' . $name);
         if ($value !== null) {
-            $element->nodeValue = $value;
+            $textNode = $doc->createTextNode($value);
+            $element->appendChild($textNode);
         }
         foreach ($attributes as $attrName => $attrValue) {
             $element->setAttribute($attrName, $attrValue);
@@ -37,12 +39,12 @@ abstract class BaseXmlModel
     {
         $elements = $parent->getElementsByTagNameNS($namespace, $name);
         if ($elements->length > 0) {
-            return $elements->item(0)->nodeValue;
+            return $elements->item(0)->textContent;
         }
         return null;
     }
 
-    abstract public function toXml(): string;
+    abstract public function toXml(\DOMDocument $doc): \DOMElement;
     
     public static function fromXml($xml): self
     {
@@ -55,6 +57,8 @@ abstract class BaseXmlModel
         }
         
         $doc = new \DOMDocument();
+        $doc->formatOutput = true;
+        $doc->preserveWhiteSpace = false;
         if (!$doc->loadXML($xml)) {
             throw new \DOMException('Failed to load XML: Invalid XML format');
         }

@@ -8,37 +8,23 @@ class Encadenamiento extends BaseXmlModel
     protected ?EncadenamientoFacturaAnterior $registroAnterior = null;
     protected ?EncadenamientoFacturaAnterior $registroPosterior = null;
 
-    public function toXml(): string
+    public function toXml(\DOMDocument $doc): \DOMElement
     {
-        $doc = new \DOMDocument('1.0', 'UTF-8');
         $root = $this->createElement($doc, 'Encadenamiento');
-        $doc->appendChild($root);
 
         if ($this->primerRegistro !== null) {
             $root->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
         }
 
         if ($this->registroAnterior !== null) {
-            $registroAnteriorXml = $this->registroAnterior->toXml();
-            $registroAnteriorDoc = new \DOMDocument();
-            $registroAnteriorDoc->loadXML($registroAnteriorXml);
-            $registroAnteriorNode = $doc->importNode($registroAnteriorDoc->documentElement, true);
-            $root->appendChild($registroAnteriorNode);
+            $root->appendChild($this->registroAnterior->toXml($doc));
         }
 
         if ($this->registroPosterior !== null) {
-            $registroPosteriorXml = $this->registroPosterior->toXml();
-            $registroPosteriorDoc = new \DOMDocument();
-            $registroPosteriorDoc->loadXML($registroPosteriorXml);
-            $registroPosteriorNode = $doc->importNode($registroPosteriorDoc->documentElement, true);
-            $root->appendChild($registroPosteriorNode);
+            $root->appendChild($this->registroPosterior->toXml($doc));
         }
 
-        // Add namespace declaration to the root element
-        $root->setAttribute('xmlns:sf', self::XML_NAMESPACE);
-        $root->setAttribute('xmlns:ds', self::XML_DS_NAMESPACE);
-
-        return $doc->saveXML();
+        return $root;
     }
 
     public static function fromXml($xml): BaseXmlModel
@@ -140,20 +126,16 @@ class EncadenamientoFacturaAnterior extends BaseXmlModel
     protected string $fechaExpedicionFactura;
     protected string $huella;
 
-    public function toXml(): string
+    public function toXml(\DOMDocument $doc): \DOMElement
     {
-        $doc = new \DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput = true;
-
         $root = $this->createElement($doc, 'RegistroAnterior');
-        $doc->appendChild($root);
 
         $root->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->idEmisorFactura));
         $root->appendChild($this->createElement($doc, 'NumSerieFactura', $this->numSerieFactura));
         $root->appendChild($this->createElement($doc, 'FechaExpedicionFactura', $this->fechaExpedicionFactura));
         $root->appendChild($this->createElement($doc, 'Huella', $this->huella));
 
-        return $doc->saveXML();
+        return $root;
     }
 
     public static function fromDOMElement(\DOMElement $element): self

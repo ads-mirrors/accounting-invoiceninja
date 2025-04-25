@@ -103,13 +103,9 @@ class PersonaFisicaJuridica extends BaseXmlModel
         return $this;
     }
 
-    public function toXml(): string
+    public function toXml(\DOMDocument $doc): \DOMElement
     {
-        $doc = new \DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput = true;
-
         $root = $this->createElement($doc, 'PersonaFisicaJuridica');
-        $doc->appendChild($root);
 
         if ($this->nif !== null) {
             $root->appendChild($this->createElement($doc, 'NIF', $this->nif));
@@ -143,7 +139,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
             $root->appendChild($this->createElement($doc, 'Pais', $this->pais));
         }
 
-        return $doc->saveXML($root);
+        return $root;
     }
 
     /**

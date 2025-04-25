@@ -9,13 +9,9 @@ class Cupon extends BaseXmlModel
     protected float $importeCupon;
     protected ?string $descripcionCupon = null;
 
-    public function toXml(): string
+    public function toXml(\DOMDocument $doc): \DOMElement
     {
-        $doc = new \DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput = true;
-
         $root = $this->createElement($doc, 'Cupon');
-        $doc->appendChild($root);
 
         // Add required elements
         $root->appendChild($this->createElement($doc, 'IDCupon', $this->idCupon));
@@ -27,7 +23,7 @@ class Cupon extends BaseXmlModel
             $root->appendChild($this->createElement($doc, 'DescripcionCupon', $this->descripcionCupon));
         }
 
-        return $doc->saveXML();
+        return $root;
     }
 
     public static function fromDOMElement(\DOMElement $element): self

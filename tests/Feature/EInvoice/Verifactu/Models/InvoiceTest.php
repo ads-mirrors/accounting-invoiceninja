@@ -11,6 +11,7 @@ use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Verifactu\Models\PrimerRegistroCadena;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
+use App\Services\EDocument\Standards\Verifactu\Models\DetalleDesglose;
 
 class InvoiceTest extends BaseModelTest
 {
@@ -43,9 +44,9 @@ class InvoiceTest extends BaseModelTest
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
-            'BaseImponible' => 1000.00,
+            'BaseImponibleOimporteNoSujeto' => 1000.00,
             'TipoImpositivo' => 21,
-            'Cuota' => 210.00
+            'CuotaRepercutida' => 210.00
         ]);
         $invoice->setDesglose($desglose);
 
@@ -74,7 +75,7 @@ class InvoiceTest extends BaseModelTest
             ->setDescripcionCupon('Descuento promocional');
         // $invoice->setCupon($cupon);
 
-        $xml = $invoice->toXml();
+        $xml = $invoice->toXmlString();
         
         // Debug output
         echo "\nGenerated XML:\n";
@@ -131,9 +132,9 @@ class InvoiceTest extends BaseModelTest
             'Impuesto' => '01',
             'ClaveRegimen' => '02',
             'CalificacionOperacion' => 'S2',
-            'BaseImponible' => 100.00,
+            'BaseImponibleOimporteNoSujeto' => 100.00,
             'TipoImpositivo' => 21,
-            'Cuota' => 21.00
+            'CuotaRepercutida' => 21.00
         ]);
         $invoice->setDesglose($desglose);
 
@@ -156,7 +157,7 @@ class InvoiceTest extends BaseModelTest
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
-        $xml = $invoice->toXml();
+        $xml = $invoice->toXmlString();
         
         // Debug output
         echo "\nGenerated XML:\n";
@@ -211,31 +212,31 @@ class InvoiceTest extends BaseModelTest
             'Impuesto' => '01',
             'ClaveRegimen' => '02',
             'CalificacionOperacion' => 'S2',
-            'BaseImponible' => -100.00,
+            'BaseImponibleOimporteNoSujeto' => -100.00,
             'TipoImpositivo' => 21,
-            'Cuota' => -21.00
+            'CuotaRepercutida' => -21.00
         ]);
         $invoice->setDesglose($desglose);
 
-        // Add FacturaRectificativa
-        $facturaRectificativa = new FacturaRectificativa(
-            'I',  // TipoRectificativa
-            -100.00,  // BaseRectificada
-            -21.00  // CuotaRectificada
-        );
-        $facturaRectificativa->addFacturaRectificada(
-            'B12345678',  // NIF
-            'FAC-2023-001',  // NumSerieFactura
-            '01-01-2023'  // FechaExpedicionFactura
-        );
-        $invoice->setFacturaRectificativa($facturaRectificativa);
-
-        // Add encadenamiento with PrimerRegistro
+        // Add encadenamiento
         $encadenamiento = new Encadenamiento();
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
-        $xml = $invoice->toXml();
+        // Add rectified invoice
+        $facturaRectificativa = new FacturaRectificativa(
+            'I',  // tipoRectificativa
+            -100.00,  // baseRectificada
+            -21.00  // cuotaRectificada
+        );
+        $facturaRectificativa->addFacturaRectificada(
+            'B12345678',  // nif
+            'FAC-2023-001',  // numSerie
+            '01-01-2023'  // fecha
+        );
+        $invoice->setFacturaRectificativa($facturaRectificativa);
+
+        $xml = $invoice->toXmlString();
         
         // Debug output
         echo "\nGenerated XML:\n";
@@ -281,12 +282,15 @@ class InvoiceTest extends BaseModelTest
             ->setNumeroInstalacion('INST-001');
         $invoice->setSistemaInformatico($sistema);
 
-        // Add desglose
+        // Add desglose with correct key names
         $desglose = new Desglose();
         $desglose->setDesgloseIVA([
-            'BaseImponible' => 100.00,
-            'TipoImpositivo' => 21,
-            'Cuota' => 21.00
+            'Impuesto' => '01',
+            'ClaveRegimen' => '02',
+            'CalificacionOperacion' => 'S2',
+            'BaseImponibleOimporteNoSujeto' => 100.00,
+            'TipoImpositivo' => 21.00,
+            'CuotaRepercutida' => 21.00
         ]);
         $invoice->setDesglose($desglose);
 
@@ -295,7 +299,12 @@ class InvoiceTest extends BaseModelTest
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
-        $xml = $invoice->toXml();
+        $xml = $invoice->toXmlString();
+        
+        // Debug output
+        echo "\nGenerated XML:\n";
+        echo $xml;
+        echo "\n\n";
         
         // Validate against XSD
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
@@ -307,6 +316,8 @@ class InvoiceTest extends BaseModelTest
         $this->assertEquals($invoice->getNombreRazonEmisor(), $deserialized->getNombreRazonEmisor());
         $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
         $this->assertEquals($invoice->getFacturaSinIdentifDestinatarioArt61d(), $deserialized->getFacturaSinIdentifDestinatarioArt61d());
+        $this->assertEquals($invoice->getCuotaTotal(), $deserialized->getCuotaTotal());
+        $this->assertEquals($invoice->getImporteTotal(), $deserialized->getImporteTotal());
     }
 
     public function testInvalidXmlThrowsException(): void
@@ -324,7 +335,7 @@ class InvoiceTest extends BaseModelTest
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Missing required field: IDVersion');
         
-        $invoice->toXml();
+        $invoice->toXmlString();
     }
 
     public function test_create_and_serialize_rectification_invoice()
@@ -342,9 +353,12 @@ class InvoiceTest extends BaseModelTest
                 ->setRazonSocial('Empresa Ejemplo SL'))
             ->setDesglose((new Desglose())
                 ->setDesgloseIVA([
-                    'BaseImponible' => 1000.00,
-                    'TipoImpositivo' => 21,
-                    'Cuota' => 210.00
+                    'Impuesto' => '01',
+                    'ClaveRegimen' => '01',
+                    'CalificacionOperacion' => 'S1',
+                    'BaseImponibleOimporteNoSujeto' => 1000.00,
+                    'TipoImpositivo' => 21.00,
+                    'CuotaRepercutida' => 210.00
                 ]))
             ->setCuotaTotal(210)
             ->setImporteTotal(1000)
@@ -380,7 +394,7 @@ class InvoiceTest extends BaseModelTest
         
         $invoice->setFacturaRectificativa($facturaRectificativa);
 
-        $xml = $invoice->toXml();
+        $xml = $invoice->toXmlString();
         
         // Debug output
         echo "\nGenerated XML:\n";
@@ -388,6 +402,15 @@ class InvoiceTest extends BaseModelTest
         echo "\n\n";
 
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+
+        // Test deserialization
+        $deserialized = Invoice::fromXml($xml);
+        $this->assertEquals($invoice->getIdVersion(), $deserialized->getIdVersion());
+        $this->assertEquals($invoice->getIdFactura(), $deserialized->getIdFactura());
+        $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
+        $this->assertEquals($invoice->getTipoRectificativa(), $deserialized->getTipoRectificativa());
+        $this->assertEquals($invoice->getCuotaTotal(), $deserialized->getCuotaTotal());
+        $this->assertEquals($invoice->getImporteTotal(), $deserialized->getImporteTotal());
     }
 
     public function testCreateAndSerializeInvoiceWithMultipleRecipients(): void
@@ -410,28 +433,28 @@ class InvoiceTest extends BaseModelTest
         $destinatario1 = new PersonaFisicaJuridica();
         $destinatario1
             ->setNif('B87654321')
-            ->setNombreRazon('Cliente 1 SL');  // Changed from setRazonSocial to setNombreRazon
+            ->setNombreRazon('Cliente 1 SL');
         $destinatarios[] = $destinatario1;
 
         $destinatario2 = new PersonaFisicaJuridica();
         $destinatario2
-            ->setPais('FR')  // French company
-            ->setTipoIdentificacion('02')  // NIF-IVA (VAT number)
-            ->setIdOtro('FR12345678901')  // French VAT number
-            ->setNombreRazon('Client 2 SARL');  // French company name
+            ->setPais('FR')
+            ->setTipoIdentificacion('02')
+            ->setIdOtro('FR12345678901')
+            ->setNombreRazon('Client 2 SARL');
         $destinatarios[] = $destinatario2;
 
         $invoice->setDestinatarios($destinatarios);
 
-        // Add desglose with proper structure
+        // Add desglose with proper structure and correct key names
         $desglose = new Desglose();
         $desglose->setDesgloseIVA([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
             'CalificacionOperacion' => 'S1',
-            'BaseImponible' => 200.00,
+            'BaseImponibleOimporteNoSujeto' => 200.00,
             'TipoImpositivo' => 21.00,
-            'Cuota' => 42.00
+            'CuotaRepercutida' => 42.00
         ]);
         $invoice->setDesglose($desglose);
 
@@ -454,7 +477,15 @@ class InvoiceTest extends BaseModelTest
             ->setIndicadorMultiplesOT('S');
         $invoice->setSistemaInformatico($sistema);
 
-        $xml = $invoice->toXml();
+        // Generate XML string
+        $xml = $invoice->toXmlString();
+        
+        // Debug output
+        echo "\nGenerated XML:\n";
+        echo $xml;
+        echo "\n\n";
+
+        // Validate against XSD
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
         // Test deserialization
@@ -493,10 +524,10 @@ class InvoiceTest extends BaseModelTest
         $desglose->setDesgloseIVA([
             'Impuesto' => '01',
             'ClaveRegimen' => '01',
-            'OperacionExenta' => 'E1',
-            'BaseImponible' => 100.00,
+            'CalificacionOperacion' => 'N1',
+            'BaseImponibleOimporteNoSujeto' => 100.00,
             'TipoImpositivo' => 0,
-            'Cuota' => 0.00
+            'CuotaRepercutida' => 0.00
         ]);
         $invoice->setDesglose($desglose);
 
@@ -519,7 +550,14 @@ class InvoiceTest extends BaseModelTest
             ->setIndicadorMultiplesOT('S');
         $invoice->setSistemaInformatico($sistema);
 
-        $xml = $invoice->toXml();
+        // Generate XML string
+        $xml = $invoice->toXmlString();
+        
+        // Debug output
+        echo "\nGenerated XML:\n";
+        echo $xml;
+        echo "\n\n";
+        
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
         // Test deserialization
@@ -582,7 +620,14 @@ class InvoiceTest extends BaseModelTest
             ->setIndicadorMultiplesOT('S');
         $invoice->setSistemaInformatico($sistema);
 
-        $xml = $invoice->toXml();
+        // Generate XML string
+        $xml = $invoice->toXmlString();
+        
+        // Debug output
+        echo "\nGenerated XML:\n";
+        echo $xml;
+        echo "\n\n";
+        
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
         // Test deserialization
@@ -637,7 +682,8 @@ class InvoiceTest extends BaseModelTest
             ->setIndicadorMultiplesOT('S');
         $invoice->setSistemaInformatico($sistema);
 
-        $xml = $invoice->toXml();
+        // Generate XML string
+        $xml = $invoice->toXmlString();
         
         // Debug output
         echo "\nGenerated XML:\n";
@@ -659,15 +705,22 @@ class InvoiceTest extends BaseModelTest
             ->setIdFactura('FAC-2023-009')
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
-            ->setEmitidaPorTerceroODestinatario('T')
             ->setDescripcionOperacion('Factura emitida por tercero')
+            ->setEmitidaPorTerceroODestinatario('T')
             ->setCuotaTotal(21.00)
             ->setImporteTotal(100.00)
             ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
             ->setTipoHuella('01')
             ->setHuella('abc123...');
 
-        // Add desglose with proper structure
+        // Set up the third party issuer
+        $tercero = new PersonaFisicaJuridica();
+        $tercero
+            ->setNif('B98765432')
+            ->setRazonSocial('Tercero Emisor SL');
+        $invoice->setTercero($tercero);
+
+        // Add desglose
         $desglose = new Desglose();
         $desglose->setDesgloseIVA([
             'Impuesto' => '01',
@@ -678,13 +731,6 @@ class InvoiceTest extends BaseModelTest
             'Cuota' => 21.00
         ]);
         $invoice->setDesglose($desglose);
-
-        // Add third party with proper structure
-        $tercero = new PersonaFisicaJuridica();
-        $tercero
-            ->setRazonSocial('Tercero Emisor SL')
-            ->setNif('B98765432');
-        $invoice->setTercero($tercero);
 
         // Add encadenamiento (required)
         $encadenamiento = new Encadenamiento();
@@ -705,7 +751,8 @@ class InvoiceTest extends BaseModelTest
             ->setIndicadorMultiplesOT('S');
         $invoice->setSistemaInformatico($sistema);
 
-        $xml = $invoice->toXml();
+        // Generate XML string
+        $xml = $invoice->toXmlString();
         
         // Debug output
         echo "\nGenerated XML:\n";
@@ -768,7 +815,14 @@ class InvoiceTest extends BaseModelTest
         $encadenamiento->setPrimerRegistro('S');
         $invoice->setEncadenamiento($encadenamiento);
 
-        $xml = $invoice->toXml();
+        // Generate XML string
+        $xml = $invoice->toXmlString();
+        
+        // Debug output
+        echo "\nGenerated XML:\n";
+        echo $xml;
+        echo "\n\n";
+        
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
         // Test deserialization
@@ -776,26 +830,43 @@ class InvoiceTest extends BaseModelTest
         $this->assertEquals('S', $deserialized->getMacrodato());
     }
 
-    public function testCreateAndSerializeInvoiceWithDigitalSignature(): void
+    public function testCreateAndSerializeInvoiceWithAgreementData(): void
     {
         $invoice = new Invoice();
-        $invoice
-            ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-011')
+        $invoice->setIdVersion('1.0')
+            ->setIdFactura('FAC-2023-012')
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
-            ->setDescripcionOperacion('Factura con firma digital')
-            ->setCuotaTotal(21.00)
-            ->setImporteTotal(100.00)
+            ->setDescripcionOperacion('Factura con datos de acuerdo')
+            ->setCuotaTotal(21)
+            ->setImporteTotal(100)
             ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
             ->setTipoHuella('01')
-            ->setHuella('abc123...');
+            ->setHuella('abc123...')
+            ->setNumRegistroAcuerdoFacturacion('REG-001')
+            ->setIdAcuerdoSistemaInformatico('AGR-001');
 
-        // Add sistema informatico with all required fields
+        // Set up Desglose
+        $desglose = new Desglose();
+        $desglose->setDesgloseIVA([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '02',
+            'CalificacionOperacion' => 'S2',
+            'BaseImponible' => 100.00,
+            'TipoImpositivo' => 21.00,
+            'Cuota' => 21.00
+        ]);
+        $invoice->setDesglose($desglose);
+
+        // Set up Encadenamiento
+        $encadenamiento = new Encadenamiento();
+        $encadenamiento->setPrimerRegistro('S');
+        $invoice->setEncadenamiento($encadenamiento);
+
+        // Set up SistemaInformatico
         $sistema = new SistemaInformatico();
-        $sistema
-            ->setNombreRazon('Sistema de Facturación')
-            ->setNif('B12345678')
+        $sistema->setNombreRazon('Sistema de Facturación')
+            ->setNIF('B12345678')
             ->setNombreSistemaInformatico('SistemaFacturacion')
             ->setIdSistemaInformatico('01')
             ->setVersion('1.0')
@@ -805,142 +876,69 @@ class InvoiceTest extends BaseModelTest
             ->setIndicadorMultiplesOT('S');
         $invoice->setSistemaInformatico($sistema);
 
-        // Add desglose with proper structure
-        $desglose = new Desglose();
-        $desglose->setDesgloseIVA([
-            'Impuesto' => '01',
-            'ClaveRegimen' => '02',
-            'CalificacionOperacion' => 'S2',
-            'BaseImponible' => 100.00,
-            'TipoImpositivo' => 21,
-            'Cuota' => 21.00
-        ]);
-        $invoice->setDesglose($desglose);
-
-        // Add encadenamiento (required)
-        $encadenamiento = new Encadenamiento();
-        $encadenamiento->setPrimerRegistro('S');
-        $invoice->setEncadenamiento($encadenamiento);
-
-        // Set up paths for certificates
-        $certsPath = dirname(__DIR__) . '/certs/';
-        $privateKeyPath = $certsPath . 'private.pem';
-        $publicKeyPath = $certsPath . 'public.pem';
-        $certificatePath = $certsPath . 'certificate.pem';
-
-        // Check if certificate files exist and are readable
-        foreach (['private.pem', 'public.pem', 'certificate.pem'] as $file) {
-            $path = $certsPath . $file;
-            echo "\n$file: ";
-            if (!file_exists($path)) {
-                echo "MISSING";
-                throw new \RuntimeException("Certificate file $file does not exist at $path");
-            }
-            if (!is_readable($path)) {
-                echo "NOT READABLE";
-                throw new \RuntimeException("Certificate file $file is not readable at $path");
-            }
-            echo "OK (size: " . filesize($path) . " bytes)";
-        }
-
-        // Set the keys
-        $invoice->setPrivateKeyPath($privateKeyPath)
-                ->setPublicKeyPath($publicKeyPath)
-                ->setCertificatePath($certificatePath);
-
-        // Generate signed XML
-        $xml = $invoice->toXml();
-
-        // Debug output
-        echo "\nGenerated XML with signature:\n";
-        echo $xml;
-        echo "\n\n";
-
-        // Load the XML into a DOMDocument for verification
-        $doc = new \DOMDocument();
-        $doc->loadXML($xml);
-
-        // Verify the signature
-        $this->assertTrue($invoice->verifySignature($doc));
-
-        // Skip schema validation for signed XML since the signature schema is not part of the core invoice schema
-        // Instead, validate the XML before signing
-        $unsignedXml = $invoice->toXml(false);
-        $this->assertValidatesAgainstXsd($unsignedXml, $this->getTestXsdPath());
-    }
-
-    public function testCreateAndSerializeInvoiceWithAgreementData(): void
-    {
-        $invoice = new Invoice();
-        $invoice
-            ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-012')
-            ->setNombreRazonEmisor('Empresa Ejemplo SL')
-            ->setTipoFactura('F1')
-            ->setDescripcionOperacion('Factura con datos de acuerdo')
-            ->setCuotaTotal(21.00)
-            ->setImporteTotal(100.00)
-            ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
-            ->setTipoHuella('01')
-            ->setHuella('abc123...')
-            ->setNumRegistroAcuerdoFacturacion('REG-001')
-            ->setIdAcuerdoSistemaInformatico('AGR-001');
-
-        // Add sistema informatico
-        $sistema = new SistemaInformatico();
-        $sistema
-            ->setNombreRazon('Sistema de Facturación')
-            ->setNif('B12345678')
-            ->setNombreSistemaInformatico('SistemaFacturacion')
-            ->setIdSistemaInformatico('01')
-            ->setVersion('1.0')
-            ->setNumeroInstalacion('INST-001');
-        $invoice->setSistemaInformatico($sistema);
-
-        $xml = $invoice->toXml();
+        $xml = $invoice->toXmlString();
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
-        // Test deserialization
-        $deserialized = Invoice::fromXml($xml);
-        $this->assertEquals('REG-001', $deserialized->getNumRegistroAcuerdoFacturacion());
-        $this->assertEquals('AGR-001', $deserialized->getIdAcuerdoSistemaInformatico());
+        // Deserialize and verify
+        $deserializedInvoice = Invoice::fromXml($xml);
+        $this->assertEquals('REG-001', $deserializedInvoice->getNumRegistroAcuerdoFacturacion());
+        $this->assertEquals('AGR-001', $deserializedInvoice->getIdAcuerdoSistemaInformatico());
     }
 
-    public function testCreateAndSerializeInvoiceWithRejectionAndCorrection(): void
+    public function testCreateAndSerializeInvoiceWithRejectionAndCorrection()
     {
         $invoice = new Invoice();
-        $invoice
-            ->setIdVersion('1.0')
+        $invoice->setIdVersion('1.0')
             ->setIdFactura('FAC-2023-013')
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
-            ->setTipoFactura('F1')
-            ->setRechazoPrevio('S')
             ->setSubsanacion('S')
+            ->setRechazoPrevio('S')
+            ->setTipoFactura('F1')
             ->setDescripcionOperacion('Factura con rechazo y subsanación')
-            ->setCuotaTotal(21.00)
-            ->setImporteTotal(100.00)
+            ->setCuotaTotal(21)
+            ->setImporteTotal(100)
             ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
             ->setTipoHuella('01')
             ->setHuella('abc123...');
 
-        // Add sistema informatico
-        $sistema = new SistemaInformatico();
-        $sistema
-            ->setNombreRazon('Sistema de Facturación')
+        // Add proper Desglose
+        $desglose = new Desglose();
+        $desglose->setDesgloseFactura([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '02',
+            'CalificacionOperacion' => 'S2',
+            'TipoImpositivo' => 21.00,
+            'BaseImponible' => 100.00,
+            'Cuota' => 21.00
+        ]);
+        $invoice->setDesglose($desglose);
+
+        // Add proper Encadenamiento
+        $encadenamiento = new Encadenamiento();
+        $encadenamiento->setPrimerRegistro('S');
+        $invoice->setEncadenamiento($encadenamiento);
+
+        // Add SistemaInformatico
+        $sistemaInformatico = new SistemaInformatico();
+        $sistemaInformatico->setNombreRazon('Sistema de Facturación')
             ->setNif('B12345678')
             ->setNombreSistemaInformatico('SistemaFacturacion')
             ->setIdSistemaInformatico('01')
             ->setVersion('1.0')
-            ->setNumeroInstalacion('INST-001');
-        $invoice->setSistemaInformatico($sistema);
+            ->setNumeroInstalacion('INST-001')
+            ->setTipoUsoPosibleSoloVerifactu('S')
+            ->setTipoUsoPosibleMultiOT('S')
+            ->setIndicadorMultiplesOT('S');
+        $invoice->setSistemaInformatico($sistemaInformatico);
 
-        $xml = $invoice->toXml();
+        $xml = $invoice->toXmlString();
+        $this->assertNotEmpty($xml);
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
         // Test deserialization
-        $deserialized = Invoice::fromXml($xml);
-        $this->assertEquals('S', $deserialized->getRechazoPrevio());
-        $this->assertEquals('S', $deserialized->getSubsanacion());
+        $deserializedInvoice = Invoice::fromXml($xml);
+        $this->assertEquals('S', $deserializedInvoice->getSubsanacion());
+        $this->assertEquals('S', $deserializedInvoice->getRechazoPrevio());
     }
 
     public function testCreateAndSerializeInvoiceWithOperationDate(): void
@@ -970,7 +968,31 @@ class InvoiceTest extends BaseModelTest
             ->setNumeroInstalacion('INST-001');
         $invoice->setSistemaInformatico($sistema);
 
-        $xml = $invoice->toXml();
+        // Add Desglose
+        $desglose = new Desglose();
+        $desglose->setDesgloseFactura([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '02',
+            'CalificacionOperacion' => 'S2',
+            'TipoImpositivo' => '21.00',
+            'BaseImponibleOimporteNoSujeto' => '100.00',
+            'CuotaRepercutida' => '21.00'
+        ]);
+        $invoice->setDesglose($desglose);
+
+        // Add Encadenamiento
+        $encadenamiento = new Encadenamiento();
+        $encadenamiento->setPrimerRegistro('S');
+        $invoice->setEncadenamiento($encadenamiento);
+
+        // Generate XML string
+        $xml = $invoice->toXmlString();
+        
+        // Debug output
+        echo "\nGenerated XML:\n";
+        echo $xml;
+        echo "\n\n";
+        
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
         // Test deserialization
@@ -1013,7 +1035,14 @@ class InvoiceTest extends BaseModelTest
             ->setNumeroInstalacion('INST-001');
         $invoice->setSistemaInformatico($sistema);
 
-        $xml = $invoice->toXml();
+        // Generate XML string
+        $xml = $invoice->toXmlString();
+        
+        // Debug output
+        echo "\nGenerated XML:\n";
+        echo $xml;
+        echo "\n\n";
+        
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
         // Test deserialization
@@ -1050,7 +1079,7 @@ class InvoiceTest extends BaseModelTest
             ->setNumeroInstalacion('INST-001');
         $invoice->setSistemaInformatico($sistema);
 
-        $invoice->toXml();
+        $invoice->toXmlString();
     }
 
     public function testInvalidTipoRectificativaThrowsException(): void
@@ -1082,7 +1111,7 @@ class InvoiceTest extends BaseModelTest
             ->setNumeroInstalacion('INST-001');
         $invoice->setSistemaInformatico($sistema);
 
-        $invoice->toXml();
+        $invoice->toXmlString();
     }
 
     public function testInvalidDateFormatThrowsException(): void
@@ -1113,7 +1142,7 @@ class InvoiceTest extends BaseModelTest
             ->setNumeroInstalacion('INST-001');
         $invoice->setSistemaInformatico($sistema);
 
-        $invoice->toXml();
+        $invoice->toXmlString();
     }
 
     public function testInvalidNIFFormatThrowsException(): void
@@ -1151,7 +1180,7 @@ class InvoiceTest extends BaseModelTest
             ->setNumeroInstalacion('INST-001');
         $invoice->setSistemaInformatico($sistema);
 
-        $invoice->toXml();
+        $invoice->toXmlString();
     }
 
     public function testInvalidAmountFormatThrowsException(): void
@@ -1182,7 +1211,7 @@ class InvoiceTest extends BaseModelTest
             ->setNumeroInstalacion('INST-001');
         $invoice->setSistemaInformatico($sistema);
 
-        $invoice->toXml();
+        $invoice->toXmlString();
     }
 
     public function testInvalidSchemaThrowsException(): void
@@ -1253,7 +1282,7 @@ class InvoiceTest extends BaseModelTest
                 ->setCertificatePath($certificatePath);
 
         // Generate signed XML
-        $xml = $invoice->toXml();
+        $xml = $invoice->toXmlString();
 
         // Debug output
         echo "\nGenerated XML with signature:\n";

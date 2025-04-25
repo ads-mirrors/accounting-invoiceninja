@@ -11,13 +11,9 @@ class Desglose extends BaseXmlModel
     protected ?array $desgloseIRPF = null;
     protected ?array $desgloseIS = null;
 
-    public function toXml(): string
+    public function toXml(\DOMDocument $doc): \DOMElement
     {
-        $doc = new \DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput = true;
-
         $root = $this->createElement($doc, 'Desglose');
-        $doc->appendChild($root);
 
         // Create DetalleDesglose element
         $detalleDesglose = $this->createElement($doc, 'DetalleDesglose');
@@ -49,8 +45,10 @@ class Desglose extends BaseXmlModel
             }
 
             // Add BaseImponibleOimporteNoSujeto (required)
-            $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', 
-                number_format($this->desgloseFactura['BaseImponible'], 2, '.', '')));
+            if (isset($this->desgloseFactura['BaseImponibleOimporteNoSujeto'])) {
+                $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', 
+                    number_format($this->desgloseFactura['BaseImponibleOimporteNoSujeto'], 2, '.', '')));
+            }
 
             // Add BaseImponibleACoste if present
             if (isset($this->desgloseFactura['BaseImponibleACoste'])) {
@@ -59,9 +57,9 @@ class Desglose extends BaseXmlModel
             }
 
             // Add CuotaRepercutida if present
-            if (isset($this->desgloseFactura['Cuota'])) {
+            if (isset($this->desgloseFactura['CuotaRepercutida'])) {
                 $detalleDesglose->appendChild($this->createElement($doc, 'CuotaRepercutida', 
-                    number_format($this->desgloseFactura['Cuota'], 2, '.', '')));
+                    number_format($this->desgloseFactura['CuotaRepercutida'], 2, '.', '')));
             }
 
             // Add TipoRecargoEquivalencia if present
@@ -95,13 +93,15 @@ class Desglose extends BaseXmlModel
             }
 
             // Add BaseImponibleOimporteNoSujeto (required)
-            $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', 
-                number_format($this->desgloseIVA['BaseImponible'], 2, '.', '')));
+            if (isset($this->desgloseIVA['BaseImponibleOimporteNoSujeto'])) {
+                $detalleDesglose->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', 
+                    number_format($this->desgloseIVA['BaseImponibleOimporteNoSujeto'], 2, '.', '')));
+            }
 
             // Add CuotaRepercutida if present
-            if (isset($this->desgloseIVA['Cuota'])) {
+            if (isset($this->desgloseIVA['CuotaRepercutida'])) {
                 $detalleDesglose->appendChild($this->createElement($doc, 'CuotaRepercutida', 
-                    number_format($this->desgloseIVA['Cuota'], 2, '.', '')));
+                    number_format($this->desgloseIVA['CuotaRepercutida'], 2, '.', '')));
             }
         }
 
@@ -110,7 +110,7 @@ class Desglose extends BaseXmlModel
             $root->appendChild($detalleDesglose);
         }
 
-        return $doc->saveXML();
+        return $root;
     }
 
     public static function fromDOMElement(\DOMElement $element): self
