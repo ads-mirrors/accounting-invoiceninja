@@ -757,9 +757,9 @@ class InvoiceTest extends TestCase
         $xml = $invoice->toXmlString();
         
         // Debug output
-        echo "\nGenerated XML:\n";
-        echo $xml;
-        echo "\n\n";
+        // echo "\nGenerated XML:\n";
+        // echo $xml;
+        // echo "\n\n";
         
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
@@ -821,9 +821,9 @@ class InvoiceTest extends TestCase
         $xml = $invoice->toXmlString();
         
         // Debug output
-        echo "\nGenerated XML:\n";
-        echo $xml;
-        echo "\n\n";
+        // echo "\nGenerated XML:\n";
+        // echo $xml;
+        // echo "\n\n";
         
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
@@ -990,10 +990,10 @@ class InvoiceTest extends TestCase
         // Generate XML string
         $xml = $invoice->toXmlString();
         
-        // Debug output
-        echo "\nGenerated XML:\n";
-        echo $xml;
-        echo "\n\n";
+        // // Debug output
+        // echo "\nGenerated XML:\n";
+        // echo $xml;
+        // echo "\n\n";
         
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
@@ -1050,9 +1050,9 @@ class InvoiceTest extends TestCase
         $xml = $invoice->toXmlString();
         
         // Debug output
-        echo "\nGenerated XML:\n";
-        echo $xml;
-        echo "\n\n";
+        // echo "\nGenerated XML:\n";
+        // echo $xml;
+        // echo "\n\n";
         
         $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
 
