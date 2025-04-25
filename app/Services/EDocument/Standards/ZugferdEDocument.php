@@ -467,7 +467,7 @@ class ZugferdEDocument extends AbstractService
     private function setBaseDocument(): self
     {
 
-        $user_or_company_phone = strlen($this->document->user->present()->phone()) > 3 ? $this->document->user->present()->phone() : $this->company->present()->phone();
+        $user_or_company_phone = strlen($this->company->present()->phone()) > 3 ? $this->company->present()->phone() : $this->document->user->present()->phone();
 
         $company_tax_registration = $this->setCompanyTaxRegistration();
 
