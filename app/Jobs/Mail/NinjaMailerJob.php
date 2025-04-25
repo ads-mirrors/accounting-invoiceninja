@@ -249,8 +249,19 @@ class NinjaMailerJob implements ShouldQueue
 
             if ($e instanceof PostmarkException) { //postmark specific failure
 
+                                
+                try {
+                    $response = json_decode($e->getMessage(), true);
+                    if (is_array($response) && isset($response['Message'])) {
+                        $message = $response['Message'];
+                    }
+                } catch (\Exception $jsonError) {
+                    // If JSON decode fails, use the original message
+                    $message = "Unknown issue sending via Postmark, please try again later.";
+                }
+
                 $this->fail();
-                $this->entityEmailFailed($e->getMessage());
+                $this->entityEmailFailed($message);
                 $this->cleanUpMailers();
 
                 return;

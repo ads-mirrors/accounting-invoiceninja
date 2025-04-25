@@ -370,17 +370,26 @@ class Email implements ShouldQueue
 
             }
 
-           
-
             /**
              * Post mark buries the proper message in a guzzle response
              * this merges a text string with a json object
              * need to harvest the ->Message property using the following
              */
             if ($e instanceof PostmarkException) { //postmark specific failure
+                
+                // Try to decode the JSON response if present
+                try {
+                    $response = json_decode($e->getMessage(), true);
+                    if (is_array($response) && isset($response['Message'])) {
+                        $message = $response['Message'];
+                    }
+                } catch (\Exception $jsonError) {
+                    // If JSON decode fails, use the original message
+                    $message = "Unknown issue sending via Postmark, please try again later.";
+                }
 
                 $this->fail();
-                $this->entityEmailFailed($e->getMessage());
+                $this->entityEmailFailed($message);
                 $this->cleanUpMailers();
 
                 return;
