@@ -153,7 +153,7 @@ class NinjaMailerJob implements ShouldQueue
 
             $this->incrementEmailCounter();
 
-            LightLogs::create(new EmailSuccess($this->nmo->company->company_key, $this->nmo->mailable->subject))
+            LightLogs::create(new EmailSuccess($this->nmo->company->company_key, $this->nmo->mailable->subject, $this->nmo->mailable->viewData['text_body'] ?? ''))
                 ->send();
 
         } catch (\Symfony\Component\Mailer\Exception\TransportException $e) {
