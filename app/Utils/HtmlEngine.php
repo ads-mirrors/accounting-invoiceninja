@@ -129,7 +129,7 @@ class HtmlEngine
         $t->replace(Ninja::transformTranslations($this->settings));
 
         $locationData = $this->entity->service()->location();
-        
+
         $data = [];
 
         $data['$date_client_now'] = ['value' => now()->setTimezone($this->client->timezone()->name)->addSeconds($this->client->utc_offset())->format($this->client->date_format()), 'label' => ''];
@@ -241,7 +241,7 @@ class HtmlEngine
             if (strlen($this->company->getSetting('qr_iban')) > 5) {
                 try {
                     $data['$swiss_qr'] = ['value' => (new SwissQrGenerator($this->entity, $this->company))->run(), 'label' => ''];
-                    $data['$swiss_qr_raw'] = ['value' => html_entity_decode($data['$swiss_qr']['value']), 'label' => '']; 
+                    $data['$swiss_qr_raw'] = ['value' => html_entity_decode($data['$swiss_qr']['value']), 'label' => ''];
                 } catch (\Exception $e) {
                     $data['$swiss_qr'] = ['value' => '', 'label' => ''];
                     $data['$swiss_qr_raw'] = ['value' => '', 'label' => ''];
@@ -679,7 +679,7 @@ class HtmlEngine
             $data['$contact.signature'] = ['value' => '', 'label' => ''];
         }
 
-        if($this->entity->quote){
+        if ($this->entity->quote) {
             $data['$quote.reference'] = ['value' => $this->entity->quote->number ?: '&nbsp;', 'label' => ctrans('texts.quote_number')];
         }
 
@@ -970,7 +970,7 @@ class HtmlEngine
 
         return $country ? $country->iso_3166_2 : ' ';
     }
-   
+
     private function lineTaxValues(): string
     {
         $tax_map = $this->entity_calc->getTaxMap();

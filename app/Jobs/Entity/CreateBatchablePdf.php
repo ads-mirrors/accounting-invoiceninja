@@ -22,7 +22,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 
 class CreateBatchablePdf implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, SerializesModels;
+    use Batchable;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use SerializesModels;
 
     private $batch_key;
 
@@ -39,7 +42,7 @@ class CreateBatchablePdf implements ShouldQueue
 
     public function handle()
     {
-        \App\Libraries\MultiDB::setDb($this->invitation->company->db);  
+        \App\Libraries\MultiDB::setDb($this->invitation->company->db);
 
         $pdf = (new CreateRawPdf($this->invitation))->handle();
 

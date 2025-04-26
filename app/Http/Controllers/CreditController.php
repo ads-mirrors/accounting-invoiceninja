@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -216,7 +217,7 @@ class CreditController extends BaseController
             // $credit->client->service()->updatePaidToDate(-1 * $credit->balance)->save(); // If we mutate the paid to date, we need to reverse the status of the invoice, this will allow the credit note that has been created to be used and double paid to dates prevented.
             $credit->client->service()->updateBalanceAndPaidToDate(-1 * ($credit->invoice->balance ?? 0), -1 * $credit->balance)->save();
             // $invoice = $credit->invoice;
-            
+
             $invoice = \App\Models\Invoice::withTrashed()->find($credit->invoice_id);
             if ($invoice) {
                 $invoice->status_id = Invoice::STATUS_REVERSED;
@@ -529,7 +530,7 @@ class CreditController extends BaseController
         if (Ninja::isHosted()  && $user->account->emailQuotaExceeded()) {
             return response(['message' => ctrans('texts.email_quota_exceeded_subject')], 400);
         }
-        
+
         if ($user->hasExactPermission('disable_emails') && (stripos($action, 'email') !== false)) {
             return response(['message' => ctrans('texts.disable_emails_error')], 400);
         }

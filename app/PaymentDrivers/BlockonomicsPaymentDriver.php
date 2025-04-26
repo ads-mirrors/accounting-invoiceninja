@@ -211,14 +211,14 @@ class BlockonomicsPaymentDriver extends BaseDriver
         try {
             $api_key = $this->company_gateway->getConfigField('apiKey');
 
-            if(!$api_key) {
+            if (!$api_key) {
                 return 'No API Key';
             }
             $get_stores_response = Http::withToken($api_key)
                 ->get($this->STORES_URL, ['wallets' => 'true']);
             $get_stores_response_status = $get_stores_response->status();
 
-            if($get_stores_response_status == 401) {
+            if ($get_stores_response_status == 401) {
                 return 'API Key is incorrect';
             }
 

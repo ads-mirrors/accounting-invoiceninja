@@ -12,7 +12,7 @@
 
 namespace App\Services\Pdf;
 
-class Markdown  
+class Markdown
 {
     public static function parse(string $markdown): string
     {

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -53,15 +54,16 @@ class AutoBill implements ShouldQueue
         }
         $invoice = false;
 
-        
+
         try {
-            
+
             nlog("autobill {$this->invoice_id}");
-            
+
             $invoice = Invoice::withTrashed()->find($this->invoice_id);
-            
-            if($invoice)
+
+            if ($invoice) {
                 $invoice->service()->autoBill();
+            }
 
         } catch (\Exception $e) {
             nlog("Failed to capture payment for {$this->invoice_id} ->".$e->getMessage());
@@ -69,7 +71,7 @@ class AutoBill implements ShouldQueue
             if ($this->send_email_on_failure && $invoice) {
 
                 $invoice->invitations->each(function ($invitation) use ($invoice) {
-                    
+
                     //2025-04-06 additional conditional check to prevent duplicate emails from being sent.
                     if ($invitation->contact && !$invitation->contact->trashed() && strlen($invitation->contact->email) >= 1 && $invoice->client->getSetting('auto_email_invoice') && !$invitation->contact->is_locked && $invoice->client->getSetting('client_online_payment_notification')) {
                         try {

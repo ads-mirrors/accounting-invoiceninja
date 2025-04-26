@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -82,7 +83,7 @@ class ClientService
         //         $this->client = Client::withTrashed()->where('id', $this->client->id)->lockForUpdate()->first();
         //         $this->client->balance += $amount;
         //         $this->client->saveQuietly();
-        //     }, 2); 
+        //     }, 2);
         // } catch (\Throwable $throwable) {
 
         //     if (DB::connection(config('database.default'))->transactionLevel() > 0) {

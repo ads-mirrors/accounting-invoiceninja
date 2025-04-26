@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -712,7 +713,7 @@ class Client extends BaseModel implements HasLocalePreference
         }
 
         if (in_array($this->currency()->code, ['USD']) && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
-        // if (in_array($this->currency()->code, ['CAD','USD']) && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
+            // if (in_array($this->currency()->code, ['CAD','USD']) && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
             // if ($this->currency()->code == 'CAD' && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
             foreach ($pms as $pm) {
                 if ($pm['gateway_type_id'] == GatewayType::ACSS) {
@@ -1035,31 +1036,33 @@ class Client extends BaseModel implements HasLocalePreference
     {
         return $this->getSetting('e_invoice_type') == 'PEPPOL' && $this->company->peppolSendingEnabled() && is_null($this->checkDeliveryNetwork());
     }
-    
+
     /**
      * checkDeliveryNetwork
      *
      * Checks whether the client country is supported
      * for sending over the PEPPOL network.
-     * 
+     *
      * @return string|null
      */
     public function checkDeliveryNetwork(): ?string
     {
 
-        if(!isset($this->country->iso_3166_2))
+        if (!isset($this->country->iso_3166_2)) {
             return "Client has no country set!";
-        
+        }
+
         $br = new \App\DataMapper\Tax\BaseRule();
 
         $government_countries = array_merge($br->peppol_business_countries, $br->peppol_government_countries);
 
-        if(in_array($this->country->iso_3166_2, $government_countries) && $this->classification == 'government'){
+        if (in_array($this->country->iso_3166_2, $government_countries) && $this->classification == 'government') {
             return null;
         }
 
-        if(in_array($this->country->iso_3166_2, $br->peppol_business_countries))
+        if (in_array($this->country->iso_3166_2, $br->peppol_business_countries)) {
             return null;
+        }
 
         return "Country {$this->country->full_name} ( {$this->country->iso_3166_2} ) is not supported by the PEPPOL network for e-delivery.";
 

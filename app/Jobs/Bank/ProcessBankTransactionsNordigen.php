@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Credit Ninja (https://invoiceninja.com).
  *
@@ -89,7 +90,7 @@ class ProcessBankTransactionsNordigen implements ShouldQueue
             sleep(1);
             throw $e;
         }
-        
+
         if (!$this->nordigen_account) {
             return;
         }

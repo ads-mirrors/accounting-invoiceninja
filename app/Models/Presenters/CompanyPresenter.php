@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -94,7 +95,7 @@ class CompanyPresenter extends EntityPresenter
 
     public function logoFile($settings)
     {
-        
+
         $context_options = [
             "ssl" => [
                "verify_peer" => false,

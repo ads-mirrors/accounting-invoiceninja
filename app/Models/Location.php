@@ -60,12 +60,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read \App\Models\Vendor|null $vendor
  * @property-read \App\Models\Company $company
  * @property-read \App\Models\Country|null $country
- * 
+ *
  * @mixin \Eloquent
  */
 class Location extends BaseModel
 {
-    
     use SoftDeletes;
     use Filterable;
     use Excludable;

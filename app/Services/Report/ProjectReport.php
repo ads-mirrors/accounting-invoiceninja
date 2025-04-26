@@ -65,11 +65,11 @@ class ProjectReport extends BaseExport
 
         $query = \App\Models\Project::with(['invoices','expenses','tasks'])
                                 ->where('company_id', $this->company->id);
-                     
+
         $projects = &$this->input['projects'];
 
         if ($projects) {
-  
+
             $transformed_projects = is_string($projects) ? $this->transformKeys(explode(',', $projects)) : $this->transformKeys($projects);
 
             if (count($transformed_projects) > 0) {
@@ -77,7 +77,7 @@ class ProjectReport extends BaseExport
             }
 
         }
-        
+
         $clients = &$this->input['clients'];
 
         if ($clients) {
@@ -114,7 +114,7 @@ class ProjectReport extends BaseExport
     // private function getTaskAllocationData(Project $project)
     // {
     //     $tasks = $project->tasks()->withTrashed()->map(function ($task) {
-            
+
     //         return [
     //             'label' => strlen($task->description ?? '') > 0 ? $task->description : $task->number,
     //             'hours' => ($task->calcDuration() / 3600)
@@ -123,11 +123,11 @@ class ProjectReport extends BaseExport
     //     });
 
     //     $taskAllocationData = [
-    //         'labels' => $tasks->pluck('label'), 
+    //         'labels' => $tasks->pluck('label'),
     //         'datasets' => [
     //             [
     //                 'label' => 'Hours Spent',
-    //                 'data' => $tasks->pluck('hours'), 
+    //                 'data' => $tasks->pluck('hours'),
     //                 'backgroundColor' => 'rgba(54, 162, 235, 0.2)',
     //                 'borderColor' => 'rgba(54, 162, 235, 1)',
     //                 'borderWidth' => 1

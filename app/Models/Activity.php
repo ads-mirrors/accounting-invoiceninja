@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -278,7 +279,7 @@ class Activity extends StaticModel
     public const E_EXPENSE_CREATED = 148;
 
     public const EMAIL_CREDIT = 149;
-    
+
     protected $casts = [
         'is_system' => 'boolean',
         'updated_at' => 'timestamp',

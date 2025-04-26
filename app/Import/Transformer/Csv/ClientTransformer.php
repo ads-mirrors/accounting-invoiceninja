@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -34,9 +35,10 @@ class ClientTransformer extends BaseTransformer
             throw new ImportException('Client already exists');
         }
 
-        if(!is_array($data))
+        if (!is_array($data)) {
             throw new ImportException('Empty row, or invalid data encountered.');
-        
+        }
+
         $settings = ClientSettings::defaults();
         $settings->currency_id = (string) $this->getCurrencyByCode($data);
 

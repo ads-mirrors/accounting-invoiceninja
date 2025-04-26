@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -261,7 +262,7 @@ class FacturaEInvoice extends AbstractService
                     $name = $pm->PayeeFinancialAccount->Name ?? '';
                     $bic = $pm->PayeeFinancialAccount->FinancialInstitutionBranch->FinancialInstitution->ID->value ?? '';
                     $typecode = $pm->PaymentMeansCode->value;
-                    
+
 
                     $this->fac->addPayment(new FacturaePayment([
                                         "method"  => FacturaePayment::TYPE_TRANSFER,
@@ -372,7 +373,7 @@ class FacturaEInvoice extends AbstractService
 
 
     // }
-    
+
     /**
      * buildItems
      *

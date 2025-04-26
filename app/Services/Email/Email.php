@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -376,7 +377,7 @@ class Email implements ShouldQueue
              * need to harvest the ->Message property using the following
              */
             if ($e instanceof PostmarkException) { //postmark specific failure
-                
+
                 // Try to decode the JSON response if present
                 try {
                     $response = json_decode($e->getMessage(), true);
@@ -614,14 +615,14 @@ class Email implements ShouldQueue
                 $this->mailer = 'smtp';
                 $this->configureSmtpMailer();
                 return $this;
-            default:                
+            default:
                 $this->mailer = config('mail.default');
                 break;
 
         }
-        
+
         $this->mailer = config('mail.default');
-        
+
         return $this;
 
     }
@@ -914,11 +915,11 @@ class Email implements ShouldQueue
         $job_failure = null;
 
         try {
-            if($this->email_object->invitation){
+            if ($this->email_object->invitation) {
                 $this->email_object->invitation->email_error = substr($errors, 0, 150);
                 $this->email_object->invitation->save();
             }
-        }catch(\Throwable $e){
+        } catch (\Throwable $e) {
             nlog("Problem saving email error: {$e->getMessage()}");
         }
     }

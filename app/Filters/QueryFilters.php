@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -246,9 +247,10 @@ abstract class QueryFilters
      */
     public function is_deleted($value = 'true')
     {
-        if(is_null($value))
+        if (is_null($value)) {
             return $this->builder;
-        
+        }
+
         if ($value == 'true') {
             return $this->builder->where('is_deleted', $value)->withTrashed();
         }

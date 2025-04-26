@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -99,7 +100,7 @@ class Expense extends BaseModel
     use SoftDeletes;
     use Filterable;
     use Searchable;
-    
+
     protected $fillable = [
         'client_id',
         'assigned_user_id',
@@ -168,7 +169,7 @@ class Expense extends BaseModel
     public function toSearchableArray()
     {
         $locale = $this->company->locale();
-        
+
         App::setLocale($locale);
 
         return [
@@ -332,7 +333,7 @@ class Expense extends BaseModel
         }
 
     }
-    
+
     /**
      * getTaxAmount
      *
@@ -341,7 +342,7 @@ class Expense extends BaseModel
     public function getTaxAmount(): float
     {
 
-         $precision = $this->currency->precision ?? 2;
+        $precision = $this->currency->precision ?? 2;
 
         if ($this->calculate_tax_by_amount) {
 
@@ -357,7 +358,7 @@ class Expense extends BaseModel
             }
         }
     }
-    
+
     /**
      * calcInclusiveLineTax
      *

@@ -101,7 +101,7 @@ class ACH implements LivewireMethodInterface
             return $cgt;
 
         }
-                
+
         $error = $response->object();
 
         $message = [
@@ -148,11 +148,11 @@ class ACH implements LivewireMethodInterface
     public function paymentResponse($request)
     {
         nlog($request->all());
-        
+
         $payment_hash = PaymentHash::where('hash', $request->input('payment_hash'))->firstOrFail();
 
         //Handle Token Billing
-        if($request->token && strlen($request->token) > 4){
+        if ($request->token && strlen($request->token) > 4) {
 
             $cgt = \App\Models\ClientGatewayToken::where('token', $request->token)->firstOrFail();
             $payment = $this->tokenBilling($cgt, $payment_hash);
@@ -160,8 +160,8 @@ class ACH implements LivewireMethodInterface
             return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
         }
 
-        //Handle Storing Payment Method + Token Billing 
-        if(isset($this->forte->company_gateway->token_billing) && $this->forte->company_gateway->token_billing != 'off'){
+        //Handle Storing Payment Method + Token Billing
+        if (isset($this->forte->company_gateway->token_billing) && $this->forte->company_gateway->token_billing != 'off') {
 
             $data = [
                 'account_holder_name' => $request->account_holder_name,
@@ -224,7 +224,7 @@ class ACH implements LivewireMethodInterface
             $payment = $this->forte->createPayment($data, Payment::STATUS_COMPLETED);
 
             return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
-            
+
         }
         //Handle Failures.
 

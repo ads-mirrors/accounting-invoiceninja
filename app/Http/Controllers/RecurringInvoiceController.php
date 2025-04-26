@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -414,7 +415,7 @@ class RecurringInvoiceController extends BaseController
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        if((stripos($request->action, 'send_now') !== false) && $user->hasExactPermission('disable_emails')){
+        if ((stripos($request->action, 'send_now') !== false) && $user->hasExactPermission('disable_emails')) {
             return response(['message' => ctrans('texts.disable_emails_error')], 400);
         }
 

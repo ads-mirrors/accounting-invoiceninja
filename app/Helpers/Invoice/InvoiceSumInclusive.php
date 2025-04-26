@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -329,12 +330,12 @@ class InvoiceSumInclusive
 
     public function getSubTotal()
     {
-        return round($this->sub_total,2);
+        return round($this->sub_total, 2);
     }
 
     public function getGrossSubTotal()
     {
-        return round($this->sub_total,2);
+        return round($this->sub_total, 2);
     }
 
     public function setSubTotal($value)
@@ -346,7 +347,7 @@ class InvoiceSumInclusive
 
     public function getTotalDiscount()
     {
-        return round($this->total_discount,2);
+        return round($this->total_discount, 2);
     }
 
     public function getTotalTaxes()
@@ -361,7 +362,7 @@ class InvoiceSumInclusive
 
     public function getTotal()
     {
-        return round($this->total,2);
+        return round($this->total, 2);
     }
 
     public function setTaxMap()
@@ -372,7 +373,7 @@ class InvoiceSumInclusive
         }
 
         $this->tax_map = collect();
-        
+
         $keys = $this->invoice_items->getGroupedTaxes()->pluck('key')->unique();
 
         $values = $this->invoice_items->getGroupedTaxes();

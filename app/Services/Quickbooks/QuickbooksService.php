@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -44,9 +45,9 @@ class QuickbooksService
     public QbClient $client;
 
     public QbPayment $payment;
-    
+
     public QbQuote $quote;
-    
+
     public QuickbooksSync $settings;
 
     private bool $testMode = true;
@@ -83,7 +84,7 @@ class QuickbooksService
         $this->invoice = new QbInvoice($this);
 
         $this->quote = new QbQuote($this);
-        
+
         $this->product = new QbProduct($this);
 
         $this->client = new QbClient($this);
@@ -97,38 +98,38 @@ class QuickbooksService
         return $this;
     }
 
-    private function checkDefaultAccounts(): self
-    {
+    // private function checkDefaultAccounts(): self
+    // {
 
-        $accountQuery = "SELECT * FROM Account WHERE AccountType IN ('Income', 'Cost of Goods Sold')";
+    //     $accountQuery = "SELECT * FROM Account WHERE AccountType IN ('Income', 'Cost of Goods Sold')";
 
-        if (strlen($this->settings->default_income_account) == 0 || strlen($this->settings->default_expense_account) == 0) {
+    //     if (strlen($this->settings->default_income_account) == 0 || strlen($this->settings->default_expense_account) == 0) {
 
-            nlog("Checking default accounts for company {$this->company->company_key}");
-            $accounts = $this->sdk->Query($accountQuery);
+    //         nlog("Checking default accounts for company {$this->company->company_key}");
+    //         $accounts = $this->sdk->Query($accountQuery);
 
-            $find_income_account = true;
-            $find_expense_account = true;
+    //         $find_income_account = true;
+    //         $find_expense_account = true;
 
-            foreach ($accounts as $account) {
-                if ($account->AccountType->value == 'Income' && $find_income_account) {
-                    $this->settings->default_income_account = $account->Id->value;
-                    $find_income_account = false;
-                } elseif ($account->AccountType->value == 'Cost of Goods Sold' && $find_expense_account) {
-                    $this->settings->default_expense_account = $account->Id->value;
-                    $find_expense_account = false;
-                }
-            }
+    //         foreach ($accounts as $account) {
+    //             if ($account->AccountType->value == 'Income' && $find_income_account) {
+    //                 $this->settings->default_income_account = $account->Id->value;
+    //                 $find_income_account = false;
+    //             } elseif ($account->AccountType->value == 'Cost of Goods Sold' && $find_expense_account) {
+    //                 $this->settings->default_expense_account = $account->Id->value;
+    //                 $find_expense_account = false;
+    //             }
+    //         }
 
-            nlog($this->settings);
+    //         nlog($this->settings);
 
-            $this->company->quickbooks->settings = $this->settings;
-            $this->company->save();
-        }
+    //         $this->company->quickbooks->settings = $this->settings;
+    //         $this->company->save();
+    //     }
 
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
     private function checkToken(): self
     {

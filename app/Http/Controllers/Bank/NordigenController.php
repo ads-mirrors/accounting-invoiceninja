@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -174,7 +175,7 @@ class NordigenController extends BaseController
             if (isset($nordigen_account['error'])) {
                 continue;
             }
-            
+
             $bank_integration = false;
 
             try {
@@ -198,8 +199,7 @@ class NordigenController extends BaseController
                 $bank_integration->currency = $nordigen_account['account_currency'];
             } finally {
 
-                if($bank_integration)
-                { 
+                if ($bank_integration) {
 
                     $bank_integration->auto_sync = true;
                     $bank_integration->disabled_upstream = false;

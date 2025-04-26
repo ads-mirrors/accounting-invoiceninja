@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -34,9 +35,9 @@ class UpdateRecurringExpenseRequest extends Request
     public function rules()
     {
         /* Ensure we have a client name, and that all emails are unique*/
+        $rules = [];
 
         $rules['country_id'] = 'integer|nullable';
-
         $rules['contacts.*.email'] = 'nullable|distinct';
 
         if (isset($this->number)) {
@@ -47,18 +48,10 @@ class UpdateRecurringExpenseRequest extends Request
         $rules['tax_amount2'] = 'numeric';
         $rules['tax_amount3'] = 'numeric';
         $rules['category_id'] = 'bail|nullable|sometimes|exists:expense_categories,id,company_id,'.auth()->user()->company()->id.',is_deleted,0';
-
-        if ($this->file('documents') && is_array($this->file('documents'))) {
-            $rules['documents.*'] = $this->fileValidation();
-        } elseif ($this->file('documents')) {
-            $rules['documents'] = $this->fileValidation();
-        }
-
-        if ($this->file('file') && is_array($this->file('file'))) {
-            $rules['file.*'] = $this->fileValidation();
-        } elseif ($this->file('file')) {
-            $rules['file'] = $this->fileValidation();
-        }
+        $rules['file'] = 'bail|sometimes|array';
+        $rules['file.*'] = $this->fileValidation();
+        $rules['documents'] = 'bail|sometimes|array';
+        $rules['documents.*'] = $this->fileValidation();
 
         return $this->globalRules($rules);
     }
@@ -81,6 +74,14 @@ class UpdateRecurringExpenseRequest extends Request
         $input = $this->all();
 
         $input = $this->decodePrimaryKeys($input);
+
+        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+            $this->files->set('documents', [$this->file('documents')]);
+        }
+
+        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+            $this->files->set('file', [$this->file('file')]);
+        }
 
         if (array_key_exists('next_send_date', $input) && is_string($input['next_send_date'])) {
             $input['next_send_date_client'] = $input['next_send_date'];

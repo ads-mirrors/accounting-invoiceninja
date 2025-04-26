@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -95,7 +96,7 @@ class Vendor extends BaseModel
     use PresentableTrait;
     use AppSetup;
     use Searchable;
-    
+
     protected $fillable = [
         'name',
         'assigned_user_id',

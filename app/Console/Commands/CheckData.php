@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -590,7 +591,7 @@ class CheckData extends Command
 
     private function clientCreditPaymentablesNew($client)
     {
-                
+
         $results = \DB::select("
                 SELECT 
                 SUM(paymentables.amount - paymentables.refunded) as credit_payment

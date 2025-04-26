@@ -1,4 +1,5 @@
 <?php
+
 /**
  * client Ninja (https://invoiceninja.com).
  *

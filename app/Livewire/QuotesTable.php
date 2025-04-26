@@ -35,7 +35,7 @@ class QuotesTable extends Component
     public string $db;
 
     public string $sort_field = 'date';
-    
+
     public function mount()
     {
         MultiDB::setDb($this->db);
@@ -60,10 +60,10 @@ class QuotesTable extends Component
         $query = Quote::query()
             ->with('client.contacts', 'company')
             // ->orderBy($this->sort, $this->sort_asc ? 'asc' : 'desc');
-            ->when($this->sort == 'number', function ($q){
+            ->when($this->sort == 'number', function ($q) {
                 $q->orderByRaw("REGEXP_REPLACE(number,'[^0-9]+','')+0 " . ($this->sort_asc ? 'asc' : 'desc'));
             })
-            ->when($this->sort != 'number', function ($q){
+            ->when($this->sort != 'number', function ($q) {
                 $q->orderBy($this->sort, ($this->sort_asc ? 'asc' : 'desc'));
             });
 

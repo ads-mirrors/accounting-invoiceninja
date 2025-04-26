@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -44,19 +45,11 @@ class UpdateClientRequest extends Request
         /** @var  \App\Models\User $user */
         $user = auth()->user();
 
-        if ($this->file('documents') && is_array($this->file('documents'))) {
-            $rules['documents.*'] = $this->fileValidation();
-        } elseif ($this->file('documents')) {
-            $rules['documents'] = $this->fileValidation();
-        }
 
-        if ($this->file('file') && is_array($this->file('file'))) {
-            $rules['file.*'] = $this->fileValidation();
-        } elseif ($this->file('file')) {
-            $rules['file'] = $this->fileValidation();
-        } else {
-            $rules['documents'] = 'bail|sometimes|array';
-        }
+        $rules['file'] = 'bail|sometimes|array';
+        $rules['file.*'] = $this->fileValidation();
+        $rules['documents'] = 'bail|sometimes|array';
+        $rules['documents.*'] = $this->fileValidation();
 
         $rules['company_logo'] = 'mimes:jpeg,jpg,png,gif|max:10000';
         $rules['industry_id'] = 'integer|nullable';
@@ -110,11 +103,15 @@ class UpdateClientRequest extends Request
         /** @var  \App\Models\User $user */
         $user = auth()->user();
 
-        /* If the user removes the currency we must always set the default */
-        // if (array_key_exists('settings', $input) && ! array_key_exists('currency_id', $input['settings'])) {
-        //     $input['settings']['currency_id'] = (string) $user->company()->settings->currency_id;
-        // } else //2025-03-11 fixes for currency_id not being set
-        
+
+        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+            $this->files->set('documents', [$this->file('documents')]);
+        }
+
+        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+            $this->files->set('file', [$this->file('file')]);
+        }
+
         if (empty($input['settings']['currency_id'])) {
             $input['settings']['currency_id'] = (string) $user->company()->settings->currency_id;
         }

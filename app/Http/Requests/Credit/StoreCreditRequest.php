@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -44,31 +45,20 @@ class StoreCreditRequest extends Request
      */
     public function rules()
     {
-        $rules = [];
-
-        if ($this->file('documents') && is_array($this->file('documents'))) {
-            $rules['documents.*'] = $this->fileValidation();
-        } elseif ($this->file('documents')) {
-            $rules['documents'] = $this->fileValidation();
-        } else {
-            $rules['documents'] = 'bail|sometimes|array';
-        }
-
-        if ($this->file('file') && is_array($this->file('file'))) {
-            $rules['file.*'] = $this->fileValidation();
-        } elseif ($this->file('file')) {
-            $rules['file'] = $this->fileValidation();
-        }
-
         /** @var \App\Models\User $user */
         $user = auth()->user();
+
+        $rules = [];
+
+        $rules['file'] = 'bail|sometimes|array';
+        $rules['file.*'] = $this->fileValidation();
+        $rules['documents'] = 'bail|sometimes|array';
+        $rules['documents.*'] = $this->fileValidation();
 
         $rules['client_id'] = 'required|exists:clients,id,company_id,'.$user->company()->id;
 
         $rules['invitations'] = 'sometimes|bail|array';
         $rules['invitations.*.client_contact_id'] = 'bail|required|distinct';
-
-        // $rules['number'] = new UniqueCreditNumberRule($this->all());
         $rules['number'] = ['nullable', Rule::unique('credits')->where('company_id', $user->company()->id)];
         $rules['discount'] = 'sometimes|numeric|max:99999999999999';
         $rules['is_amount_discount'] = ['boolean'];
@@ -103,6 +93,44 @@ class StoreCreditRequest extends Request
     {
         $input = $this->all();
 
+        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
+            $this->files->set('documents', [$this->file('documents')]);
+        }
+
+        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+            $this->files->set('file', [$this->file('file')]);
+        }
+
+        if (array_key_exists('is_amount_discount', $input) && is_bool($input['is_amount_discount'])) {
+            $input['is_amount_discount'] = $this->setBoolean($input['is_amount_discount']);
+        } else {
+            $input['is_amount_discount'] = false;
+        }
+
+        if (isset($input['exchange_rate'])) {
+            $input['exchange_rate'] = $this->parseFloat($input['exchange_rate']);
+        }
+
+        if (isset($input['amount'])) {
+            $input['amount'] = $this->parseFloat($input['amount']);
+        }
+
+        if (isset($input['custom_surcharge1'])) {
+            $input['custom_surcharge1'] = $this->parseFloat($input['custom_surcharge1']);
+        }
+
+        if (isset($input['custom_surcharge2'])) {
+            $input['custom_surcharge2'] = $this->parseFloat($input['custom_surcharge2']);
+        }
+
+        if (isset($input['custom_surcharge3'])) {
+            $input['custom_surcharge3'] = $this->parseFloat($input['custom_surcharge3']);
+        }
+
+        if (isset($input['custom_surcharge4'])) {
+            $input['custom_surcharge4'] = $this->parseFloat($input['custom_surcharge4']);
+        }
+
         if (array_key_exists('design_id', $input) && is_string($input['design_id'])) {
             $input['design_id'] = $this->decodePrimaryKey($input['design_id']);
         }
@@ -116,10 +144,6 @@ class StoreCreditRequest extends Request
         $input['line_items'] = isset($input['line_items']) ? $this->cleanItems($input['line_items']) : [];
         $input['line_items'] = $this->cleanFeeItems($input['line_items']);
         $input['amount'] = $this->entityTotalAmount($input['line_items']);
-
-        if (array_key_exists('exchange_rate', $input) && is_null($input['exchange_rate'])) {
-            $input['exchange_rate'] = 1;
-        }
 
         if (isset($input['footer']) && $this->hasHeader('X-REACT')) {
             $input['footer'] = str_replace("\n", "", $input['footer']);

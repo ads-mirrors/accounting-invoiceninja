@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -160,7 +161,7 @@ class PayPalPPCPPaymentDriver extends PayPalBasePaymentDriver
 
         nlog("Process response =>");
 
-        if(method_exists($response, 'json')) {
+        if (method_exists($response, 'json')) {
             nlog($response->json());
         } else {
             nlog($response);

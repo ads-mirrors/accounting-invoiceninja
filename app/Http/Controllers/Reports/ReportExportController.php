@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -37,7 +38,7 @@ class ReportExportController extends BaseController
 
         // Check if the content starts with PDF signature (%PDF-)
         $isPdf = str_starts_with(trim($report), '%PDF-');
-        
+
         $attachment_name = $isPdf ? 'report.pdf' : 'report.csv';
 
         $headers = [

@@ -36,11 +36,11 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
     {
 
         if (isset($value['Invoice'])) {
-            
+
             $r = new EInvoice();
 
             $errors = $r->validateRequest($value['Invoice'], InvoiceLevel::class);
-            
+
             foreach ($errors as $key => $msg) {
 
                 $this->validator->errors()->add(
@@ -50,22 +50,20 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
 
             }
 
-            if(isset($value['Invoice']['InvoicePeriod'][0]['Description'])){
+            if (isset($value['Invoice']['InvoicePeriod'][0]['Description'])) {
                 $parts = explode('|', $value['Invoice']['InvoicePeriod'][0]['Description']);
                 $parts_count = count($parts);
 
-                if($parts_count == 2)
-                {
-                    if(!$this->isValidDateSyntax($parts[0])){
-                                                
+                if ($parts_count == 2) {
+                    if (!$this->isValidDateSyntax($parts[0])) {
+
                         $this->validator->errors()->add(
                             "e_invoice.InvoicePeriod.Description.0.StartDate",
                             ctrans('texts.invalid_date_create_syntax')
                         );
 
-                    }
-                    elseif (!$this->isValidDateSyntax($parts[1])){
-                        
+                    } elseif (!$this->isValidDateSyntax($parts[1])) {
+
                         $this->validator->errors()->add(
                             "e_invoice.InvoicePeriod.Description.0.EndDate",
                             ctrans('texts.invalid_date_create_syntax')
@@ -73,9 +71,7 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
 
                     }
 
-                }
-                elseif($parts_count == 1 && strlen($value['Invoice']['InvoicePeriod'][0]['Description']) > 2)
-                {
+                } elseif ($parts_count == 1 && strlen($value['Invoice']['InvoicePeriod'][0]['Description']) > 2) {
                     $this->validator->errors()->add(
                         "e_invoice.InvoicePeriod.Description.0.StartDate",
                         ctrans('texts.start_and_end_date_required')
@@ -95,7 +91,7 @@ class ValidInvoiceScheme implements ValidationRule, ValidatorAwareRule
             return false;
         }
     }
-    
+
     /**
      * Set the current validator.
      */

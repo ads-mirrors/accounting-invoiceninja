@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -229,7 +230,7 @@ class ExpenseFilters extends QueryFilters
                     ->whereColumn('clients.id', 'expenses.client_id'), $sort_col[1]);
         }
 
-        
+
         if ($sort_col[0] == 'project' && in_array($sort_col[1], ['asc', 'desc'])) {
             return $this->builder
                     ->orderByRaw('ISNULL(project_id), project_id '. $sort_col[1])

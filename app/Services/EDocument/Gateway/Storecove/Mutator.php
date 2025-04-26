@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -595,8 +596,9 @@ class Mutator implements MutatorInterface
         //Regardless, always include the client email address as a route - Storecove will only use this as a fallback.
         $client_email = $this->getIndividualEmailRoute();
 
-        if(strlen($client_email) > 2)
+        if (strlen($client_email) > 2) {
             $this->setEmailRouting($client_email);
+        }
 
         $code = $this->getClientRoutingCode();
         $identifier = false;
@@ -615,7 +617,7 @@ class Mutator implements MutatorInterface
             $identifier = $this->getClientPublicIdentifier($code);
         }
 
-        $identifier = str_ireplace(["FR","BE"],"", $identifier);
+        $identifier = str_ireplace(["FR","BE"], "", $identifier);
         $identifier = preg_replace("/[^a-zA-Z0-9]/", "", $identifier);
 
         $this->setStorecoveMeta($this->buildRouting([

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -167,7 +168,7 @@ class InvoiceFilters extends QueryFilters
 
                 $query->whereNull('due_date')
                     ->orWhere(function ($q) {
-                        $q->where('due_date', '>=', now()->startOfDay()->subSecond())->where(function ($qq){
+                        $q->where('due_date', '>=', now()->startOfDay()->subSecond())->where(function ($qq) {
                             $qq->where('partial', 0)->orWhere('balance', '>', 0);
                         });
                     })

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -168,7 +169,7 @@ class LicenseController extends BaseController
         /* Catch claim license requests */
         if (config('ninja.environment') == 'selfhost') {
 
-            if(config('ninja.license_key')){
+            if (config('ninja.license_key')) {
                 nlog("License key found in config - using that instead");
                 $license_key = config('ninja.license_key');
             }
