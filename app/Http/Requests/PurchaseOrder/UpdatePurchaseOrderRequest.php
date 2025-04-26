@@ -62,8 +62,7 @@ class UpdatePurchaseOrderRequest extends Request
 
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
+        
         $rules['status_id'] = 'sometimes|integer|in:1,2,3,4,5';
         $rules['exchange_rate'] = 'bail|sometimes|numeric';
         $rules['amount'] = ['sometimes', 'bail', 'numeric', 'max:99999999999999'];
@@ -86,8 +85,8 @@ class UpdatePurchaseOrderRequest extends Request
 
         $input['id'] = $this->purchase_order->id;
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
+        if (isset($input['documents'])) {
+            unset($input['documents']);
         }
 
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {

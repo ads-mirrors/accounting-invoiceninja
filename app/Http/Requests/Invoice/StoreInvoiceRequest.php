@@ -117,9 +117,11 @@ class StoreInvoiceRequest extends Request
             $input['line_items'] = $this->cleanFeeItems($input['line_items']);
             $input['amount'] = $this->entityTotalAmount($input['line_items']);
         }
+
         if (isset($input['partial']) && $input['partial'] == 0) {
             $input['partial_due_date'] = null;
         }
+        
         if (!isset($input['tax_rate1'])) {
             $input['tax_rate1'] = 0;
         }

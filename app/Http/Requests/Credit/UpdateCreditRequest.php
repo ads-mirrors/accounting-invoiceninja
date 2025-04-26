@@ -49,12 +49,8 @@ class UpdateCreditRequest extends Request
 
         $rules = [];
 
-
-        $rules['file.*'] = $this->fileValidation();
         $rules['file'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-
+        $rules['file.*'] = $this->fileValidation();
 
         $rules['number'] = ['bail', 'sometimes', 'nullable', Rule::unique('credits')->where('company_id', $user->company()->id)->ignore($this->credit->id)];
 
@@ -93,9 +89,9 @@ class UpdateCreditRequest extends Request
         $input = $this->all();
 
         $input = $this->decodePrimaryKeys($input);
-
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
+       
+        if (isset($input['documents'])) {
+            unset($input['documents']);
         }
 
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {

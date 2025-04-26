@@ -40,8 +40,7 @@ class UpdateRecurringQuoteRequest extends Request
 
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
+        
 
         if ($this->number) {
             $rules['number'] = Rule::unique('recurring_quotes')->where('company_id', auth()->user()->company()->id)->ignore($this->recurring_quote->id);
@@ -55,10 +54,6 @@ class UpdateRecurringQuoteRequest extends Request
         $input = $this->all();
         $input = $this->decodePrimaryKeys($input);
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
-        }
-
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
@@ -71,7 +66,7 @@ class UpdateRecurringQuoteRequest extends Request
             $input['auto_bill_enabled'] = $this->setAutoBillFlag($input['auto_bill']);
         }
 
-        if (array_key_exists('documents', $input)) {
+        if (isset($input['documents'])) {
             unset($input['documents']);
         }
 

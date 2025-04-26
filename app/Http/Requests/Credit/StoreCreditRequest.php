@@ -91,7 +91,12 @@ class StoreCreditRequest extends Request
 
     public function prepareForValidation()
     {
+        
+        $user = auth()->user();
+
         $input = $this->all();
+
+        $input = $this->decodePrimaryKeys($input);
 
         if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
@@ -99,36 +104,6 @@ class StoreCreditRequest extends Request
 
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
-        }
-
-        if (array_key_exists('is_amount_discount', $input) && is_bool($input['is_amount_discount'])) {
-            $input['is_amount_discount'] = $this->setBoolean($input['is_amount_discount']);
-        } else {
-            $input['is_amount_discount'] = false;
-        }
-
-        if (isset($input['exchange_rate'])) {
-            $input['exchange_rate'] = $this->parseFloat($input['exchange_rate']);
-        }
-
-        if (isset($input['amount'])) {
-            $input['amount'] = $this->parseFloat($input['amount']);
-        }
-
-        if (isset($input['custom_surcharge1'])) {
-            $input['custom_surcharge1'] = $this->parseFloat($input['custom_surcharge1']);
-        }
-
-        if (isset($input['custom_surcharge2'])) {
-            $input['custom_surcharge2'] = $this->parseFloat($input['custom_surcharge2']);
-        }
-
-        if (isset($input['custom_surcharge3'])) {
-            $input['custom_surcharge3'] = $this->parseFloat($input['custom_surcharge3']);
-        }
-
-        if (isset($input['custom_surcharge4'])) {
-            $input['custom_surcharge4'] = $this->parseFloat($input['custom_surcharge4']);
         }
 
         if (array_key_exists('design_id', $input) && is_string($input['design_id'])) {
@@ -139,7 +114,23 @@ class StoreCreditRequest extends Request
             $input['partial_due_date'] = null;
         }
 
-        $input = $this->decodePrimaryKeys($input);
+        if (!isset($input['tax_rate1'])) {
+            $input['tax_rate1'] = 0;
+        }
+        if (!isset($input['tax_rate2'])) {
+            $input['tax_rate2'] = 0;
+        }
+        if (!isset($input['tax_rate3'])) {
+            $input['tax_rate3'] = 0;
+        }
+
+        if (array_key_exists('exchange_rate', $input) && is_null($input['exchange_rate'])) {
+            $input['exchange_rate'] = 1;
+        }
+
+        if (!isset($input['date'])) {
+            $input['date'] = now()->addSeconds($user->company()->utc_offset())->format('Y-m-d');
+        }
 
         $input['line_items'] = isset($input['line_items']) ? $this->cleanItems($input['line_items']) : [];
         $input['line_items'] = $this->cleanFeeItems($input['line_items']);

@@ -50,8 +50,7 @@ class UpdateRecurringExpenseRequest extends Request
         $rules['category_id'] = 'bail|nullable|sometimes|exists:expense_categories,id,company_id,'.auth()->user()->company()->id.',is_deleted,0';
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
+        
 
         return $this->globalRules($rules);
     }
@@ -75,8 +74,8 @@ class UpdateRecurringExpenseRequest extends Request
 
         $input = $this->decodePrimaryKeys($input);
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
+        if (isset($input['documents'])) {
+            unset($input['documents']);
         }
 
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
@@ -85,10 +84,6 @@ class UpdateRecurringExpenseRequest extends Request
 
         if (array_key_exists('next_send_date', $input) && is_string($input['next_send_date'])) {
             $input['next_send_date_client'] = $input['next_send_date'];
-        }
-
-        if (array_key_exists('documents', $input)) {
-            unset($input['documents']);
         }
 
         if (! array_key_exists('currency_id', $input) || strlen($input['currency_id']) == 0) {

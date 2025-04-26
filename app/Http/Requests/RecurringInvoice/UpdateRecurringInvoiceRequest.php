@@ -48,8 +48,6 @@ class UpdateRecurringInvoiceRequest extends Request
 
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
 
         $rules['number'] = ['bail', 'sometimes', Rule::unique('recurring_invoices')->where('company_id', $user->company()->id)->ignore($this->recurring_invoice->id)];
 
@@ -81,9 +79,6 @@ class UpdateRecurringInvoiceRequest extends Request
     {
         $input = $this->all();
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
-        }
 
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
@@ -146,7 +141,7 @@ class UpdateRecurringInvoiceRequest extends Request
             $input['auto_bill_enabled'] = $this->setAutoBillFlag($input['auto_bill']);
         }
 
-        if (array_key_exists('documents', $input)) {
+        if (isset($input['documents'])) {
             unset($input['documents']);
         }
 

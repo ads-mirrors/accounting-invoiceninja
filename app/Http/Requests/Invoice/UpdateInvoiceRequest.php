@@ -49,8 +49,6 @@ class UpdateInvoiceRequest extends Request
 
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
 
         $rules['number'] = ['bail', 'sometimes', 'nullable', Rule::unique('invoices')->where('company_id', $user->company()->id)->ignore($this->invoice->id)];
 
@@ -99,10 +97,6 @@ class UpdateInvoiceRequest extends Request
 
         $input['id'] = $this->invoice->id;
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
-        }
-
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
@@ -116,7 +110,7 @@ class UpdateInvoiceRequest extends Request
             $input['amount'] = $this->entityTotalAmount($input['line_items']);
         }
 
-        if (array_key_exists('documents', $input)) {
+        if (isset($input['documents'])) {
             unset($input['documents']);
         }
 

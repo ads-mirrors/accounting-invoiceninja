@@ -38,8 +38,6 @@ class UpdateProductRequest extends Request
         $rules = [];
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
 
         $rules['cost'] = 'numeric';
         $rules['price'] = 'numeric';
@@ -55,16 +53,16 @@ class UpdateProductRequest extends Request
     {
         $input = $this->all();
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
-        }
-
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
         if (! isset($input['quantity'])) {
             $input['quantity'] = 1;
+        }
+
+        if (isset($input['documents'])) {
+            unset($input['documents']);
         }
 
         if (array_key_exists('assigned_user_id', $input) && is_string($input['assigned_user_id'])) {

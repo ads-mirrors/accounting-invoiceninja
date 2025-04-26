@@ -54,8 +54,6 @@ class UpdatePaymentRequest extends Request
 
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
 
         return $rules;
     }
@@ -66,16 +64,16 @@ class UpdatePaymentRequest extends Request
 
         $input = $this->decodePrimaryKeys($input);
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
-        }
-
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
         }
 
         if (isset($input['amount'])) {
             unset($input['amount']);
+        }
+
+        if (isset($input['documents'])) {
+            unset($input['documents']);
         }
 
         if (isset($input['invoices']) && is_array($input['invoices']) !== false) {

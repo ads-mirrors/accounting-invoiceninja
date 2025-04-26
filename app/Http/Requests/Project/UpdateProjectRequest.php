@@ -50,8 +50,6 @@ class UpdateProjectRequest extends Request
         $rules['task_rate'] = 'sometimes|bail|numeric';
         $rules['file'] = 'bail|sometimes|array';
         $rules['file.*'] = $this->fileValidation();
-        $rules['documents'] = 'bail|sometimes|array';
-        $rules['documents.*'] = $this->fileValidation();
 
         return $this->globalRules($rules);
     }
@@ -60,9 +58,6 @@ class UpdateProjectRequest extends Request
     {
         $input = $this->decodePrimaryKeys($this->all());
 
-        if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
-            $this->files->set('documents', [$this->file('documents')]);
-        }
 
         if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('file', [$this->file('file')]);
@@ -78,6 +73,10 @@ class UpdateProjectRequest extends Request
 
         if (array_key_exists('budgeted_hours', $input) && empty($input['budgeted_hours'])) {
             $input['budgeted_hours'] = 0;
+        }
+
+        if (isset($input['documents'])) {
+            unset($input['documents']);
         }
 
         $this->replace($input);
