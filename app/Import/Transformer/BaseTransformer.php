@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -41,7 +42,7 @@ class BaseTransformer
     protected $company;
 
     public array $error_array = [];
-    
+
     public function __construct($company)
     {
         $this->company = $company;
@@ -394,7 +395,7 @@ class BaseTransformer
 
         // Convert to float and apply negative sign if necessary
         $result = (float) $amount;
-        
+
         return $isNegative ? -$result : $result;
 
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -71,7 +72,7 @@ class RecurringInvoiceToInvoiceFactory
 
         return $invoice;
     }
-    
+
     /**
      * transformEInvoice
      *
@@ -80,41 +81,38 @@ class RecurringInvoiceToInvoiceFactory
      */
     private static function transformEInvoice($recurring_invoice)
     {
-        if(!$recurring_invoice->e_invoice) 
+        if (!$recurring_invoice->e_invoice) {
             return null;
+        }
 
-        if(isset($recurring_invoice->e_invoice->Invoice)) {
-            
-            if(isset($recurring_invoice->e_invoice->Invoice->InvoicePeriod) && is_array($recurring_invoice->e_invoice->Invoice->InvoicePeriod)) {
+        if (isset($recurring_invoice->e_invoice->Invoice)) {
+
+            if (isset($recurring_invoice->e_invoice->Invoice->InvoicePeriod) && is_array($recurring_invoice->e_invoice->Invoice->InvoicePeriod)) {
                 $period = $recurring_invoice->e_invoice->Invoice->InvoicePeriod[0];
-                
-                if($description = $period->Description)
-                {
+
+                if ($description = $period->Description) {
                     $parts = explode('|', $description);
 
-                    if(count($parts) == 2) 
-                    {
+                    if (count($parts) == 2) {
                         $start_template = explode(',', $parts[0]);
                         $end_template = explode(',', $parts[1]);
 
                         $start_date = date_create('now', new \DateTimeZone($recurring_invoice->client->timezone()->name));
 
-                        foreach($start_template as $template)
-                        {
+                        foreach ($start_template as $template) {
                             $start_date->modify($template);
                         }
-                        
+
                         $start_date = $start_date->format('Y-m-d');
 
                         $end_date = date_create('now', new \DateTimeZone($recurring_invoice->client->timezone()->name));
 
-                        foreach($end_template as $template)
-                        {
+                        foreach ($end_template as $template) {
                             $end_date->modify($template);
                         }
 
                         $end_date = $end_date->format('Y-m-d');
-                        
+
                         $einvoice = new \InvoiceNinja\EInvoice\Models\Peppol\Invoice();
 
                         $ip = new \InvoiceNinja\EInvoice\Models\Peppol\PeriodType\InvoicePeriod();
@@ -122,7 +120,7 @@ class RecurringInvoiceToInvoiceFactory
                         $ip->EndDate = new \DateTime($end_date);
                         $einvoice->InvoicePeriod = [$ip];
 
-                        
+
                         $stub = new \stdClass();
                         $stub->Invoice = $einvoice;
 
@@ -130,10 +128,10 @@ class RecurringInvoiceToInvoiceFactory
 
                     }
                 }
-            
+
             }
 
-            
+
         }
 
         return null;

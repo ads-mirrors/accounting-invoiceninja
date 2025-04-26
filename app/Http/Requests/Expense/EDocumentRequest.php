@@ -36,7 +36,7 @@ class EDocumentRequest extends Request
         if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }
-        
+
         $this->replace($input);
 
     }

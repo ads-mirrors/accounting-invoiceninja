@@ -1039,7 +1039,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
         $this->init();
 
-        try{
+        try {
             if ($this->stripe_connect) {
                 // Verify Connect configuration
                 if (!strlen($this->company_gateway->getConfigField('account_id')) > 1) {
@@ -1054,7 +1054,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             } else {
                 // Test regular API key access
                 $api_key = $this->company_gateway->getConfigField('apiKey');
-                
+
                 if (empty($api_key)) {
                     return 'error';
                 }

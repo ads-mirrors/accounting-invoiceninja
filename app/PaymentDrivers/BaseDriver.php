@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -419,8 +420,9 @@ class BaseDriver extends AbstractPaymentDriver
 
         $invoice = $this->payment_hash->fee_invoice;
 
-        if(!$invoice)
+        if (!$invoice) {
             return;
+        }
 
         if (collect($invoice->line_items)->contains('unit_code', $this->payment_hash->hash)) {
             $invoice->service()->toggleFeesPaid($this->payment_hash->hash)->save();

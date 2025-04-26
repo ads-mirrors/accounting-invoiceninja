@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -60,7 +61,7 @@ class CreateAccountRequest extends Request
 
     public function prepareForValidation()
     {
-        
+
         nlog(array_merge(['signup' => 'true', 'ipaddy' => request()->ip()], $this->all()));
 
         $input = $this->all();

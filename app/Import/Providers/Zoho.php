@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -83,7 +84,7 @@ class Zoho extends BaseImport
         $entity_type = 'invoice';
 
         $data = $this->getCsvData($entity_type);
-                
+
         if (empty($data)) {
             $this->entity_count['invoices'] = 0;
 

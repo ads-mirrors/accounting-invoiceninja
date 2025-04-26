@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -62,11 +63,11 @@ class ImportJsonController extends BaseController
 
         $metadata = [];
 
-        if($request->metadata) {
+        if ($request->metadata) {
 
             $metadata = $this->handleChunkedUpload($request);
 
-            if(!isset($metadata['uploaded_filepath'])){
+            if (!isset($metadata['uploaded_filepath'])) {
 
                 return response()->json([
                         'success' => true,
@@ -76,11 +77,10 @@ class ImportJsonController extends BaseController
                         'fileName' => $metadata['fileName']
                     ], 200);
 
-           }
+            }
 
-           $file_location = $metadata['uploaded_filepath'];
-        }
-        else{
+            $file_location = $metadata['uploaded_filepath'];
+        } else {
 
             $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
 
@@ -104,23 +104,23 @@ class ImportJsonController extends BaseController
 
         unset($metadata['uploaded_filepath']);
 
-        return response()->json(array_merge(['message' => 'Processing','success' => true], $metadata ), 200);
+        return response()->json(array_merge(['message' => 'Processing','success' => true], $metadata), 200);
     }
 
     private function handleChunkedUpload(ImportJsonRequest $request)
     {
-        
+
         $metadata = json_decode($request->metadata, true);
         $chunk = $request->file('file');
 
         $tempPath = sys_get_temp_dir()."/{$metadata['fileHash']}/app/chunks/";
 
-        if(!is_dir($tempPath)) {
+        if (!is_dir($tempPath)) {
             mkdir($tempPath, 0777, true);
         }
 
         $chunkPath = $tempPath . '/' . $metadata['currentChunk'];
-        
+
         file_put_contents($chunkPath, file_get_contents($chunk));
 
         $uploadedChunks = count(glob($tempPath . '/*'));
@@ -128,7 +128,7 @@ class ImportJsonController extends BaseController
         if ($uploadedChunks >= $metadata['totalChunks']) {
             // Combine all chunks
             $tempFilePath = $tempPath . $metadata['fileName'];
-            
+
             $handle = fopen($tempFilePath, 'wb');
 
             for ($i = 0; $i < $metadata['totalChunks']; $i++) {
@@ -137,7 +137,7 @@ class ImportJsonController extends BaseController
             }
 
             fclose($handle);
-            
+
             $disk = Ninja::isHosted() ? 'backup' : config('filesystems.default');
 
             Storage::disk($disk)->put(
@@ -151,7 +151,7 @@ class ImportJsonController extends BaseController
             Storage::deleteDirectory(sys_get_temp_dir()."/{$metadata['fileHash']}");
 
             $metadata['uploaded_filepath'] = 'migrations/'.$metadata['fileName'];
-            
+
             return $metadata;
 
         }
@@ -160,7 +160,7 @@ class ImportJsonController extends BaseController
 
     }
 
-    private function deleteDirectory($dir) 
+    private function deleteDirectory($dir)
     {
         $files = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
@@ -176,6 +176,6 @@ class ImportJsonController extends BaseController
         }
 
         return rmdir($dir);
-    
+
     }
 }

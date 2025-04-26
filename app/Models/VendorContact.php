@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -87,7 +88,7 @@ class VendorContact extends Authenticatable implements HasLocalePreference
     use SoftDeletes;
     use HasFactory;
     use Searchable;
-    
+
     /* Used to authenticate a vendor */
     protected $guard = 'vendor';
 

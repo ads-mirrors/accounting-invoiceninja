@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -105,7 +106,7 @@ class TaxSummaryReport extends BaseExport
 
         // Initialize cash variables
         $cash_gross_sales = 0;
-        $cash_taxable_sales = 0; 
+        $cash_taxable_sales = 0;
         $cash_exempt_sales = 0;
 
         $gross_sales = round($query->sum('amount'), 2);
@@ -221,7 +222,7 @@ class TaxSummaryReport extends BaseExport
         $this->csv->insertOne([]);
         $this->csv->insertOne([ctrans('texts.cash_accounting')]);
         $this->csv->insertOne([]);
-        
+
         $this->csv->insertOne([ctrans('texts.gross'), $cash_gross_sales_money, $cash_gross_sales_formatted]);
         $this->csv->insertOne([ctrans('texts.taxable_amount'), $cash_taxable_sales_money, $cash_taxable_sales_formatted]);
         $this->csv->insertOne([ctrans('texts.tax_exempt'), $cash_exempt_sales_money, $cash_exempt_sales_formatted]);
@@ -263,7 +264,7 @@ class TaxSummaryReport extends BaseExport
         $this->taxes['cash_gross_sales'] = $cash_gross_sales_money;
         $this->taxes['cash_taxable_sales'] = $cash_taxable_sales_money;
         $this->taxes['cash_exempt_sales'] = $cash_exempt_sales_money;
-    
+
         $this->taxes['gross_sales'] = $gross_sales_money;
         $this->taxes['taxable_sales'] = $taxable_sales_money;
         $this->taxes['exempt_sales'] = $exempt_sales_money;

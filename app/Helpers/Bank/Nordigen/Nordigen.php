@@ -287,7 +287,7 @@ class Nordigen
 
         Email::dispatch($mo, $bank_integration->company);
 
-        
+
 
     }
 

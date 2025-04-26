@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -27,17 +28,17 @@ class SearchController extends Controller
     private array $invoices = [];
 
     private array $quotes = [];
-    
+
     private array $expenses = [];
 
     private array $credits = [];
-    
+
     private array $recurring_invoices = [];
-    
+
     private array $vendors = [];
-    
+
     private array $vendor_contacts = [];
-    
+
     private array $purchase_orders = [];
 
 
@@ -157,7 +158,7 @@ class SearchController extends Controller
                     break;
                 case 'client_contacts':
 
-                    if ($result['_source']['__soft_deleted']) { 
+                    if ($result['_source']['__soft_deleted']) {
                         break;
                     }
 
@@ -170,7 +171,7 @@ class SearchController extends Controller
                     break;
                 case 'quotes':
 
-                    if ($result['_source']['__soft_deleted']) { 
+                    if ($result['_source']['__soft_deleted']) {
                         break;
                     }
 
@@ -184,7 +185,7 @@ class SearchController extends Controller
                     break;
 
                 case 'expenses':
-                    
+
                     if ($result['_source']['__soft_deleted']) {
                         break;
                     }

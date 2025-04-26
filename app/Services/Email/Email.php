@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -288,7 +289,7 @@ class Email implements ShouldQueue
 
             $this->incrementEmailCounter();
 
-            LightLogs::create(new EmailSuccess($this->company->company_key, $this->mailable->subject))
+            LightLogs::create(new EmailSuccess($this->company->company_key, $this->mailable->subject, $this->mailable->viewData['text_body'] ?? ''))
                 ->send();
 
         } catch (\Symfony\Component\Mailer\Exception\TransportException $e) {
@@ -370,8 +371,6 @@ class Email implements ShouldQueue
 
             }
 
-           
-
             /**
              * Post mark buries the proper message in a guzzle response
              * this merges a text string with a json object
@@ -379,8 +378,19 @@ class Email implements ShouldQueue
              */
             if ($e instanceof PostmarkException) { //postmark specific failure
 
+                // Try to decode the JSON response if present
+                try {
+                    $response = json_decode($e->getMessage(), true);
+                    if (is_array($response) && isset($response['Message'])) {
+                        $message = $response['Message'];
+                    }
+                } catch (\Exception $jsonError) {
+                    // If JSON decode fails, use the original message
+                    $message = "Unknown issue sending via Postmark, please try again later.";
+                }
+
                 $this->fail();
-                $this->entityEmailFailed($e->getMessage());
+                $this->entityEmailFailed($message);
                 $this->cleanUpMailers();
 
                 return;
@@ -605,14 +615,14 @@ class Email implements ShouldQueue
                 $this->mailer = 'smtp';
                 $this->configureSmtpMailer();
                 return $this;
-            default:                
+            default:
                 $this->mailer = config('mail.default');
                 break;
 
         }
-        
+
         $this->mailer = config('mail.default');
-        
+
         return $this;
 
     }
@@ -905,11 +915,11 @@ class Email implements ShouldQueue
         $job_failure = null;
 
         try {
-            if($this->email_object->invitation){
+            if ($this->email_object->invitation) {
                 $this->email_object->invitation->email_error = substr($errors, 0, 150);
                 $this->email_object->invitation->save();
             }
-        }catch(\Throwable $e){
+        } catch (\Throwable $e) {
             nlog("Problem saving email error: {$e->getMessage()}");
         }
     }

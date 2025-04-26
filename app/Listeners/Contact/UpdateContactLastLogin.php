@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -38,11 +39,11 @@ class UpdateContactLastLogin implements ShouldQueue
         $client_contact = $event->client_contact;
 
         $contacts = \App\Models\ClientContact::where('company_id', $client_contact->company_id)
-                                 ->where('email', $client_contact->email);    
-        
+                                 ->where('email', $client_contact->email);
+
         $contacts->update(['last_login' => now()]);
 
         \App\Models\Client::withTrashed()->whereIn('id', $contacts->pluck('client_id'))->where('is_deleted', false)->update(['last_login' => now()]);
-        
+
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -175,7 +176,7 @@ class ClientFilters extends QueryFilters
         if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
-            
+
         $dir = ($sort_col[1] == 'asc') ? 'asc' : 'desc';
 
         if ($sort_col[0] == 'number') {
@@ -185,7 +186,7 @@ class ClientFilters extends QueryFilters
         if ($sort_col[0] == 'name') {
             return $this->builder
                 ->select('clients.*')
-                ->selectSub(function($query) {
+                ->selectSub(function ($query) {
                     $query->from('client_contacts')
                         ->whereColumn('client_contacts.client_id', 'clients.id')
                         ->whereNull('client_contacts.deleted_at')

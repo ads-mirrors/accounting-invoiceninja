@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -122,7 +123,7 @@ class PurchaseOrder extends BaseModel
     use Filterable;
     use SoftDeletes;
     use Searchable;
-    
+
     protected $hidden = [
         'id',
         'private_notes',
@@ -433,12 +434,12 @@ class PurchaseOrder extends BaseModel
 
     public function entityEmailEvent($invitation, $reminder_template, $template = '')
     {
-        
+
         switch ($reminder_template) {
             case 'purchase_order':
                 event(new PurchaseOrderWasEmailed($invitation, $invitation->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), $reminder_template));
                 break;
-                
+
             default:
                 event(new PurchaseOrderWasEmailed($invitation, $invitation->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), $reminder_template));
                 break;

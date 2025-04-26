@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -211,7 +212,7 @@ class FortePaymentDriver extends BaseDriver
                     ->get("{$forte_base_uri}/organizations/{$forte_organization_id}/locations/{$forte_location_id}/customers/");
 
         $error = $response->json()['response']['response_desc'] ?? 'error';
-        
+
         return $response->successful() ? 'ok' : $error;
 
     }
@@ -277,7 +278,7 @@ class FortePaymentDriver extends BaseDriver
             ],
         ];
 
-        if($cgt->gateway_type_id == GatewayType::BANK_TRANSFER) {
+        if ($cgt->gateway_type_id == GatewayType::BANK_TRANSFER) {
             $data["echeck"] = [
                 "sec_code" => "WEB",
             ];

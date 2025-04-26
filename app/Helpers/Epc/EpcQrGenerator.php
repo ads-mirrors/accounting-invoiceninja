@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -65,18 +66,17 @@ class EpcQrGenerator
 
     public function encodeMessage()
     {
-       
+
         if (isset($this->company->e_invoice->Invoice->PaymentMeans) && ($pm = $this->company->e_invoice->Invoice->PaymentMeans[0] ?? false) && in_array($pm->PaymentMeansCode->value, ['30', '58'])) {
 
             $iban = $pm->PayeeFinancialAccount->ID->value;
             $bic = $pm->PayeeFinancialAccount->FinancialInstitutionBranch->FinancialInstitution->ID->value ?? '';
 
-        }
-        else {
-        
+        } else {
+
             $bic = isset($this->company?->custom_fields?->company2) ? $this->company->settings->custom_value2 : '';
             $iban = isset($this->company?->custom_fields?->company1) ? $this->company->settings->custom_value1 : '';
-        
+
         }
 
         $data = [

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -451,38 +452,38 @@ class CompanyController extends BaseController
 
         $this->uploadLogo($request->file('company_logo'), $company, $company);
 
-        if($request->has('sync_send_time') && $request->input('sync_send_time') == 'true') {
-            
+        if ($request->has('sync_send_time') && $request->input('sync_send_time') == 'true') {
+
             //Update Reminders
             Invoice::where('company_id', $company->id)
                     ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
                     ->whereNotNull('next_send_date')
-                    ->where('next_send_date','>', now())
+                    ->where('next_send_date', '>', now())
                     ->where('balance', '>', 0)
                     ->cursor()
-                    ->each(function ($invoice){
+                    ->each(function ($invoice) {
                         $invoice->service()->setReminder();
                     });
-                    
+
 
             //Update Recurring Invoices
             RecurringInvoice::where('company_id', $company->id)
                             ->where('status_id', RecurringInvoice::STATUS_ACTIVE)
                             ->where('next_send_date', '>', now())
                             ->cursor()
-                            ->each(function ($recurring_invoice){
+                            ->each(function ($recurring_invoice) {
 
                                 $offset = $recurring_invoice->client->timezone_offset();
                                 $recurring_invoice->next_send_date = \Carbon\Carbon::parse($recurring_invoice->next_send_date_client)->startOfDay()->addSeconds($offset);
                                 $recurring_invoice->save();
-                                
-            });
+
+                            });
 
 
 
         }
-                    
-                    return $this->itemResponse($company);
+
+        return $this->itemResponse($company);
     }
 
     /**

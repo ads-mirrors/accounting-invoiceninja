@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -54,8 +55,8 @@ class BankMatchingService implements ShouldQueue
 
     public function failed($exception = null)
     {
-        
-        if($exception) {
+
+        if ($exception) {
             nlog("BANKMATCHINGSERVICE:: ". $exception->getMessage());
         }
 

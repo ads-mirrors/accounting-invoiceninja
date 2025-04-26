@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Entity Ninja (https://entityninja.com).
  *
@@ -99,15 +100,15 @@ class CreateRawPdf
 
     public function handle()
     {
-        
+
         $pdf = $this->generatePdf();
 
-        if($this->isBlankPdf($pdf)) {
-      
+        if ($this->isBlankPdf($pdf)) {
+
             nlog("Blank PDF detected, generating again");
             $pdf = $this->generatePdf();
         }
-        
+
         if ($this->isBlankPdf($pdf)) {
 
             nlog("Blank PDF detected, generating again!!! :: {$this->entity_string} {$this->entity->id}");
@@ -121,13 +122,14 @@ class CreateRawPdf
     private function isBlankPdf($pdf): bool
     {
 
-        $size = mb_strlen($pdf, '8bit'); 
+        $size = mb_strlen($pdf, '8bit');
 
-        $blankPdfSize = 12 * 1024; 
-        $tolerance = 100; 
+        $blankPdfSize = 12 * 1024;
+        $tolerance = 100;
 
-        if($size <= $blankPdfSize) 
+        if ($size <= $blankPdfSize) {
             nlog("PDF EXCEPTION:: size: {$size}, blank PDF size: {$blankPdfSize}, tolerance: {$tolerance}");
+        }
 
         return abs($size) <= $blankPdfSize;
 

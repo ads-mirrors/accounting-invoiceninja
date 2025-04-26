@@ -60,7 +60,7 @@ class UpdateLocationTaxData implements ShouldQueue
         $client = $this->location->client;
 
         try {
-            
+
             if (!$this->location->state && $this->location->postal_code) {
 
                 $this->location->update(['state' => USStates::getState($this->location->postal_code)]);

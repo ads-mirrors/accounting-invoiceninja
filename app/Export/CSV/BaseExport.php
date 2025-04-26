@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -1464,8 +1465,7 @@ class BaseExport
             if (stripos($value, 'tax.') !== false) {
                 $value = Str::after($value, 'tax.');
                 $header[] = $value;
-            }
-            elseif (stripos($value, 'custom_value') !== false) {
+            } elseif (stripos($value, 'custom_value') !== false) {
                 $parts = explode(".", $value);
 
                 if (count($parts) == 2 && in_array($parts[0], ['credit','quote','invoice','purchase_order','recurring_invoice'])) {
@@ -1685,7 +1685,7 @@ class BaseExport
             if (is_float($value)) {
 
                 //Careful not to convert discount % to currency
-                if($key == 'discount' && isset($entity->is_amount_discount) && !$entity->is_amount_discount) {
+                if ($key == 'discount' && isset($entity->is_amount_discount) && !$entity->is_amount_discount) {
                     continue;
                 }
 

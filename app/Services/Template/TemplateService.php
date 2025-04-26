@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -118,14 +119,14 @@ class TemplateService
         });
 
         $function = new \Twig\TwigFunction('img', \Closure::fromCallable(function (string $image_src, string $image_style = '') {
-            
+
             $html = '<img src="' . $image_src . '" style="' . $image_style . '"></img>';
 
             return $html;
             // return new \Twig\Markup($html, 'UTF-8');
 
         }));
-        
+
         $this->twig->addFunction($function);
 
         $function = new \Twig\TwigFunction('t', \Closure::fromCallable(function (string $text_key) {
@@ -399,7 +400,7 @@ class TemplateService
             }
         }
 
-                
+
         $html = htmlspecialchars_decode($html, ENT_QUOTES | ENT_HTML5);
         $html = str_ireplace(['<br>'], '<br/>', $html);
 
@@ -562,7 +563,7 @@ class TemplateService
                     $this->entity = $invoice;
 
                     if ($invoice->payments ?? false) {
-                        $payments = $invoice->payments->map(function ($payment) use($invoice) {
+                        $payments = $invoice->payments->map(function ($payment) use ($invoice) {
                             return $this->transformPayment($payment, $invoice);
                         })->toArray();
                     }
@@ -642,7 +643,7 @@ class TemplateService
         return collect($items)->map(function ($item) use ($client_or_vendor) {
 
             $item->cost_raw = $item->cost ?? 0;
-            
+
             $item->discount_raw = $item->discount ?? 0;
             $item->line_total_raw = $item->line_total ?? 0;
             $item->gross_line_total_raw = $item->gross_line_total ?? 0;
@@ -653,7 +654,7 @@ class TemplateService
             $item->net_cost = Number::formatMoney($item->net_cost_raw, $client_or_vendor);
 
             $item->cost = Number::formatMoney($item->cost_raw, $client_or_vendor);
-            
+
             if ($item->is_amount_discount) {
                 $item->discount = Number::formatMoney($item->discount_raw, $client_or_vendor);
             }
@@ -681,7 +682,7 @@ class TemplateService
         $this->payment = $payment;
 
         $credits = $payment->credits
-        ->when($entity instanceof Credit, function($collection) use ($entity) {
+        ->when($entity instanceof Credit, function ($collection) use ($entity) {
             return $collection->where('number', $entity->number);
         })
         ->map(function ($credit) use ($payment) {
@@ -702,9 +703,9 @@ class TemplateService
         });
 
         $pivot = $payment->invoices
-        ->when($entity instanceof Invoice, function($collection) use ($entity) {
+        ->when($entity instanceof Invoice, function ($collection) use ($entity) {
             return $collection->where('number', $entity->number);
-        })  
+        })
         ->map(function ($invoice) use ($payment) {
             return [
                 'invoice' => $invoice->number,
@@ -885,7 +886,7 @@ class TemplateService
                     $this->entity = $credit;
 
                     if ($credit->payments ?? false) {
-                        $payments = $credit->payments->map(function ($payment) use($credit) {
+                        $payments = $credit->payments->map(function ($payment) use ($credit) {
                             return $this->transformPayment($payment, $credit);
                         })->toArray();
                     }
@@ -1080,7 +1081,7 @@ class TemplateService
                 'vendor' => $this->getVendor($expense),
                 'project' => ($expense->project && !$nested) ? $this->transformProject($expense->project, true) : [],
             ];
-         })->toArray();
+        })->toArray();
     }
 
     /**
@@ -1671,7 +1672,7 @@ class TemplateService
             }
 
             $contains_html = str_contains($child['content'], '<') && str_contains($child['content'], '>');
-        
+
             if ($contains_html) {
                 // If the element contains the HTML, we gonna display it as is. Backend is going to
                 // encode it for us, preventing any errors on the processing stage.

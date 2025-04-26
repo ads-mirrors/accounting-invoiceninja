@@ -508,7 +508,7 @@ class InvoiceController extends BaseController
             return response(['message' => ctrans('texts.email_quota_exceeded_subject')], 400);
         }
 
-        if($user->hasExactPermission('disable_emails') && (stripos($action, 'email') !== false)){
+        if ($user->hasExactPermission('disable_emails') && (stripos($action, 'email') !== false)) {
             return response(['message' => ctrans('texts.disable_emails_error')], 400);
         }
 
@@ -552,17 +552,17 @@ class InvoiceController extends BaseController
 
             $batch_id = (new \App\Jobs\Invoice\PrintEntityBatch(Invoice::class, $invoices->pluck('id')->toArray(), $user->company()->db))->handle();
             $batch = \Illuminate\Support\Facades\Bus::findBatch($batch_id);
-            $batch_key = $batch->name;          
+            $batch_key = $batch->name;
 
             $finished = false;
 
-            do{
+            do {
                 usleep(300000);
                 $batch = \Illuminate\Support\Facades\Bus::findBatch($batch_id);
                 $finished = $batch->finished();
-            }while(!$finished);
-            
-            $paths = $invoices->map(function ($invoice) use($batch_key){
+            } while (!$finished);
+
+            $paths = $invoices->map(function ($invoice) use ($batch_key) {
                 return \Illuminate\Support\Facades\Cache::pull("{$batch_key}-{$invoice->id}");
             })->filter(function ($value) {
                 return !is_null($value);

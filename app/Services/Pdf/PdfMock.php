@@ -114,7 +114,7 @@ class PdfMock
     public function build(): self
     {
         $this->mock = $this->initEntity();
-        
+
         $this->setPdfService();
 
         return $this;

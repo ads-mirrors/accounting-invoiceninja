@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -20,9 +21,9 @@ use App\Models\RecurringInvoice;
 use App\Services\AbstractService;
 
 class LocationData extends AbstractService
-{    
+{
     private ?Location $businessLocation;
-    
+
     private ?Location $shippingLocation;
 
     public function __construct(private Invoice | Quote | Credit | RecurringInvoice $entity)
@@ -35,8 +36,7 @@ class LocationData extends AbstractService
         if (!$this->entity->location) {
             $this->businessLocation = null;
             $this->shippingLocation = null;
-        }
-        elseif($this->entity->location->is_shipping_location) {
+        } elseif ($this->entity->location->is_shipping_location) {
             $this->shippingLocation = $this->entity->location;
             $this->businessLocation = null;
         } else {
@@ -61,7 +61,7 @@ class LocationData extends AbstractService
             'country' => $this->getBusinessCountry(),
             'country_name' => $this->getBusinessCountryName(),
             'country_code' => $this->getBusinessCountryCode(),
-            
+
             // Shipping Address (from shipping location or client default)
             'shipping_location_name' => $this->getShippingLocationName(),
             'shipping_address' => $this->getShippingAddress(),
@@ -105,7 +105,7 @@ class LocationData extends AbstractService
         }
 
         return $this->entity->client->shipping_country ?? $this->entity->company->country();
-        
+
     }
 
     public function getCityState()
@@ -163,9 +163,9 @@ class LocationData extends AbstractService
         }
     }
 
-    private function getShippingAddress(): string  
+    private function getShippingAddress(): string
     {
-        
+
         $str = ' ';
 
         if ($address1 = $this->getShippingAddress1()) {
@@ -184,7 +184,7 @@ class LocationData extends AbstractService
         return $str;
 
     }
-    
+
     private function getBusinessAddress1(): string
     {
         if ($this->businessLocation) {

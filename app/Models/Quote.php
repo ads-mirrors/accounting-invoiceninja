@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -476,16 +477,16 @@ class Quote extends BaseModel
         return true;
 
     }
-    
+
     /**
      * entityEmailEvent
      *
-     * Translates the email type into an activity + notification 
+     * Translates the email type into an activity + notification
      * that matches.
      */
     public function entityEmailEvent($invitation, $reminder_template, $template = '')
     {
-        
+
         switch ($reminder_template) {
             case 'quote':
                 event(new QuoteWasEmailed($invitation, $invitation->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), $reminder_template));
@@ -505,6 +506,6 @@ class Quote extends BaseModel
         }
     }
 
-    
-    
+
+
 }

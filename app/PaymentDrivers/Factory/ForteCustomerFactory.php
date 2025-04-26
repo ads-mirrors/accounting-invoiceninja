@@ -93,7 +93,7 @@ class ForteCustomerFactory
 
     private function getBillingAddress(array $customer): array
     {
-        
+
         if (isset($customer['default_billing_address_token']) && isset($customer['addresses'][0]['physical_address'])) {
 
             foreach ($customer['addresses'] as $address) {

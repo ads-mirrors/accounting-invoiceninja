@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -278,9 +279,9 @@ class RotessaPaymentDriver extends BaseDriver
 
     public function tokenBilling(\App\Models\ClientGatewayToken $cgt, \App\Models\PaymentHash $payment_hash)
     {
-                
+
         $this->setPaymentMethod($cgt->gateway_type_id);
-        
+
         return $this->payment_method->tokenBilling($cgt, $payment_hash);
 
     }

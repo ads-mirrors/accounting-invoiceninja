@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -72,9 +73,9 @@ class TransactionReport implements ShouldQueue
                                             $payment->status_id = Payment::STATUS_COMPLETED;
                                             $payment->save();
 
-                                            $references =collect($transactions)->where('id', $payment->transaction_reference)->first();
+                                            $references = collect($transactions)->where('id', $payment->transaction_reference)->first();
 
-                                            if($references) {
+                                            if ($references) {
                                                 SystemLogger::dispatch(
                                                     ['response' => $references->toArray(), 'data' => []],
                                                     SystemLog::CATEGORY_GATEWAY_RESPONSE,
@@ -138,16 +139,15 @@ class TransactionReport implements ShouldQueue
                                                 $error
                                             );
 
-                                            if(collect($transactions)->where('id', $payment->transaction_reference)->first())
-                                            {
+                                            if (collect($transactions)->where('id', $payment->transaction_reference)->first()) {
                                                 SystemLogger::dispatch(
                                                     ['response' => collect($transactions)->where('id', $payment->transaction_reference)->first()->toArray(), 'data' => []],
                                                     SystemLog::CATEGORY_GATEWAY_RESPONSE,
                                                     SystemLog::EVENT_GATEWAY_FAILURE,
                                                     SystemLog::TYPE_ROTESSA,
                                                     $payment->client,
-                                                        $payment->company,
-                                                    );
+                                                    $payment->company,
+                                                );
                                             }
 
                                         });

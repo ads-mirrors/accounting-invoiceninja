@@ -53,8 +53,9 @@ class Statement
 
             $invitation = $this->getInvitation();
 
-            if(!$invitation)
+            if (!$invitation) {
                 return null;
+            }
 
             $html = new HtmlEngine($invitation);
 
@@ -69,13 +70,12 @@ class Statement
                 $variables['values']['$end_date'] = $this->translateDate($this->options['end_date'], $this->client->date_format(), $this->client->locale());
                 $variables['labels']['$start_date_label'] = ctrans('texts.start_date');
                 $variables['labels']['$end_date_label'] = ctrans('texts.end_date');
-                
+
                 $pdf = null;
 
-                try{
+                try {
                     $pdf = $this->templateStatement($variables);
-                }
-                catch(\Throwable $e){
+                } catch (\Throwable $e) {
                     nlog("wrapped");
                     nlog($e->getMessage());
                 }
@@ -84,7 +84,7 @@ class Statement
             }
 
 
-            $variables['values']['$show_paid_stamp'] = 'none'; 
+            $variables['values']['$show_paid_stamp'] = 'none';
 
             $options = [
                 // 'client' => $this->entity->client,
@@ -100,7 +100,7 @@ class Statement
             ];
 
             $ps = new \App\Services\Pdf\PdfService($invitation, 'statement', array_merge($options, $this->options));
-            
+
             $ps->config = (new \App\Services\Pdf\PdfConfiguration($ps))->init();
 
             $ps->config->pdf_variables = (array) $this->entity->company->settings->pdf_variables;
@@ -110,7 +110,7 @@ class Statement
             $ps->designer = (new \App\Services\Pdf\PdfDesigner($ps))->build();
 
             $ps->designer->buildFromPartials((array)$ps->config->design->design);
-            
+
             $ps->builder = (new \App\Services\Pdf\PdfBuilder($ps))->build();
 
             $pdf = $ps->getPdf();
@@ -153,8 +153,7 @@ class Statement
                             ->where('company_id', $this->client->company_id)
                             ->first();
 
-        if($template)
-        {
+        if ($template) {
             $ts = $template->service();
             $ts->addGlobal(['show_credits' => $this->options['show_credits_table']]);
             $ts->addGlobal(['show_aging' => $this->options['show_aging_table']]);
@@ -199,12 +198,11 @@ class Statement
     {
         if ($this->getInvoices()->count() >= 1) {
             $this->entity = $this->getInvoices()->first(); //@phpstan-ignore-line
-        }
-        else {
+        } else {
             $this->entity = $this->client->invoices()->whereHas('invitations')->first();
         }
 
-        if(\is_null($this->entity)){
+        if (\is_null($this->entity)) {
             $settings = new \stdClass();
             $settings->entity = \App\Models\Client::class;
             $settings->currency_id = '1';
@@ -214,7 +212,7 @@ class Statement
             $this->client->settings = $settings;
 
             $this->entity = \App\Models\Invoice::factory()->make(); //@phpstan-ignore-line
-            $this->entity->client =$this->client;//@phpstan-ignore-line
+            $this->entity->client = $this->client;//@phpstan-ignore-line
             $ii = \App\Models\InvoiceInvitation::factory()->make(); //@phpstan-ignore-line
             $ii->setRelation('invoice', $this->entity); //@phpstan-ignore-line
             $ii->setRelation('contact', $this->client->contacts->first()); //@phpstan-ignore-line
@@ -231,7 +229,7 @@ class Statement
             // $this->entity->setRelation('invitations', \App\Models\InvoiceInvitation::factory()->make()); //@phpstan-ignore-line
             // $this->entity->setRelation('company', $this->client->company);
             // $this->entity->setRelation('user', $this->client->user);
-            
+
         }
 
         return $this;
@@ -410,16 +408,18 @@ class Statement
      */
     protected function getInvitation()
     {
-        if($this->entity instanceof Invoice) {
+        if ($this->entity instanceof Invoice) {
             $invitation = $this->entity->invitations->first();
-            
-            if($invitation)
-                return $invitation;
 
-        $invitation = $this->client->invoices()->whereHas('invitations')->first()->invitations->first();
-        
-        if ($invitation) 
-            return $invitation;
+            if ($invitation) {
+                return $invitation;
+            }
+
+            $invitation = $this->client->invoices()->whereHas('invitations')->first()->invitations->first();
+
+            if ($invitation) {
+                return $invitation;
+            }
 
         }
 
@@ -467,7 +467,7 @@ class Statement
             // $q->whereBetween('due_date', [$to, $from])->orWhereNull('due_date');
             $query->where(function ($q) use ($to, $from) {
                 $q->whereDate('due_date', '>=', now()->startOfDay())
-                  ->orWhere(function($q2) use ($to, $from) {
+                  ->orWhere(function ($q2) use ($to, $from) {
                       $q2->whereNull('due_date')
                       ->whereBetween('date', [$to,$from]);
                   });
@@ -541,7 +541,7 @@ class Statement
 
         if (! empty($this->client->getSetting('statement_design_id'))) {
             $id = $this->decodePrimaryKey($this->client->getSetting('statement_design_id'));
-         }
+        }
 
         return Design::withTrashed()->find($id);
     }

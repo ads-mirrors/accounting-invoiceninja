@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -633,7 +634,7 @@ class ProfitLoss
                 $this->start_date = (new \Carbon\Carbon('-1 year'))->startOfYear();
                 $this->end_date = (new \Carbon\Carbon('-1 year'))->endOfYear();
                 break;
-                
+
             case 'this_year':
                 $this->start_date = now()->startOfYear();
                 $this->end_date = now();

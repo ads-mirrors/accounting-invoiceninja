@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -45,19 +46,8 @@ class UpdateRecurringInvoiceRequest extends Request
 
         $rules = [];
 
-        if ($this->file('documents') && is_array($this->file('documents'))) {
-            $rules['documents.*'] = $this->fileValidation();
-        } elseif ($this->file('documents')) {
-            $rules['documents'] = $this->fileValidation();
-        } else {
-            $rules['documents'] = 'bail|sometimes|array';
-        }
-
-        if ($this->file('file') && is_array($this->file('file'))) {
-            $rules['file.*'] = $this->fileValidation();
-        } elseif ($this->file('file')) {
-            $rules['file'] = $this->fileValidation();
-        }
+        $rules['file'] = 'bail|sometimes|array';
+        $rules['file.*'] = $this->fileValidation();
 
         $rules['number'] = ['bail', 'sometimes', Rule::unique('recurring_invoices')->where('company_id', $user->company()->id)->ignore($this->recurring_invoice->id)];
 
@@ -88,6 +78,11 @@ class UpdateRecurringInvoiceRequest extends Request
     public function prepareForValidation()
     {
         $input = $this->all();
+
+
+        if ($this->file('file') instanceof \Illuminate\Http\UploadedFile) {
+            $this->files->set('file', [$this->file('file')]);
+        }
 
         if (array_key_exists('due_date_days', $input) && is_null($input['due_date_days'])) {
             $input['due_date_days'] = 'terms';
@@ -146,7 +141,7 @@ class UpdateRecurringInvoiceRequest extends Request
             $input['auto_bill_enabled'] = $this->setAutoBillFlag($input['auto_bill']);
         }
 
-        if (array_key_exists('documents', $input)) {
+        if (isset($input['documents'])) {
             unset($input['documents']);
         }
 

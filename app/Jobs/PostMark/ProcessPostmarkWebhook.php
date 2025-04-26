@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -450,8 +451,8 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
     public function failed($exception = null)
     {
-        
-        if($exception) {
+
+        if ($exception) {
             nlog("PROCESSPOSTMARKWEBHOOK:: ". $exception->getMessage());
         }
 

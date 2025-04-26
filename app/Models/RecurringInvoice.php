@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -134,7 +135,7 @@ class RecurringInvoice extends BaseModel
     use HasRecurrence;
     use PresentableTrait;
     use Searchable;
-    
+
     protected $presenter = RecurringInvoicePresenter::class;
 
     /**
@@ -735,7 +736,7 @@ class RecurringInvoice extends BaseModel
             // if ($this->client->timezone_offset() < 0) {
             //     $next_send_date = $this->nextSendDateClient($next_send_date->addDay()->format('Y-m-d'));
             // } else {
-                $next_send_date = $this->nextDateByFrequencyNoOffset($next_send_date);
+            $next_send_date = $this->nextDateByFrequencyNoOffset($next_send_date);
             // }
         }
 
