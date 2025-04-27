@@ -313,7 +313,12 @@ class PayPalWebhook implements ShouldQueue
     //--------------------------------------------------------------------------------------//
     private function verifyWebhook(): bool
     {
-        nlog($this->headers);
+        // nlog($this->headers);
+
+        if(!isset($this->headers['paypal-auth-algo'][0])){
+          nlog(array_merge(["no paypal-auth-algo"], $this->webhook_request));
+        }
+
         $request = [
             'auth_algo' => $this->headers['paypal-auth-algo'][0],
             'cert_url' => $this->headers['paypal-cert-url'][0],
