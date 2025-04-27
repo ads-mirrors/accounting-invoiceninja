@@ -283,7 +283,7 @@ class Client extends BaseModel implements HasLocalePreference
 
     public function getScoutKey()
     {
-        return $this->company->db.":".$this->id;
+        return $this->company ? $this->company->db.":".$this->id : config('database.default').":".$this->id; //28-04-2025 handle removing clients when purged
     }
 
     public function getEntityType()
