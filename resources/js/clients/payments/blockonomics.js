@@ -164,9 +164,10 @@ class Blockonomics {
                 console.log('Payment status:', data.status);
                 const isPaymentUnconfirmed = data.status === 0;
                 const isPaymentPartiallyConfirmed = data.status === 1;
-                // TODO: Do we need to handle Payment confirmed status?
-                // This usually takes too long to happen, so we can just wait for the unconfirmed status?
-                if (isPaymentUnconfirmed || isPaymentPartiallyConfirmed) {
+                const isPaymentConfirmed = data.status === 2;
+                // Confirmation status: 0 = unconfirmed, 1 = partially confirmed, 2 = confirmed
+                // If any of the statuses are true, submit the form and redirect
+                if (isPaymentUnconfirmed || isPaymentPartiallyConfirmed || isPaymentConfirmed) {
                     document.querySelector('input[name="txid"]').value = data.txid || '';
                     document.getElementById('server-response').submit();
                 }
