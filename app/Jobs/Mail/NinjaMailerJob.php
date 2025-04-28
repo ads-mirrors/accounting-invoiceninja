@@ -210,7 +210,20 @@ class NinjaMailerJob implements ShouldQueue
 
             }
 
-        } catch (\Exception $e) {
+        } catch(\ErrorException $e){
+            
+            nlog("indeed i am a error exception NinjaMailerJob");
+            
+            $message = "Attachment size is too large.";
+            $this->fail();
+            $this->logMailError($message, $this->company->clients()->first());
+            $this->entityEmailFailed($message);
+            $this->cleanUpMailers();
+
+            return;
+        
+        }
+        catch (\Exception $e) {
             nlog("Mailer failed with {$e->getMessage()}");
             $message = $e->getMessage();
 

@@ -248,12 +248,14 @@ class Document extends BaseModel
         }
 
         try {
-            $file = base64_encode($image);
+            // $file = base64_encode($image);
+            $file = $image;
 
             $img = new \Imagick(); //@phpstan-ignore-line
             $img->readImageBlob($file);
             $img->setImageCompression(true); //@phpstan-ignore-line
             $img->setImageCompressionQuality(40);
+            $img->stripImage();
 
             return $img->getImageBlob();
 
@@ -264,6 +266,7 @@ class Document extends BaseModel
         }
 
     }
+
 
     /**
      * Returns boolean based on checks for image.

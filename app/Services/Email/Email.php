@@ -346,7 +346,18 @@ class Email implements ShouldQueue
                 $message = null;
             }
 
-        } catch (\Exception | \RuntimeException $e) {
+        } catch(\ErrorException $e){
+            nlog("indeed i am a error exception Email Class");
+            $message = "Attachment size is too large.";
+            $this->fail();
+            $this->logMailError($message, $this->company->clients()->first());
+            $this->cleanUpMailers();
+
+            $this->entityEmailFailed($message);
+
+            return;
+        } 
+        catch (\Exception | \RuntimeException $e) {
             nlog("Mailer failed with {$e->getMessage()}");
             $message = $e->getMessage();
 
