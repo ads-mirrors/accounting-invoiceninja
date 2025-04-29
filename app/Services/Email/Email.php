@@ -346,8 +346,8 @@ class Email implements ShouldQueue
                 $message = null;
             }
 
-        } catch(\ErrorException $e){
-            nlog("indeed i am a error exception Email Class");
+        } catch(\ErrorException $e){ //@todo - remove after symfony/mailer is updated with bug fix
+
             $message = "Attachment size is too large.";
             $this->fail();
             $this->logMailError($message, $this->company->clients()->first());
