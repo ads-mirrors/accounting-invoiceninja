@@ -75,10 +75,26 @@ class StoreClientRequest extends Request
         $rules['shipping_country_id'] = 'integer|nullable|exists:countries,id';
         $rules['number'] = ['sometimes', 'nullable', 'bail', Rule::unique('clients')->where('company_id', $user->company()->id)];
         $rules['country_id'] = 'integer|nullable|exists:countries,id';
-        $rules['custom_value1'] = 'bail|nullable|sometimes|alpha_num';
-        $rules['custom_value2'] = 'bail|nullable|sometimes|alpha_num';
-        $rules['custom_value3'] = 'bail|nullable|sometimes|alpha_num';
-        $rules['custom_value4'] = 'bail|nullable|sometimes|alpha_num';
+        $rules['custom_value1'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            }];
+        $rules['custom_value2'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            }];
+        $rules['custom_value3'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            }];
+        $rules['custom_value4'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            }];
 
         return $rules;
     }
