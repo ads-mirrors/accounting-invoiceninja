@@ -66,7 +66,15 @@ class PaymentTest extends TestCase
     {
              
                 
-        $client = Client::factory()->create(['company_id' => $this->company->id, 'user_id' => $this->user->id]);
+        $client = Client::factory()->create([
+            'company_id' => $this->company->id, 
+            'user_id' => $this->user->id, 
+            'balance' => 0, 
+            'paid_to_date' => 0,
+            'credit_balance' => 0,
+            'payment_balance' => 0,
+        ]);
+
         ClientContact::factory()->create([
             'user_id' => $this->user->id,
             'client_id' => $client->id,
@@ -90,10 +98,9 @@ class PaymentTest extends TestCase
         $this->assertEquals(10, $invoice->amount);
         $this->assertEquals(10, $invoice->balance);
 
-
         $credit = CreditFactory::create($this->company->id, $this->user->id);
         $credit->client_id = $client->id;
-        $credit->status_id = Credit::STATUS_SENT;
+        $credit->status_id = Credit::STATUS_DRAFT;
 
         $credit->line_items = $this->buildLineItems();
         $credit->uses_inclusive_taxes = false;
@@ -140,6 +147,10 @@ class PaymentTest extends TestCase
         $this->assertEquals(10, $payment->amount);
         $this->assertEquals(0, $payment->refunded);
         $this->assertEquals(0, $payment->applied);
+
+        $client = $client->refresh();   
+        $this->assertEquals(0, $client->balance);
+        $this->assertEquals(10, $client->paid_to_date);
 
         $invoice = $invoice->refresh();
         $this->assertEquals(0, $invoice->balance);
