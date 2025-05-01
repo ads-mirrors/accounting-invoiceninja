@@ -37,6 +37,7 @@ class PaymentTransformer extends EntityTransformer
         'invoices',
         'type',
         'credits',
+        'activities',
     ];
 
     public function __construct($serializer = null)
@@ -44,6 +45,18 @@ class PaymentTransformer extends EntityTransformer
         parent::__construct();
 
         $this->serializer = $serializer;
+    }
+
+    /**
+     * @param Payment $payment
+     *
+     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     */
+    public function includeActivities(Payment $payment)
+    {
+        $transformer = new ActivityTransformer($this->serializer);
+
+        return $this->includeCollection($payment->activities, $transformer, Activity::class);
     }
 
     public function includeInvoices(Payment $payment)

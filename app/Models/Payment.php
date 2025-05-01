@@ -220,6 +220,11 @@ class Payment extends BaseModel
         return $this->morphMany(Document::class, 'documentable');
     }
 
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activity::class)->where('company_id', $this->company_id)->take(50)->orderBy('id', 'desc');
+    }
+    
     /**
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
      */

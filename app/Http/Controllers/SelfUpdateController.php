@@ -129,8 +129,6 @@ class SelfUpdateController extends BaseController
         Artisan::call('cache:clear');
         Artisan::call('ninja:design-update');
 
-        // $this->runModelChecks();
-
         nlog('Called Artisan commands');
 
         return response()->json(['message' => 'Update completed'], 200);
