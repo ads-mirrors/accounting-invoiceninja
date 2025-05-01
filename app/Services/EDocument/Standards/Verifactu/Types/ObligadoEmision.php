@@ -5,41 +5,41 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class ObligadoEmision extends PersonaFisicaJuridicaES
 {
     /** @var string|null */
-    protected $tipoPersona;
+    protected $TipoPersona;
 
     /** @var string|null */
-    protected $razonSocialCompleta;
+    protected $RazonSocialCompleta;
 
     /** @var string|null */
-    protected $nombreComercial;
+    protected $NombreComercial;
 
     /** @var string|null */
-    protected $codigoPostal;
+    protected $CodigoPostal;
 
     /** @var string|null */
-    protected $direccion;
+    protected $Direccion;
 
     /** @var string|null */
-    protected $poblacion;
+    protected $Poblacion;
 
     /** @var string|null */
-    protected $provincia;
+    protected $Provincia;
 
     /** @var string|null */
-    protected $pais;
+    protected $Pais;
 
     /** @var string|null */
-    protected $telefono;
+    protected $Telefono;
 
     /** @var string|null */
-    protected $email;
+    protected $Email;
 
     /** @var string|null */
-    protected $web;
+    protected $Web;
 
     public function getTipoPersona(): ?string
     {
-        return $this->tipoPersona;
+        return $this->TipoPersona;
     }
 
     public function setTipoPersona(?string $tipoPersona): self
@@ -47,13 +47,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($tipoPersona !== null && !in_array($tipoPersona, ['F', 'J'])) {
             throw new \InvalidArgumentException('TipoPersona must be either "F" (Física) or "J" (Jurídica)');
         }
-        $this->tipoPersona = $tipoPersona;
+        $this->TipoPersona = $tipoPersona;
         return $this;
     }
 
     public function getRazonSocialCompleta(): ?string
     {
-        return $this->razonSocialCompleta;
+        return $this->RazonSocialCompleta;
     }
 
     public function setRazonSocialCompleta(?string $razonSocialCompleta): self
@@ -61,13 +61,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($razonSocialCompleta !== null && strlen($razonSocialCompleta) > 120) {
             throw new \InvalidArgumentException('RazonSocialCompleta must not exceed 120 characters');
         }
-        $this->razonSocialCompleta = $razonSocialCompleta;
+        $this->RazonSocialCompleta = $razonSocialCompleta;
         return $this;
     }
 
     public function getNombreComercial(): ?string
     {
-        return $this->nombreComercial;
+        return $this->NombreComercial;
     }
 
     public function setNombreComercial(?string $nombreComercial): self
@@ -75,13 +75,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($nombreComercial !== null && strlen($nombreComercial) > 120) {
             throw new \InvalidArgumentException('NombreComercial must not exceed 120 characters');
         }
-        $this->nombreComercial = $nombreComercial;
+        $this->NombreComercial = $nombreComercial;
         return $this;
     }
 
     public function getCodigoPostal(): ?string
     {
-        return $this->codigoPostal;
+        return $this->CodigoPostal;
     }
 
     public function setCodigoPostal(?string $codigoPostal): self
@@ -89,13 +89,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($codigoPostal !== null && strlen($codigoPostal) > 10) {
             throw new \InvalidArgumentException('CodigoPostal must not exceed 10 characters');
         }
-        $this->codigoPostal = $codigoPostal;
+        $this->CodigoPostal = $codigoPostal;
         return $this;
     }
 
     public function getDireccion(): ?string
     {
-        return $this->direccion;
+        return $this->Direccion;
     }
 
     public function setDireccion(?string $direccion): self
@@ -103,13 +103,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($direccion !== null && strlen($direccion) > 250) {
             throw new \InvalidArgumentException('Direccion must not exceed 250 characters');
         }
-        $this->direccion = $direccion;
+        $this->Direccion = $direccion;
         return $this;
     }
 
     public function getPoblacion(): ?string
     {
-        return $this->poblacion;
+        return $this->Poblacion;
     }
 
     public function setPoblacion(?string $poblacion): self
@@ -117,13 +117,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($poblacion !== null && strlen($poblacion) > 50) {
             throw new \InvalidArgumentException('Poblacion must not exceed 50 characters');
         }
-        $this->poblacion = $poblacion;
+        $this->Poblacion = $poblacion;
         return $this;
     }
 
     public function getProvincia(): ?string
     {
-        return $this->provincia;
+        return $this->Provincia;
     }
 
     public function setProvincia(?string $provincia): self
@@ -131,13 +131,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($provincia !== null && strlen($provincia) > 20) {
             throw new \InvalidArgumentException('Provincia must not exceed 20 characters');
         }
-        $this->provincia = $provincia;
+        $this->Provincia = $provincia;
         return $this;
     }
 
     public function getPais(): ?string
     {
-        return $this->pais;
+        return $this->Pais;
     }
 
     public function setPais(?string $pais): self
@@ -145,13 +145,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($pais !== null && strlen($pais) > 20) {
             throw new \InvalidArgumentException('Pais must not exceed 20 characters');
         }
-        $this->pais = $pais;
+        $this->Pais = $pais;
         return $this;
     }
 
     public function getTelefono(): ?string
     {
-        return $this->telefono;
+        return $this->Telefono;
     }
 
     public function setTelefono(?string $telefono): self
@@ -159,13 +159,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($telefono !== null && strlen($telefono) > 20) {
             throw new \InvalidArgumentException('Telefono must not exceed 20 characters');
         }
-        $this->telefono = $telefono;
+        $this->Telefono = $telefono;
         return $this;
     }
 
     public function getEmail(): ?string
     {
-        return $this->email;
+        return $this->Email;
     }
 
     public function setEmail(?string $email): self
@@ -178,13 +178,13 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
                 throw new \InvalidArgumentException('Invalid email format');
             }
         }
-        $this->email = $email;
+        $this->Email = $email;
         return $this;
     }
 
     public function getWeb(): ?string
     {
-        return $this->web;
+        return $this->Web;
     }
 
     public function setWeb(?string $web): self
@@ -192,7 +192,7 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
         if ($web !== null && strlen($web) > 250) {
             throw new \InvalidArgumentException('Web must not exceed 250 characters');
         }
-        $this->web = $web;
+        $this->Web = $web;
         return $this;
     }
 } 

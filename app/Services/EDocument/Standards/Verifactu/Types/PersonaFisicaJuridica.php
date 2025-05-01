@@ -5,17 +5,17 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class PersonaFisicaJuridica
 {
     /** @var string|null Max length 120 characters */
-    protected $nombreRazon;
+    protected $NombreRazon;
 
     /** @var string|null NIF format */
-    protected $nif;
+    protected $NIF;
 
     /** @var IDOtro|null */
-    protected $idOtro;
+    protected $IDOtro;
 
     public function getNombreRazon(): ?string
     {
-        return $this->nombreRazon;
+        return $this->NombreRazon;
     }
 
     public function setNombreRazon(?string $nombreRazon): self
@@ -23,36 +23,36 @@ class PersonaFisicaJuridica
         if ($nombreRazon !== null && strlen($nombreRazon) > 120) {
             throw new \InvalidArgumentException('NombreRazon must not exceed 120 characters');
         }
-        $this->nombreRazon = $nombreRazon;
+        $this->NombreRazon = $nombreRazon;
         return $this;
     }
 
-    public function getNif(): ?string
+    public function getNIF(): ?string
     {
-        return $this->nif;
+        return $this->NIF;
     }
 
-    public function setNif(?string $nif): self
+    public function setNIF(?string $nif): self
     {
         // TODO: Add NIF validation
-        if ($nif !== null && $this->idOtro !== null) {
+        if ($nif !== null && $this->IDOtro !== null) {
             throw new \InvalidArgumentException('Cannot set both NIF and IDOtro');
         }
-        $this->nif = $nif;
+        $this->NIF = $nif;
         return $this;
     }
 
-    public function getIdOtro(): ?IDOtro
+    public function getIDOtro(): ?IDOtro
     {
-        return $this->idOtro;
+        return $this->IDOtro;
     }
 
-    public function setIdOtro(?IDOtro $idOtro): self
+    public function setIDOtro(?IDOtro $idOtro): self
     {
-        if ($idOtro !== null && $this->nif !== null) {
+        if ($idOtro !== null && $this->NIF !== null) {
             throw new \InvalidArgumentException('Cannot set both NIF and IDOtro');
         }
-        $this->idOtro = $idOtro;
+        $this->IDOtro = $idOtro;
         return $this;
     }
 } 

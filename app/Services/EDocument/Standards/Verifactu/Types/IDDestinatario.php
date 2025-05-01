@@ -5,14 +5,14 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class IDDestinatario extends PersonaFisicaJuridicaES
 {
     /** @var string|null */
-    protected $codigoPais;
+    protected $CodigoPais;
 
     /** @var IDOtro|null */
-    protected $idOtro;
+    protected $IDOtro;
 
     public function getCodigoPais(): ?string
     {
-        return $this->codigoPais;
+        return $this->CodigoPais;
     }
 
     public function setCodigoPais(?string $codigoPais): self
@@ -20,18 +20,18 @@ class IDDestinatario extends PersonaFisicaJuridicaES
         if ($codigoPais !== null && strlen($codigoPais) !== 2) {
             throw new \InvalidArgumentException('CodigoPais must be a 2-character ISO country code');
         }
-        $this->codigoPais = $codigoPais;
+        $this->CodigoPais = $codigoPais;
         return $this;
     }
 
-    public function getIdOtro(): ?IDOtro
+    public function getIDOtro(): ?IDOtro
     {
-        return $this->idOtro;
+        return $this->IDOtro;
     }
 
-    public function setIdOtro(?IDOtro $idOtro): self
+    public function setIDOtro(?IDOtro $idOtro): self
     {
-        $this->idOtro = $idOtro;
+        $this->IDOtro = $idOtro;
         return $this;
     }
 } 

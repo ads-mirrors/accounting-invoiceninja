@@ -5,23 +5,23 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class Incidencia
 {
     /** @var string */
-    protected $codigo;
+    protected $Codigo;
 
     /** @var string */
-    protected $descripcion;
+    protected $Descripcion;
 
     /** @var string|null Max length 120 characters */
-    protected $nombreRazon;
+    protected $NombreRazon;
 
     /** @var string|null NIF format */
-    protected $nif;
+    protected $NIF;
 
     /** @var string|null */
-    protected $fechaHora;
+    protected $FechaHora;
 
     public function getCodigo(): string
     {
-        return $this->codigo;
+        return $this->Codigo;
     }
 
     public function setCodigo(string $codigo): self
@@ -29,13 +29,13 @@ class Incidencia
         if (!preg_match('/^\d{3}$/', $codigo)) {
             throw new \InvalidArgumentException('Codigo must be a 3-digit number');
         }
-        $this->codigo = $codigo;
+        $this->Codigo = $codigo;
         return $this;
     }
 
     public function getDescripcion(): string
     {
-        return $this->descripcion;
+        return $this->Descripcion;
     }
 
     public function setDescripcion(string $descripcion): self
@@ -43,13 +43,13 @@ class Incidencia
         if (strlen($descripcion) > 500) {
             throw new \InvalidArgumentException('Descripcion must not exceed 500 characters');
         }
-        $this->descripcion = $descripcion;
+        $this->Descripcion = $descripcion;
         return $this;
     }
 
     public function getNombreRazon(): ?string
     {
-        return $this->nombreRazon;
+        return $this->NombreRazon;
     }
 
     public function setNombreRazon(?string $nombreRazon): self
@@ -57,25 +57,25 @@ class Incidencia
         if ($nombreRazon !== null && strlen($nombreRazon) > 120) {
             throw new \InvalidArgumentException('NombreRazon must not exceed 120 characters');
         }
-        $this->nombreRazon = $nombreRazon;
+        $this->NombreRazon = $nombreRazon;
         return $this;
     }
 
-    public function getNif(): ?string
+    public function getNIF(): ?string
     {
-        return $this->nif;
+        return $this->NIF;
     }
 
-    public function setNif(?string $nif): self
+    public function setNIF(?string $nif): self
     {
         // TODO: Add NIF validation
-        $this->nif = $nif;
+        $this->NIF = $nif;
         return $this;
     }
 
     public function getFechaHora(): ?string
     {
-        return $this->fechaHora;
+        return $this->FechaHora;
     }
 
     public function setFechaHora(?string $fechaHora): self
@@ -85,7 +85,7 @@ class Incidencia
                 throw new \InvalidArgumentException('FechaHora must be in YYYY-MM-DD HH:mm:ss format');
             }
         }
-        $this->fechaHora = $fechaHora;
+        $this->FechaHora = $fechaHora;
         return $this;
     }
 } 

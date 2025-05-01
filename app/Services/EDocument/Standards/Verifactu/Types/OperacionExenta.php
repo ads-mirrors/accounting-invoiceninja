@@ -2,7 +2,7 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
-class OperacionExent
+class OperacionExenta
 {
     public const E1 = 'E1'; // EXENTA por Art. 20
     public const E2 = 'E2'; // EXENTA por Art. 21
@@ -12,7 +12,7 @@ class OperacionExent
     public const E6 = 'E6'; // EXENTA por otros
 
     /** @var string */
-    protected $value;
+    protected $Value;
 
     public function __construct(string $value)
     {
@@ -21,7 +21,7 @@ class OperacionExent
 
     public function getValue(): string
     {
-        return $this->value;
+        return $this->Value;
     }
 
     public function setValue(string $value): self
@@ -42,12 +42,12 @@ class OperacionExent
             ));
         }
 
-        $this->value = $value;
+        $this->Value = $value;
         return $this;
     }
 
     public function __toString(): string
     {
-        return $this->value;
+        return $this->Value;
     }
 } 

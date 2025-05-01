@@ -4,71 +4,103 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 
 class Cabecera
 {
-    /** @var ObligadoEmision */
-    protected $obligadoEmision;
+    /** @var PersonaFisicaJuridicaES */
+    protected $ObligadoEmision;
 
     /** @var PersonaFisicaJuridicaES|null */
-    protected $representante;
+    protected $Representante;
 
-    /** @var array{fechaFinVeriFactu?: string, incidencia?: IncidenciaType}|null */
-    protected $remisionVoluntaria;
+    /** @var array{FechaFinVeriFactu?: string}|null */
+    protected $RemisionVoluntaria;
 
-    /** @var array{refRequerimiento: string, finRequerimiento?: string}|null */
-    protected $remisionRequerimiento;
+    /** @var array{RefRequerimiento: string, FinRequerimiento?: string}|null */
+    protected $RemisionRequerimiento;
 
-    public function getObligadoEmision(): ObligadoEmision
+    public function getObligadoEmision(): PersonaFisicaJuridicaES
     {
-        return $this->obligadoEmision;
+        return $this->ObligadoEmision;
     }
 
-    public function setObligadoEmision(ObligadoEmision $obligadoEmision): self
+    public function setObligadoEmision(PersonaFisicaJuridicaES $obligadoEmision): self
     {
-        $this->obligadoEmision = $obligadoEmision;
+        $this->ObligadoEmision = $obligadoEmision;
         return $this;
     }
 
     public function getRepresentante(): ?PersonaFisicaJuridicaES
     {
-        return $this->representante;
+        return $this->Representante;
     }
 
     public function setRepresentante(?PersonaFisicaJuridicaES $representante): self
     {
-        $this->representante = $representante;
+        $this->Representante = $representante;
         return $this;
     }
 
     /**
-     * @return array{fechaFinVeriFactu?: string, incidencia?: IncidenciaType}|null
+     * @return array{FechaFinVeriFactu?: string}|null
      */
     public function getRemisionVoluntaria(): ?array
     {
-        return $this->remisionVoluntaria;
+        return $this->RemisionVoluntaria;
     }
 
     /**
-     * @param array{fechaFinVeriFactu?: string, incidencia?: IncidenciaType}|null $remisionVoluntaria
+     * @param array{FechaFinVeriFactu?: string}|null $remisionVoluntaria
      */
     public function setRemisionVoluntaria(?array $remisionVoluntaria): self
     {
-        $this->remisionVoluntaria = $remisionVoluntaria;
+        if ($remisionVoluntaria !== null) {
+            if (isset($remisionVoluntaria['FechaFinVeriFactu'])) {
+                // Validate date format DD-MM-YYYY
+                if (!preg_match('/^\d{2}-\d{2}-\d{4}$/', $remisionVoluntaria['FechaFinVeriFactu'])) {
+                    throw new \InvalidArgumentException('FechaFinVeriFactu must be in DD-MM-YYYY format');
+                }
+                
+                // Validate date components
+                list($day, $month, $year) = explode('-', $remisionVoluntaria['FechaFinVeriFactu']);
+                if (!checkdate((int)$month, (int)$day, (int)$year)) {
+                    throw new \InvalidArgumentException('Invalid date in FechaFinVeriFactu');
+                }
+            }
+        }
+        $this->RemisionVoluntaria = $remisionVoluntaria;
         return $this;
     }
 
     /**
-     * @return array{refRequerimiento: string, finRequerimiento?: string}|null
+     * @return array{RefRequerimiento: string, FinRequerimiento?: string}|null
      */
     public function getRemisionRequerimiento(): ?array
     {
-        return $this->remisionRequerimiento;
+        return $this->RemisionRequerimiento;
     }
 
     /**
-     * @param array{refRequerimiento: string, finRequerimiento?: string}|null $remisionRequerimiento
+     * @param array{RefRequerimiento: string, FinRequerimiento?: string}|null $remisionRequerimiento
      */
     public function setRemisionRequerimiento(?array $remisionRequerimiento): self
     {
-        $this->remisionRequerimiento = $remisionRequerimiento;
+        if ($remisionRequerimiento !== null) {
+            if (!isset($remisionRequerimiento['RefRequerimiento'])) {
+                throw new \InvalidArgumentException('RefRequerimiento is required in RemisionRequerimiento');
+            }
+
+            if (isset($remisionRequerimiento['FinRequerimiento'])) {
+                // Validate date format DD-MM-YYYY
+                if (!preg_match('/^\d{2}-\d{2}-\d{4}$/', $remisionRequerimiento['FinRequerimiento'])) {
+                    throw new \InvalidArgumentException('FinRequerimiento must be in DD-MM-YYYY format');
+                }
+                
+                // Validate date components
+                list($day, $month, $year) = explode('-', $remisionRequerimiento['FinRequerimiento']);
+                if (!checkdate((int)$month, (int)$day, (int)$year)) {
+                    throw new \InvalidArgumentException('Invalid date in FinRequerimiento');
+                }
+            }
+        }
+        $this->RemisionRequerimiento = $remisionRequerimiento;
         return $this;
     }
 } 

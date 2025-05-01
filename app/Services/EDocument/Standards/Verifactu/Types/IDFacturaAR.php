@@ -5,35 +5,35 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class IDFacturaAR
 {
     /** @var string */
-    protected $idEmisorFactura;
+    protected $IDEmisorFactura;
 
     /** @var string */
-    protected $numSerieFactura;
+    protected $NumSerieFactura;
 
     /** @var string */
-    protected $fechaExpedicionFactura;
+    protected $FechaExpedicionFactura;
 
     /** @var string|null */
-    protected $numSerieFacturaOrigen;
+    protected $NumSerieFacturaOrigen;
 
     /** @var string|null */
-    protected $fechaExpedicionFacturaOrigen;
+    protected $FechaExpedicionFacturaOrigen;
 
-    public function getIdEmisorFactura(): string
+    public function getIDEmisorFactura(): string
     {
-        return $this->idEmisorFactura;
+        return $this->IDEmisorFactura;
     }
 
-    public function setIdEmisorFactura(string $idEmisorFactura): self
+    public function setIDEmisorFactura(string $idEmisorFactura): self
     {
         // TODO: Add NIF validation
-        $this->idEmisorFactura = $idEmisorFactura;
+        $this->IDEmisorFactura = $idEmisorFactura;
         return $this;
     }
 
     public function getNumSerieFactura(): string
     {
-        return $this->numSerieFactura;
+        return $this->NumSerieFactura;
     }
 
     public function setNumSerieFactura(string $numSerieFactura): self
@@ -41,13 +41,13 @@ class IDFacturaAR
         if (strlen($numSerieFactura) > 60) {
             throw new \InvalidArgumentException('NumSerieFactura must not exceed 60 characters');
         }
-        $this->numSerieFactura = $numSerieFactura;
+        $this->NumSerieFactura = $numSerieFactura;
         return $this;
     }
 
     public function getFechaExpedicionFactura(): string
     {
-        return $this->fechaExpedicionFactura;
+        return $this->FechaExpedicionFactura;
     }
 
     public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
@@ -63,13 +63,13 @@ class IDFacturaAR
             throw new \InvalidArgumentException('Invalid date');
         }
         
-        $this->fechaExpedicionFactura = $fechaExpedicionFactura;
+        $this->FechaExpedicionFactura = $fechaExpedicionFactura;
         return $this;
     }
 
     public function getNumSerieFacturaOrigen(): ?string
     {
-        return $this->numSerieFacturaOrigen;
+        return $this->NumSerieFacturaOrigen;
     }
 
     public function setNumSerieFacturaOrigen(?string $numSerieFacturaOrigen): self
@@ -77,13 +77,13 @@ class IDFacturaAR
         if ($numSerieFacturaOrigen !== null && strlen($numSerieFacturaOrigen) > 60) {
             throw new \InvalidArgumentException('NumSerieFacturaOrigen must not exceed 60 characters');
         }
-        $this->numSerieFacturaOrigen = $numSerieFacturaOrigen;
+        $this->NumSerieFacturaOrigen = $numSerieFacturaOrigen;
         return $this;
     }
 
     public function getFechaExpedicionFacturaOrigen(): ?string
     {
-        return $this->fechaExpedicionFacturaOrigen;
+        return $this->FechaExpedicionFacturaOrigen;
     }
 
     public function setFechaExpedicionFacturaOrigen(?string $fechaExpedicionFacturaOrigen): self
@@ -101,7 +101,7 @@ class IDFacturaAR
             }
         }
         
-        $this->fechaExpedicionFacturaOrigen = $fechaExpedicionFacturaOrigen;
+        $this->FechaExpedicionFacturaOrigen = $fechaExpedicionFacturaOrigen;
         return $this;
     }
 } 

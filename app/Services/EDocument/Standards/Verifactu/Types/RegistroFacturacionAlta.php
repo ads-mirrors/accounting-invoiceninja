@@ -5,125 +5,125 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class RegistroFacturacionAlta
 {
     /** @var string */
-    protected $idVersion;
+    protected $IDVersion;
 
     /** @var IDFacturaExpedida */
-    protected $idFactura;
+    protected $IDFactura;
 
     /** @var string|null Max length 70 characters */
-    protected $refExterna;
+    protected $RefExterna;
 
     /** @var string Max length 120 characters */
-    protected $nombreRazonEmisor;
+    protected $NombreRazonEmisor;
 
     /** @var Subsanacion|null */
-    protected $subsanacion;
+    protected $Subsanacion;
 
     /** @var RechazoPrevio|null */
-    protected $rechazoPrevio;
+    protected $RechazoPrevio;
 
     /** @var string */
-    protected $tipoFactura;
+    protected $TipoFactura;
 
     /** @var string|null */
-    protected $tipoRectificativa;
+    protected $TipoRectificativa;
 
     /** @var IDFacturaAR[]|null */
-    protected $facturasRectificadas = [];
+    protected $FacturasRectificadas = [];
 
     /** @var IDFacturaAR[]|null */
-    protected $facturasSustituidas = [];
+    protected $FacturasSustituidas = [];
 
     /** @var DesgloseRectificacion|null */
-    protected $importeRectificacion;
+    protected $ImporteRectificacion;
 
     /** @var string|null */
-    protected $fechaOperacion;
+    protected $FechaOperacion;
 
     /** @var string Max length 500 characters */
-    protected $descripcionOperacion;
+    protected $DescripcionOperacion;
 
     /** @var string|null */
-    protected $facturaSimplificadaArt7273;
+    protected $FacturaSimplificadaArt7273;
 
     /** @var string|null */
-    protected $facturaSinIdentifDestinatarioArt61d;
+    protected $FacturaSinIdentifDestinatarioArt61d;
 
     /** @var string|null */
-    protected $macrodato;
+    protected $Macrodato;
 
     /** @var string|null */
-    protected $emitidaPorTerceroODestinatario;
+    protected $EmitidaPorTerceroODestinatario;
 
     /** @var PersonaFisicaJuridica|null */
-    protected $tercero;
+    protected $Tercero;
 
     /** @var PersonaFisicaJuridica[]|null */
-    protected $destinatarios = [];
+    protected $Destinatarios = [];
 
     /** @var array|null */
-    protected $cupon;
+    protected $Cupon;
 
     /** @var Desglose */
-    protected $desglose;
+    protected $Desglose;
 
     /** @var float */
-    protected $cuotaTotal;
+    protected $CuotaTotal;
 
     /** @var float */
-    protected $importeTotal;
+    protected $ImporteTotal;
 
     /** @var array */
-    protected $encadenamiento;
+    protected $Encadenamiento;
 
     /** @var SistemaInformatico */
-    protected $sistemaInformatico;
+    protected $SistemaInformatico;
 
     /** @var \DateTime */
-    protected $fechaHoraHusoGenRegistro;
+    protected $FechaHoraHusoGenRegistro;
 
     /** @var string|null Max length 15 characters */
-    protected $numRegistroAcuerdoFacturacion;
+    protected $NumRegistroAcuerdoFacturacion;
 
     /** @var string|null Max length 16 characters */
-    protected $idAcuerdoSistemaInformatico;
+    protected $IDAcuerdoSistemaInformatico;
 
     /** @var string */
-    protected $tipoHuella;
+    protected $TipoHuella;
 
     /** @var string Max length 64 characters */
-    protected $huella;
+    protected $Huella;
 
     /** @var string|null */
-    protected $signature;
+    protected $Signature;
 
     // Getters and setters with validation
 
-    public function getIdVersion(): string
+    public function getIDVersion(): string
     {
-        return $this->idVersion;
+        return $this->IDVersion;
     }
 
-    public function setIdVersion(string $idVersion): self
+    public function setIDVersion(string $idVersion): self
     {
-        $this->idVersion = $idVersion;
+        $this->IDVersion = $idVersion;
         return $this;
     }
 
-    public function getIdFactura(): IDFacturaExpedida
+    public function getIDFactura(): IDFacturaExpedida
     {
-        return $this->idFactura;
+        return $this->IDFactura;
     }
 
-    public function setIdFactura(IDFacturaExpedida $idFactura): self
+    public function setIDFactura(IDFacturaExpedida $idFactura): self
     {
-        $this->idFactura = $idFactura;
+        $this->IDFactura = $idFactura;
         return $this;
     }
 
     public function getRefExterna(): ?string
     {
-        return $this->refExterna;
+        return $this->RefExterna;
     }
 
     public function setRefExterna(?string $refExterna): self
@@ -131,13 +131,13 @@ class RegistroFacturacionAlta
         if ($refExterna !== null && strlen($refExterna) > 70) {
             throw new \InvalidArgumentException('RefExterna must not exceed 70 characters');
         }
-        $this->refExterna = $refExterna;
+        $this->RefExterna = $refExterna;
         return $this;
     }
 
     public function getNombreRazonEmisor(): string
     {
-        return $this->nombreRazonEmisor;
+        return $this->NombreRazonEmisor;
     }
 
     public function setNombreRazonEmisor(string $nombreRazonEmisor): self
@@ -145,7 +145,7 @@ class RegistroFacturacionAlta
         if (strlen($nombreRazonEmisor) > 120) {
             throw new \InvalidArgumentException('NombreRazonEmisor must not exceed 120 characters');
         }
-        $this->nombreRazonEmisor = $nombreRazonEmisor;
+        $this->NombreRazonEmisor = $nombreRazonEmisor;
         return $this;
     }
 
@@ -156,21 +156,21 @@ class RegistroFacturacionAlta
      */
     public function getDestinatarios(): array
     {
-        return $this->destinatarios;
+        return $this->Destinatarios;
     }
 
     public function addDestinatario(PersonaFisicaJuridica $destinatario): self
     {
-        if (count($this->destinatarios) >= 1000) {
+        if (count($this->Destinatarios) >= 1000) {
             throw new \RuntimeException('Maximum number of Destinatarios (1000) exceeded');
         }
-        $this->destinatarios[] = $destinatario;
+        $this->Destinatarios[] = $destinatario;
         return $this;
     }
 
     public function getHuella(): string
     {
-        return $this->huella;
+        return $this->Huella;
     }
 
     public function setHuella(string $huella): self
@@ -178,7 +178,7 @@ class RegistroFacturacionAlta
         if (strlen($huella) > 64) {
             throw new \InvalidArgumentException('Huella must not exceed 64 characters');
         }
-        $this->huella = $huella;
+        $this->Huella = $huella;
         return $this;
     }
 } 

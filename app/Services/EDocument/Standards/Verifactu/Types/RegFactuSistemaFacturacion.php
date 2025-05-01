@@ -4,31 +4,31 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 
 class RegFactuSistemaFacturacion
 {
-    /** @var Cabecera */
-    protected $cabecera;
+    /** @var PersonaFisicaJuridicaES */
+    protected $ObligadoEmision;
 
-    /** @var RegistroFactura */
-    protected $registroFactura;
+    /** @var RegistroAlta */
+    protected $RegistroAlta;
 
-    public function getCabecera(): Cabecera
+    public function getObligadoEmision(): PersonaFisicaJuridicaES
     {
-        return $this->cabecera;
+        return $this->ObligadoEmision;
     }
 
-    public function setCabecera(Cabecera $cabecera): self
+    public function setObligadoEmision(PersonaFisicaJuridicaES $obligadoEmision): self
     {
-        $this->cabecera = $cabecera;
+        $this->ObligadoEmision = $obligadoEmision;
         return $this;
     }
 
-    public function getRegistroFactura(): RegistroFactura
+    public function getRegistroAlta(): RegistroAlta
     {
-        return $this->registroFactura;
+        return $this->RegistroAlta;
     }
 
-    public function setRegistroFactura(RegistroFactura $registroFactura): self
+    public function setRegistroAlta(RegistroAlta $registroAlta): self
     {
-        $this->registroFactura = $registroFactura;
+        $this->RegistroAlta = $registroAlta;
         return $this;
     }
 } 

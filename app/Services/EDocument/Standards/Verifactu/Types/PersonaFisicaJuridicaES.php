@@ -5,26 +5,26 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class PersonaFisicaJuridicaES
 {
     /** @var string NIF format */
-    protected $nif;
+    protected $NIF;
 
     /** @var string|null Max length 120 characters */
-    protected $nombreRazon;
+    protected $NombreRazon;
 
-    public function getNif(): string
+    public function getNIF(): string
     {
-        return $this->nif;
+        return $this->NIF;
     }
 
-    public function setNif(string $nif): self
+    public function setNIF(string $nif): self
     {
         // TODO: Add NIF validation
-        $this->nif = $nif;
+        $this->NIF = $nif;
         return $this;
     }
 
     public function getNombreRazon(): ?string
     {
-        return $this->nombreRazon;
+        return $this->NombreRazon;
     }
 
     public function setNombreRazon(?string $nombreRazon): self
@@ -32,7 +32,7 @@ class PersonaFisicaJuridicaES
         if ($nombreRazon !== null && strlen($nombreRazon) > 120) {
             throw new \InvalidArgumentException('NombreRazon must not exceed 120 characters');
         }
-        $this->nombreRazon = $nombreRazon;
+        $this->NombreRazon = $nombreRazon;
         return $this;
     }
 } 

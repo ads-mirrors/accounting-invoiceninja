@@ -9,7 +9,7 @@ class ImporteSgn14_2
     use TextTypes;
 
     /** @var string */
-    protected $value;
+    protected $Value;
 
     public function __construct(string $value)
     {
@@ -18,18 +18,18 @@ class ImporteSgn14_2
 
     public function getValue(): string
     {
-        return $this->value;
+        return $this->Value;
     }
 
     public function setValue(string $value): self
     {
         $this->validateNumericString($value, 14, 2, 'Amount');
-        $this->value = $value;
+        $this->Value = $value;
         return $this;
     }
 
     public function __toString(): string
     {
-        return $this->value;
+        return $this->Value;
     }
 } 

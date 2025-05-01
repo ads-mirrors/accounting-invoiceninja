@@ -5,40 +5,40 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class IDFacturaExpedida
 {
     /** @var string NIF format */
-    protected $idEmisorFactura;
+    protected $IDEmisorFactura;
 
     /** @var string */
-    protected $numSerieFactura;
+    protected $NumSerieFactura;
 
     /** @var string Date format YYYY-MM-DD */
-    protected $fechaExpedicionFactura;
+    protected $FechaExpedicionFactura;
 
-    public function getIdEmisorFactura(): string
+    public function getIDEmisorFactura(): string
     {
-        return $this->idEmisorFactura;
+        return $this->IDEmisorFactura;
     }
 
-    public function setIdEmisorFactura(string $idEmisorFactura): self
+    public function setIDEmisorFactura(string $idEmisorFactura): self
     {
         // TODO: Add NIF validation
-        $this->idEmisorFactura = $idEmisorFactura;
+        $this->IDEmisorFactura = $idEmisorFactura;
         return $this;
     }
 
     public function getNumSerieFactura(): string
     {
-        return $this->numSerieFactura;
+        return $this->NumSerieFactura;
     }
 
     public function setNumSerieFactura(string $numSerieFactura): self
     {
-        $this->numSerieFactura = $numSerieFactura;
+        $this->NumSerieFactura = $numSerieFactura;
         return $this;
     }
 
     public function getFechaExpedicionFactura(): string
     {
-        return $this->fechaExpedicionFactura;
+        return $this->FechaExpedicionFactura;
     }
 
     public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
@@ -47,7 +47,7 @@ class IDFacturaExpedida
         if (!\DateTime::createFromFormat('Y-m-d', $fechaExpedicionFactura)) {
             throw new \InvalidArgumentException('FechaExpedicionFactura must be in YYYY-MM-DD format');
         }
-        $this->fechaExpedicionFactura = $fechaExpedicionFactura;
+        $this->FechaExpedicionFactura = $fechaExpedicionFactura;
         return $this;
     }
 } 

@@ -5,36 +5,36 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class RegistroFactura
 {
     /** @var RegistroAlta */
-    protected $registroAlta;
+    protected $RegistroAlta;
 
     /** @var RegistroFacturacionAnulacion|null */
-    protected $registroAnulacion;
+    protected $RegistroAnulacion;
 
     public function getRegistroAlta(): RegistroAlta
     {
-        return $this->registroAlta;
+        return $this->RegistroAlta;
     }
 
     public function setRegistroAlta(RegistroAlta $registroAlta): self
     {
-        if ($registroAlta !== null && $this->registroAnulacion !== null) {
+        if ($registroAlta !== null && $this->RegistroAnulacion !== null) {
             throw new \InvalidArgumentException('Cannot set both RegistroAlta and RegistroAnulacion');
         }
-        $this->registroAlta = $registroAlta;
+        $this->RegistroAlta = $registroAlta;
         return $this;
     }
 
     public function getRegistroAnulacion(): ?RegistroFacturacionAnulacion
     {
-        return $this->registroAnulacion;
+        return $this->RegistroAnulacion;
     }
 
     public function setRegistroAnulacion(?RegistroFacturacionAnulacion $registroAnulacion): self
     {
-        if ($registroAnulacion !== null && $this->registroAlta !== null) {
+        if ($registroAnulacion !== null && $this->RegistroAlta !== null) {
             throw new \InvalidArgumentException('Cannot set both RegistroAlta and RegistroAnulacion');
         }
-        $this->registroAnulacion = $registroAnulacion;
+        $this->RegistroAnulacion = $registroAnulacion;
         return $this;
     }
 } 
