@@ -117,7 +117,7 @@ class StoreClientRequest extends Request
         $settings = (array)ClientSettings::defaults();
 
         /* Stub settings if they don't exist */
-        if (!array_key_exists('settings', $input)) {
+        if (!array_key_exists('settings', $input) || is_null($input['settings'])) {
             $input['settings'] = [];
         } elseif (is_object($input['settings'])) {
             $input['settings'] = (array)$input['settings'];
