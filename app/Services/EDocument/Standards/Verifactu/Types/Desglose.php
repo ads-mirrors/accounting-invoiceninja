@@ -2,9 +2,12 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class Desglose
 {
     /** @var array<DetalleDesglose> */
+    #[SerializedName('sum1:DetalleDesglose')]
     protected $DetalleDesglose = [];
 
     /**

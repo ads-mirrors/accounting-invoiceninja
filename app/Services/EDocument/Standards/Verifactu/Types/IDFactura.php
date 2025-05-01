@@ -2,15 +2,20 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class IDFactura
 {
     /** @var string */
+    #[SerializedName('sum1:IDEmisorFactura')]
     protected $IDEmisorFactura;
 
     /** @var string */
+    #[SerializedName('sum1:NumSerieFactura')]
     protected $NumSerieFactura;
 
     /** @var string */
+    #[SerializedName('sum1:FechaExpedicionFactura')]
     protected $FechaExpedicionFactura;
 
     public function getIDEmisorFactura(): string

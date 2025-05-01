@@ -2,9 +2,12 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class Destinatarios
 {
     /** @var array<IDDestinatario> */
+    #[SerializedName('sum1:IDDestinatario')]
     protected $IDDestinatario = [];
 
     /**

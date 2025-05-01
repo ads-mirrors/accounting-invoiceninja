@@ -2,12 +2,16 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class RegistroFactura
 {
     /** @var RegistroAlta */
+    #[SerializedName('sum1:RegistroAlta')]
     protected $RegistroAlta;
 
     /** @var RegistroFacturacionAnulacion|null */
+    #[SerializedName('sum1:RegistroAnulacion')]
     protected $RegistroAnulacion;
 
     public function getRegistroAlta(): RegistroAlta

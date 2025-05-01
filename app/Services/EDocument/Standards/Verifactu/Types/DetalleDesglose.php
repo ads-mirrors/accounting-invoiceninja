@@ -2,33 +2,44 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class DetalleDesglose
 {
     /** @var string */
+    #[SerializedName('sum1:ClaveRegimen')]
     protected $ClaveRegimen;
 
     /** @var string */
+    #[SerializedName('sum1:CalificacionOperacion')]
     protected $CalificacionOperacion;
 
     /** @var string|null */
+    #[SerializedName('sum1:OperacionExenta')]
     protected $OperacionExenta;
 
     /** @var float|null */
+    #[SerializedName('sum1:TipoImpositivo')]
     protected $TipoImpositivo;
 
     /** @var float */
+    #[SerializedName('sum1:BaseImponibleOimporteNoSujeto')]
     protected $BaseImponibleOimporteNoSujeto;
 
     /** @var float|null */
+    #[SerializedName('sum1:BaseImponibleACoste')]
     protected $BaseImponibleACoste;
 
     /** @var float|null */
+    #[SerializedName('sum1:CuotaRepercutida')]
     protected $CuotaRepercutida;
 
     /** @var float|null */
+    #[SerializedName('sum1:TipoRecargoEquivalencia')]
     protected $TipoRecargoEquivalencia;
 
     /** @var float|null */
+    #[SerializedName('sum1:CuotaRecargoEquivalencia')]
     protected $CuotaRecargoEquivalencia;
 
     public function getClaveRegimen(): string

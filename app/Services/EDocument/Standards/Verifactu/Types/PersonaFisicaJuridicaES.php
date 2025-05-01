@@ -2,12 +2,16 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class PersonaFisicaJuridicaES
 {
     /** @var string NIF format */
+    #[SerializedName('sum1:NIF')]
     protected $NIF;
 
     /** @var string|null Max length 120 characters */
+    #[SerializedName('sum1:NombreRazon')]
     protected $NombreRazon;
 
     public function getNIF(): string

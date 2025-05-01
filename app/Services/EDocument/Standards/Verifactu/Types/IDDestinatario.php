@@ -2,12 +2,16 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class IDDestinatario extends PersonaFisicaJuridicaES
 {
     /** @var string|null */
+    #[SerializedName('sum1:CodigoPais')]
     protected $CodigoPais;
 
     /** @var IDOtro|null */
+    #[SerializedName('sum1:IDOtro')]
     protected $IDOtro;
 
     public function getCodigoPais(): ?string

@@ -2,15 +2,20 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class IDOtro
 {
     /** @var string */
+    #[SerializedName('sum1:CodigoPais')]
     protected $CodigoPais;
 
     /** @var string */
+    #[SerializedName('sum1:IDType')]
     protected $IDType;
 
     /** @var string */
+    #[SerializedName('sum1:ID')]
     protected $ID;
 
     public function getCodigoPais(): string
@@ -34,11 +39,9 @@ class IDOtro
 
     public function setIDType(string $idType): self
     {
-        if (!in_array($idType, ['02', '03', '04', '05', '06', '07'])) {
+        $validTypes = ['02', '03', '04', '05', '06', '07'];
+        if (!in_array($idType, $validTypes)) {
             throw new \InvalidArgumentException('Invalid IDType value');
-        }
-        if ($this->CodigoPais === 'ES' && $idType === '01') {
-            throw new \InvalidArgumentException('IDType 01 cannot be used with CodigoPais ES');
         }
         $this->IDType = $idType;
         return $this;
