@@ -4,45 +4,34 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 
 class Encadenamiento
 {
-    /** @var string */
-    protected $NumSerieFacturaAnterior;
+    /** @var IDFacturaAR */
+    protected $RegistroAnterior;
 
     /** @var string */
-    protected $FechaExpedicionFacturaAnterior;
+    protected $HuellaRegistroAnterior;
 
-    public function getNumSerieFacturaAnterior(): string
+    public function getRegistroAnterior(): IDFacturaAR
     {
-        return $this->NumSerieFacturaAnterior;
+        return $this->RegistroAnterior;
     }
 
-    public function setNumSerieFacturaAnterior(string $numSerieFacturaAnterior): self
+    public function setRegistroAnterior(IDFacturaAR $registroAnterior): self
     {
-        if (strlen($numSerieFacturaAnterior) > 60) {
-            throw new \InvalidArgumentException('NumSerieFacturaAnterior must not exceed 60 characters');
-        }
-        $this->NumSerieFacturaAnterior = $numSerieFacturaAnterior;
+        $this->RegistroAnterior = $registroAnterior;
         return $this;
     }
 
-    public function getFechaExpedicionFacturaAnterior(): string
+    public function getHuellaRegistroAnterior(): string
     {
-        return $this->FechaExpedicionFacturaAnterior;
+        return $this->HuellaRegistroAnterior;
     }
 
-    public function setFechaExpedicionFacturaAnterior(string $fechaExpedicionFacturaAnterior): self
+    public function setHuellaRegistroAnterior(string $huellaRegistroAnterior): self
     {
-        // Validate date format DD-MM-YYYY
-        if (!preg_match('/^\d{2}-\d{2}-\d{4}$/', $fechaExpedicionFacturaAnterior)) {
-            throw new \InvalidArgumentException('FechaExpedicionFacturaAnterior must be in DD-MM-YYYY format');
+        if (strlen($huellaRegistroAnterior) > 64) {
+            throw new \InvalidArgumentException('HuellaRegistroAnterior must not exceed 64 characters');
         }
-        
-        // Validate date components
-        list($day, $month, $year) = explode('-', $fechaExpedicionFacturaAnterior);
-        if (!checkdate((int)$month, (int)$day, (int)$year)) {
-            throw new \InvalidArgumentException('Invalid date');
-        }
-        
-        $this->FechaExpedicionFacturaAnterior = $fechaExpedicionFacturaAnterior;
+        $this->HuellaRegistroAnterior = $huellaRegistroAnterior;
         return $this;
     }
 } 
