@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Services\EDocument\Standards\Verifactu\Types;
+
+class Subsanacion
+{
+    /** @var string */
+    protected $NumRegistroAcuerdoFacturacion;
+
+    /** @var string */
+    protected $FechaRegistroAcuerdoFacturacion;
+
+    public function getNumRegistroAcuerdoFacturacion(): string
+    {
+        return $this->NumRegistroAcuerdoFacturacion;
+    }
+
+    public function setNumRegistroAcuerdoFacturacion(string $numRegistroAcuerdoFacturacion): self
+    {
+        if (strlen($numRegistroAcuerdoFacturacion) > 15) {
+            throw new \InvalidArgumentException('NumRegistroAcuerdoFacturacion must not exceed 15 characters');
+        }
+        $this->NumRegistroAcuerdoFacturacion = $numRegistroAcuerdoFacturacion;
+        return $this;
+    }
+
+    public function getFechaRegistroAcuerdoFacturacion(): string
+    {
+        return $this->FechaRegistroAcuerdoFacturacion;
+    }
+
+    public function setFechaRegistroAcuerdoFacturacion(string $fechaRegistroAcuerdoFacturacion): self
+    {
+        // Validate date format YYYY-MM-DD
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaRegistroAcuerdoFacturacion)) {
+            throw new \InvalidArgumentException('FechaRegistroAcuerdoFacturacion must be in YYYY-MM-DD format');
+        }
+        
+        // Validate date components
+        list($year, $month, $day) = explode('-', $fechaRegistroAcuerdoFacturacion);
+        if (!checkdate((int)$month, (int)$day, (int)$year)) {
+            throw new \InvalidArgumentException('Invalid date');
+        }
+        
+        $this->FechaRegistroAcuerdoFacturacion = $fechaRegistroAcuerdoFacturacion;
+        return $this;
+    }
+} 
