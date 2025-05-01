@@ -7,7 +7,7 @@ class RegistroFacturacionAnulacion
     /** @var string */
     protected $idVersion;
 
-    /** @var IDFacturaExpedida */
+    /** @var IDFacturaAR */
     protected $idFactura;
 
     /** @var string|null Max length 70 characters */
@@ -22,7 +22,13 @@ class RegistroFacturacionAnulacion
     /** @var SistemaInformatico */
     protected $sistemaInformatico;
 
-    /** @var \DateTime */
+    /** @var string */
+    protected $huella;
+
+    /** @var string|null */
+    protected $signature;
+
+    /** @var string */
     protected $fechaHoraHusoGenRegistro;
 
     /** @var string|null Max length 15 characters */
@@ -33,12 +39,6 @@ class RegistroFacturacionAnulacion
 
     /** @var string */
     protected $tipoHuella;
-
-    /** @var string Max length 64 characters */
-    protected $huella;
-
-    /** @var string|null */
-    protected $signature;
 
     public function getIdVersion(): string
     {
@@ -51,12 +51,12 @@ class RegistroFacturacionAnulacion
         return $this;
     }
 
-    public function getIdFactura(): IDFacturaExpedida
+    public function getIdFactura(): IDFacturaAR
     {
         return $this->idFactura;
     }
 
-    public function setIdFactura(IDFacturaExpedida $idFactura): self
+    public function setIdFactura(IDFacturaAR $idFactura): self
     {
         $this->idFactura = $idFactura;
         return $this;
@@ -115,13 +115,42 @@ class RegistroFacturacionAnulacion
         return $this;
     }
 
-    public function getFechaHoraHusoGenRegistro(): \DateTime
+    public function getHuella(): string
+    {
+        return $this->huella;
+    }
+
+    public function setHuella(string $huella): self
+    {
+        if (strlen($huella) > 100) {
+            throw new \InvalidArgumentException('Huella must not exceed 100 characters');
+        }
+        $this->huella = $huella;
+        return $this;
+    }
+
+    public function getSignature(): ?string
+    {
+        return $this->signature;
+    }
+
+    public function setSignature(?string $signature): self
+    {
+        $this->signature = $signature;
+        return $this;
+    }
+
+    public function getFechaHoraHusoGenRegistro(): string
     {
         return $this->fechaHoraHusoGenRegistro;
     }
 
-    public function setFechaHoraHusoGenRegistro(\DateTime $fechaHoraHusoGenRegistro): self
+    public function setFechaHoraHusoGenRegistro(string $fechaHoraHusoGenRegistro): self
     {
+        // Validate ISO 8601 format with timezone
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/', $fechaHoraHusoGenRegistro)) {
+            throw new \InvalidArgumentException('FechaHoraHusoGenRegistro must be in ISO 8601 format with timezone (e.g. 2024-09-13T19:20:30+01:00)');
+        }
         $this->fechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
         return $this;
     }
@@ -162,31 +191,6 @@ class RegistroFacturacionAnulacion
     public function setTipoHuella(string $tipoHuella): self
     {
         $this->tipoHuella = $tipoHuella;
-        return $this;
-    }
-
-    public function getHuella(): string
-    {
-        return $this->huella;
-    }
-
-    public function setHuella(string $huella): self
-    {
-        if (strlen($huella) > 64) {
-            throw new \InvalidArgumentException('Huella must not exceed 64 characters');
-        }
-        $this->huella = $huella;
-        return $this;
-    }
-
-    public function getSignature(): ?string
-    {
-        return $this->signature;
-    }
-
-    public function setSignature(?string $signature): self
-    {
-        $this->signature = $signature;
         return $this;
     }
 } 

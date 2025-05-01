@@ -5,72 +5,72 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 class RegistroAlta
 {
     /** @var string */
-    protected $idVersion;
+    protected $IDVersion;
 
     /** @var IDFactura */
-    protected $idFactura;
+    protected $IDFactura;
 
     /** @var string */
-    protected $nombreRazonEmisor;
+    protected $NombreRazonEmisor;
 
     /** @var string */
-    protected $tipoFactura;
+    protected $TipoFactura;
 
     /** @var string */
-    protected $descripcionOperacion;
+    protected $DescripcionOperacion;
 
-    /** @var array<IDDestinatario> */
-    protected $destinatarios = [];
+    /** @var Destinatarios */
+    protected $Destinatarios;
 
-    /** @var array<DetalleDesglose> */
-    protected $desglose = [];
+    /** @var Desglose */
+    protected $Desglose;
 
     /** @var float */
-    protected $cuotaTotal;
+    protected $CuotaTotal;
 
     /** @var float */
-    protected $importeTotal;
+    protected $ImporteTotal;
 
-    /** @var RegistroAnterior|null */
-    protected $encadenamiento;
+    /** @var Encadenamiento|null */
+    protected $Encadenamiento;
 
     /** @var SistemaInformatico */
-    protected $sistemaInformatico;
+    protected $SistemaInformatico;
 
     /** @var string */
-    protected $fechaHoraHusoGenRegistro;
+    protected $FechaHoraHusoGenRegistro;
 
     /** @var string */
-    protected $tipoHuella;
+    protected $TipoHuella;
 
     /** @var string */
-    protected $huella;
+    protected $Huella;
 
-    public function getIdVersion(): string
+    public function getIDVersion(): string
     {
-        return $this->idVersion;
+        return $this->IDVersion;
     }
 
-    public function setIdVersion(string $idVersion): self
+    public function setIDVersion(string $idVersion): self
     {
-        $this->idVersion = $idVersion;
+        $this->IDVersion = $idVersion;
         return $this;
     }
 
-    public function getIdFactura(): IDFactura
+    public function getIDFactura(): IDFactura
     {
-        return $this->idFactura;
+        return $this->IDFactura;
     }
 
-    public function setIdFactura(IDFactura $idFactura): self
+    public function setIDFactura(IDFactura $idFactura): self
     {
-        $this->idFactura = $idFactura;
+        $this->IDFactura = $idFactura;
         return $this;
     }
 
     public function getNombreRazonEmisor(): string
     {
-        return $this->nombreRazonEmisor;
+        return $this->NombreRazonEmisor;
     }
 
     public function setNombreRazonEmisor(string $nombreRazonEmisor): self
@@ -78,27 +78,27 @@ class RegistroAlta
         if (strlen($nombreRazonEmisor) > 120) {
             throw new \InvalidArgumentException('NombreRazonEmisor must not exceed 120 characters');
         }
-        $this->nombreRazonEmisor = $nombreRazonEmisor;
+        $this->NombreRazonEmisor = $nombreRazonEmisor;
         return $this;
     }
 
     public function getTipoFactura(): string
     {
-        return $this->tipoFactura;
+        return $this->TipoFactura;
     }
 
     public function setTipoFactura(string $tipoFactura): self
     {
-        if (!in_array($tipoFactura, ['F1', 'F2', 'F3', 'F4', 'R1', 'R2', 'R3', 'R4'])) {
-            throw new \InvalidArgumentException('Invalid TipoFactura value');
+        if (!preg_match('/^F[1-4]$/', $tipoFactura)) {
+            throw new \InvalidArgumentException('TipoFactura must be F1, F2, F3, or F4');
         }
-        $this->tipoFactura = $tipoFactura;
+        $this->TipoFactura = $tipoFactura;
         return $this;
     }
 
     public function getDescripcionOperacion(): string
     {
-        return $this->descripcionOperacion;
+        return $this->DescripcionOperacion;
     }
 
     public function setDescripcionOperacion(string $descripcionOperacion): self
@@ -106,122 +106,113 @@ class RegistroAlta
         if (strlen($descripcionOperacion) > 500) {
             throw new \InvalidArgumentException('DescripcionOperacion must not exceed 500 characters');
         }
-        $this->descripcionOperacion = $descripcionOperacion;
+        $this->DescripcionOperacion = $descripcionOperacion;
         return $this;
     }
 
-    /**
-     * @return array<IDDestinatario>
-     */
-    public function getDestinatarios(): array
+    public function getDestinatarios(): Destinatarios
     {
-        return $this->destinatarios;
+        return $this->Destinatarios;
     }
 
-    public function addDestinatario(IDDestinatario $destinatario): self
+    public function setDestinatarios(Destinatarios $destinatarios): self
     {
-        $this->destinatarios[] = $destinatario;
+        $this->Destinatarios = $destinatarios;
         return $this;
     }
 
-    /**
-     * @return array<DetalleDesglose>
-     */
-    public function getDesglose(): array
+    public function getDesglose(): Desglose
     {
-        return $this->desglose;
+        return $this->Desglose;
     }
 
-    public function addDesglose(DetalleDesglose $detalle): self
+    public function setDesglose(Desglose $desglose): self
     {
-        $this->desglose[] = $detalle;
+        $this->Desglose = $desglose;
         return $this;
     }
 
     public function getCuotaTotal(): float
     {
-        return $this->cuotaTotal;
+        return $this->CuotaTotal;
     }
 
     public function setCuotaTotal(float $cuotaTotal): self
     {
-        $this->cuotaTotal = $cuotaTotal;
+        $this->CuotaTotal = $cuotaTotal;
         return $this;
     }
 
     public function getImporteTotal(): float
     {
-        return $this->importeTotal;
+        return $this->ImporteTotal;
     }
 
     public function setImporteTotal(float $importeTotal): self
     {
-        $this->importeTotal = $importeTotal;
+        $this->ImporteTotal = $importeTotal;
         return $this;
     }
 
-    public function getEncadenamiento(): ?RegistroAnterior
+    public function getEncadenamiento(): ?Encadenamiento
     {
-        return $this->encadenamiento;
+        return $this->Encadenamiento;
     }
 
-    public function setEncadenamiento(?RegistroAnterior $encadenamiento): self
+    public function setEncadenamiento(?Encadenamiento $encadenamiento): self
     {
-        $this->encadenamiento = $encadenamiento;
+        $this->Encadenamiento = $encadenamiento;
         return $this;
     }
 
     public function getSistemaInformatico(): SistemaInformatico
     {
-        return $this->sistemaInformatico;
+        return $this->SistemaInformatico;
     }
 
     public function setSistemaInformatico(SistemaInformatico $sistemaInformatico): self
     {
-        $this->sistemaInformatico = $sistemaInformatico;
+        $this->SistemaInformatico = $sistemaInformatico;
         return $this;
     }
 
     public function getFechaHoraHusoGenRegistro(): string
     {
-        return $this->fechaHoraHusoGenRegistro;
+        return $this->FechaHoraHusoGenRegistro;
     }
 
     public function setFechaHoraHusoGenRegistro(string $fechaHoraHusoGenRegistro): self
     {
-        // Validate ISO 8601 format with timezone
+        // Validate ISO 8601 date format with timezone
         if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/', $fechaHoraHusoGenRegistro)) {
-            throw new \InvalidArgumentException('FechaHoraHusoGenRegistro must be in ISO 8601 format with timezone (e.g. 2024-09-13T19:20:30+01:00)');
+            throw new \InvalidArgumentException('FechaHoraHusoGenRegistro must be in ISO 8601 format (YYYY-MM-DDThh:mm:ss±hh:mm)');
         }
-        $this->fechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
+        $this->FechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
         return $this;
     }
 
     public function getTipoHuella(): string
     {
-        return $this->tipoHuella;
+        return $this->TipoHuella;
     }
 
     public function setTipoHuella(string $tipoHuella): self
     {
-        if (!in_array($tipoHuella, ['01', '02', '03', '04'])) {
-            throw new \InvalidArgumentException('Invalid TipoHuella value');
+        if (!preg_match('/^\d{2}$/', $tipoHuella)) {
+            throw new \InvalidArgumentException('TipoHuella must be a 2-digit number');
         }
-        $this->tipoHuella = $tipoHuella;
+        $this->TipoHuella = $tipoHuella;
         return $this;
     }
 
     public function getHuella(): string
     {
-        return $this->huella;
+        return $this->Huella;
     }
 
     public function setHuella(string $huella): self
     {
-        if (strlen($huella) > 100) {
-            throw new \InvalidArgumentException('Huella must not exceed 100 characters');
-        }
-        $this->huella = $huella;
+        $this->Huella = $huella;
         return $this;
     }
 } 

@@ -4,35 +4,29 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 
 class Desglose
 {
-    /** @var Detalle[] */
-    protected $detalle = [];
+    /** @var array<DetalleDesglose> */
+    protected $DetalleDesglose = [];
 
     /**
-     * @return Detalle[]
+     * @return array<DetalleDesglose>
      */
-    public function getDetalle(): array
+    public function getDetalleDesglose(): array
     {
-        return $this->detalle;
+        return $this->DetalleDesglose;
     }
 
-    public function addDetalle(Detalle $detalle): self
+    public function addDetalleDesglose(DetalleDesglose $detalle): self
     {
-        if (count($this->detalle) >= 1000) {
-            throw new \RuntimeException('Maximum number of Detalle (1000) exceeded');
-        }
-        $this->detalle[] = $detalle;
+        $this->DetalleDesglose[] = $detalle;
         return $this;
     }
 
     /**
-     * @param Detalle[] $detalle
+     * @param array<DetalleDesglose> $detalles
      */
-    public function setDetalle(array $detalle): self
+    public function setDetalleDesglose(array $detalles): self
     {
-        if (count($detalle) > 1000) {
-            throw new \RuntimeException('Maximum number of Detalle (1000) exceeded');
-        }
-        $this->detalle = $detalle;
+        $this->DetalleDesglose = $detalles;
         return $this;
     }
 } 

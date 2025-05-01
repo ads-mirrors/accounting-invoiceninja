@@ -4,7 +4,10 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 
 class Incidencia
 {
-    /** @var string Max length 2000 characters */
+    /** @var string */
+    protected $codigo;
+
+    /** @var string */
     protected $descripcion;
 
     /** @var string|null Max length 120 characters */
@@ -16,6 +19,20 @@ class Incidencia
     /** @var string|null */
     protected $fechaHora;
 
+    public function getCodigo(): string
+    {
+        return $this->codigo;
+    }
+
+    public function setCodigo(string $codigo): self
+    {
+        if (!preg_match('/^\d{3}$/', $codigo)) {
+            throw new \InvalidArgumentException('Codigo must be a 3-digit number');
+        }
+        $this->codigo = $codigo;
+        return $this;
+    }
+
     public function getDescripcion(): string
     {
         return $this->descripcion;
@@ -23,8 +40,8 @@ class Incidencia
 
     public function setDescripcion(string $descripcion): self
     {
-        if (strlen($descripcion) > 2000) {
-            throw new \InvalidArgumentException('Descripcion must not exceed 2000 characters');
+        if (strlen($descripcion) > 500) {
+            throw new \InvalidArgumentException('Descripcion must not exceed 500 characters');
         }
         $this->descripcion = $descripcion;
         return $this;

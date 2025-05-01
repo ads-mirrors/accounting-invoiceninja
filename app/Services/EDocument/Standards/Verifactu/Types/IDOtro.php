@@ -4,61 +4,57 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 
 class IDOtro
 {
-    /** @var string|null ISO 3166-1 alpha-2 */
-    protected $codigoPais;
+    /** @var string */
+    protected $CodigoPais;
 
     /** @var string */
-    protected $idType;
+    protected $IDType;
 
-    /** @var string Max length 20 characters */
-    protected $id;
+    /** @var string */
+    protected $ID;
 
-    public function getCodigoPais(): ?string
+    public function getCodigoPais(): string
     {
-        return $this->codigoPais;
+        return $this->CodigoPais;
     }
 
-    public function setCodigoPais(?string $codigoPais): self
+    public function setCodigoPais(string $codigoPais): self
     {
-        if ($codigoPais !== null) {
-            if (strlen($codigoPais) !== 2) {
-                throw new \InvalidArgumentException('CodigoPais must be a 2-letter ISO country code');
-            }
-            // Prevent using ES with IDType 01
-            if ($codigoPais === 'ES' && $this->idType === '01') {
-                throw new \InvalidArgumentException('Cannot use CodigoPais=ES with IDType=01, use NIF instead');
-            }
+        if (strlen($codigoPais) !== 2) {
+            throw new \InvalidArgumentException('CodigoPais must be a 2-character ISO country code');
         }
-        $this->codigoPais = $codigoPais;
+        $this->CodigoPais = $codigoPais;
         return $this;
     }
 
-    public function getIdType(): string
+    public function getIDType(): string
     {
-        return $this->idType;
+        return $this->IDType;
     }
 
-    public function setIdType(string $idType): self
+    public function setIDType(string $idType): self
     {
-        // Prevent using ES with IDType 01
-        if ($this->codigoPais === 'ES' && $idType === '01') {
-            throw new \InvalidArgumentException('Cannot use CodigoPais=ES with IDType=01, use NIF instead');
+        if (!in_array($idType, ['02', '03', '04', '05', '06', '07'])) {
+            throw new \InvalidArgumentException('Invalid IDType value');
         }
-        $this->idType = $idType;
+        if ($this->CodigoPais === 'ES' && $idType === '01') {
+            throw new \InvalidArgumentException('IDType 01 cannot be used with CodigoPais ES');
+        }
+        $this->IDType = $idType;
         return $this;
     }
 
-    public function getId(): string
+    public function getID(): string
     {
-        return $this->id;
+        return $this->ID;
     }
 
-    public function setId(string $id): self
+    public function setID(string $id): self
     {
         if (strlen($id) > 20) {
             throw new \InvalidArgumentException('ID must not exceed 20 characters');
         }
-        $this->id = $id;
+        $this->ID = $id;
         return $this;
     }
 } 
