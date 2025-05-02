@@ -3,12 +3,14 @@
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
 use App\Services\EDocument\Standards\Verifactu\Types\Common\TextTypes;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class ImporteSgn14_2
 {
     use TextTypes;
 
     /** @var string */
+    #[SerializedName('sum1:Value')]
     protected $Value;
 
     public function __construct(string $value)

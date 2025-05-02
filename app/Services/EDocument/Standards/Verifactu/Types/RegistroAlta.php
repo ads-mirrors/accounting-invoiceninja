@@ -2,48 +2,64 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class RegistroAlta
 {
     /** @var string */
+    #[SerializedName('sum1:IDVersion')]
     protected $IDVersion;
 
     /** @var IDFactura */
+    #[SerializedName('sum1:IDFactura')]
     protected $IDFactura;
 
     /** @var string */
+    #[SerializedName('sum1:NombreRazonEmisor')]
     protected $NombreRazonEmisor;
 
     /** @var string */
+    #[SerializedName('sum1:TipoFactura')]
     protected $TipoFactura;
 
     /** @var string */
+    #[SerializedName('sum1:DescripcionOperacion')]
     protected $DescripcionOperacion;
 
     /** @var Destinatarios */
+    #[SerializedName('sum1:Destinatarios')]
     protected $Destinatarios;
 
     /** @var Desglose */
+    #[SerializedName('sum1:Desglose')]
     protected $Desglose;
 
     /** @var float */
+    #[SerializedName('sum1:CuotaTotal')]
     protected $CuotaTotal;
 
     /** @var float */
+    #[SerializedName('sum1:ImporteTotal')]
     protected $ImporteTotal;
 
     /** @var Encadenamiento|null */
+    #[SerializedName('sum1:Encadenamiento')]
     protected $Encadenamiento;
 
     /** @var SistemaInformatico */
+    #[SerializedName('sum1:SistemaInformatico')]
     protected $SistemaInformatico;
 
     /** @var string */
+    #[SerializedName('sum1:FechaHoraHusoGenRegistro')]
     protected $FechaHoraHusoGenRegistro;
 
     /** @var string */
+    #[SerializedName('sum1:TipoHuella')]
     protected $TipoHuella;
 
     /** @var string */
+    #[SerializedName('sum1:Huella')]
     protected $Huella;
 
     public function getIDVersion(): string

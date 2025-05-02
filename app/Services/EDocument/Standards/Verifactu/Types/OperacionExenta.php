@@ -2,6 +2,8 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class OperacionExenta
 {
     public const E1 = 'E1'; // EXENTA por Art. 20
@@ -12,6 +14,7 @@ class OperacionExenta
     public const E6 = 'E6'; // EXENTA por otros
 
     /** @var string */
+    #[SerializedName('sum1:Value')]
     protected $Value;
 
     public function __construct(string $value)

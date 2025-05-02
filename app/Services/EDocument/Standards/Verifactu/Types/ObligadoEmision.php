@@ -2,39 +2,52 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class ObligadoEmision extends PersonaFisicaJuridicaES
 {
     /** @var string|null */
+    #[SerializedName('sum1:TipoPersona')]
     protected $TipoPersona;
 
     /** @var string|null */
+    #[SerializedName('sum1:RazonSocialCompleta')]
     protected $RazonSocialCompleta;
 
     /** @var string|null */
+    #[SerializedName('sum1:NombreComercial')]
     protected $NombreComercial;
 
     /** @var string|null */
+    #[SerializedName('sum1:CodigoPostal')]
     protected $CodigoPostal;
 
     /** @var string|null */
+    #[SerializedName('sum1:Direccion')]
     protected $Direccion;
 
     /** @var string|null */
+    #[SerializedName('sum1:Poblacion')]
     protected $Poblacion;
 
     /** @var string|null */
+    #[SerializedName('sum1:Provincia')]
     protected $Provincia;
 
     /** @var string|null */
+    #[SerializedName('sum1:Pais')]
     protected $Pais;
 
     /** @var string|null */
+    #[SerializedName('sum1:Telefono')]
     protected $Telefono;
 
     /** @var string|null */
+    #[SerializedName('sum1:Email')]
     protected $Email;
 
     /** @var string|null */
+    #[SerializedName('sum1:Web')]
     protected $Web;
 
     public function getTipoPersona(): ?string

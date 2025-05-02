@@ -2,27 +2,36 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class SistemaInformatico extends PersonaFisicaJuridicaES
 {
     /** @var string */
+    #[SerializedName('sum1:NombreSistemaInformatico')]
     protected $NombreSistemaInformatico;
 
     /** @var string */
+    #[SerializedName('sum1:IdSistemaInformatico')]
     protected $IdSistemaInformatico;
 
     /** @var string */
+    #[SerializedName('sum1:Version')]
     protected $Version;
 
     /** @var string */
+    #[SerializedName('sum1:NumeroInstalacion')]
     protected $NumeroInstalacion;
 
     /** @var string */
+    #[SerializedName('sum1:TipoUsoPosibleSoloVerifactu')]
     protected $TipoUsoPosibleSoloVerifactu;
 
     /** @var string */
+    #[SerializedName('sum1:TipoUsoPosibleMultiOT')]
     protected $TipoUsoPosibleMultiOT;
 
     /** @var string */
+    #[SerializedName('sum1:IndicadorMultiplesOT')]
     protected $IndicadorMultiplesOT;
 
     public function getNombreSistemaInformatico(): string

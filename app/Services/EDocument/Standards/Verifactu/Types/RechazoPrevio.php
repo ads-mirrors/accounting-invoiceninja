@@ -2,15 +2,20 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class RechazoPrevio
 {
     /** @var string */
+    #[SerializedName('sum1:NumRegistroAcuerdoFacturacion')]
     protected $NumRegistroAcuerdoFacturacion;
 
     /** @var string */
+    #[SerializedName('sum1:FechaRegistroAcuerdoFacturacion')]
     protected $FechaRegistroAcuerdoFacturacion;
 
     /** @var string */
+    #[SerializedName('sum1:MotivoRechazo')]
     protected $MotivoRechazo;
 
     public function getNumRegistroAcuerdoFacturacion(): string

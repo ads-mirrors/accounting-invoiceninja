@@ -2,15 +2,20 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class DesgloseRectificacion
 {
     /** @var float */
+    #[SerializedName('sum1:BaseRectificada')]
     protected $BaseRectificada;
 
     /** @var float */
+    #[SerializedName('sum1:CuotaRectificada')]
     protected $CuotaRectificada;
 
     /** @var float|null */
+    #[SerializedName('sum1:CuotaRecargoRectificada')]
     protected $CuotaRecargoRectificada;
 
     public function getBaseRectificada(): float

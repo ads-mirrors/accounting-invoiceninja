@@ -2,12 +2,16 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class Subsanacion
 {
     /** @var string */
+    #[SerializedName('sum1:NumRegistroAcuerdoFacturacion')]
     protected $NumRegistroAcuerdoFacturacion;
 
     /** @var string */
+    #[SerializedName('sum1:FechaRegistroAcuerdoFacturacion')]
     protected $FechaRegistroAcuerdoFacturacion;
 
     public function getNumRegistroAcuerdoFacturacion(): string

@@ -2,21 +2,28 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class Incidencia
 {
     /** @var string */
+    #[SerializedName('sum1:Codigo')]
     protected $Codigo;
 
     /** @var string */
+    #[SerializedName('sum1:Descripcion')]
     protected $Descripcion;
 
     /** @var string|null Max length 120 characters */
+    #[SerializedName('sum1:NombreRazon')]
     protected $NombreRazon;
 
     /** @var string|null NIF format */
+    #[SerializedName('sum1:NIF')]
     protected $NIF;
 
     /** @var string|null */
+    #[SerializedName('sum1:FechaHora')]
     protected $FechaHora;
 
     public function getCodigo(): string

@@ -2,18 +2,24 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class Cabecera
 {
     /** @var PersonaFisicaJuridicaES */
+    #[SerializedName('sum1:ObligadoEmision')]
     protected $ObligadoEmision;
 
     /** @var PersonaFisicaJuridicaES|null */
+    #[SerializedName('sum1:Representante')]
     protected $Representante;
 
     /** @var array{FechaFinVeriFactu?: string}|null */
+    #[SerializedName('sum1:RemisionVoluntaria')]
     protected $RemisionVoluntaria;
 
     /** @var array{RefRequerimiento: string, FinRequerimiento?: string}|null */
+    #[SerializedName('sum1:RemisionRequerimiento')]
     protected $RemisionRequerimiento;
 
     public function getObligadoEmision(): PersonaFisicaJuridicaES

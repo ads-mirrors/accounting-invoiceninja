@@ -2,42 +2,56 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class RegistroFacturacionAnulacion
 {
     /** @var string */
+    #[SerializedName('sum1:IDVersion')]
     protected $IDVersion;
 
     /** @var IDFacturaAR */
+    #[SerializedName('sum1:IDFactura')]
     protected $IDFactura;
 
     /** @var string|null Max length 70 characters */
+    #[SerializedName('sum1:RefExterna')]
     protected $RefExterna;
 
     /** @var string Max length 120 characters */
+    #[SerializedName('sum1:NombreRazonEmisor')]
     protected $NombreRazonEmisor;
 
     /** @var string|null Max length 2000 characters */
+    #[SerializedName('sum1:MotivoAnulacion')]
     protected $MotivoAnulacion;
 
     /** @var SistemaInformatico */
+    #[SerializedName('sum1:SistemaInformatico')]
     protected $SistemaInformatico;
 
     /** @var string */
+    #[SerializedName('sum1:Huella')]
     protected $Huella;
 
     /** @var string|null */
+    #[SerializedName('sum1:Signature')]
     protected $Signature;
 
     /** @var string */
+    #[SerializedName('sum1:FechaHoraHusoGenRegistro')]
     protected $FechaHoraHusoGenRegistro;
 
     /** @var string|null Max length 15 characters */
+    #[SerializedName('sum1:NumRegistroAcuerdoFacturacion')]
     protected $NumRegistroAcuerdoFacturacion;
 
     /** @var string|null Max length 16 characters */
+    #[SerializedName('sum1:IDAcuerdoSistemaInformatico')]
     protected $IDAcuerdoSistemaInformatico;
 
     /** @var string */
+    #[SerializedName('sum1:TipoHuella')]
     protected $TipoHuella;
 
     public function getIDVersion(): string

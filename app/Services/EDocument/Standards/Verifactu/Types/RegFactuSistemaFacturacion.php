@@ -2,33 +2,37 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\SerializedName;
+
 class RegFactuSistemaFacturacion
 {
-    /** @var PersonaFisicaJuridicaES */
-    protected $ObligadoEmision;
+    /** @var Cabecera */
+    #[SerializedName('sum:Cabecera')]
+    protected $Cabecera;
 
-    /** @var RegistroAlta */
-    protected $RegistroAlta;
+    /** @var RegistroFactura */
+    #[SerializedName('sum:RegistroFactura')]
+    protected $RegistroFactura;
 
-    public function getObligadoEmision(): PersonaFisicaJuridicaES
+    public function getCabecera(): Cabecera
     {
-        return $this->ObligadoEmision;
+        return $this->Cabecera;
     }
 
-    public function setObligadoEmision(PersonaFisicaJuridicaES $obligadoEmision): self
+    public function setCabecera(Cabecera $cabecera): self
     {
-        $this->ObligadoEmision = $obligadoEmision;
+        $this->Cabecera = $cabecera;
         return $this;
     }
 
-    public function getRegistroAlta(): RegistroAlta
+    public function getRegistroFactura(): RegistroFactura
     {
-        return $this->RegistroAlta;
+        return $this->RegistroFactura;
     }
 
-    public function setRegistroAlta(RegistroAlta $registroAlta): self
+    public function setRegistroFactura(RegistroFactura $registroFactura): self
     {
-        $this->RegistroAlta = $registroAlta;
+        $this->RegistroFactura = $registroFactura;
         return $this;
     }
 } 
