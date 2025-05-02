@@ -59,8 +59,7 @@ class SerializerTest extends TestCase
 
         $invoice = $serializer->deserialize($document, $parent_class, 'xml', [\Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer::SKIP_NULL_VALUES => true]);
 
-        // nlog($invoice);
-echo(print_r($invoice, true));
+        $this->assertInstanceOf(SoapEnvelope::class, $invoice);
 
     }
 }
