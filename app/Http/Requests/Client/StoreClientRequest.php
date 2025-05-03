@@ -75,10 +75,26 @@ class StoreClientRequest extends Request
         $rules['shipping_country_id'] = 'integer|nullable|exists:countries,id';
         $rules['number'] = ['sometimes', 'nullable', 'bail', Rule::unique('clients')->where('company_id', $user->company()->id)];
         $rules['country_id'] = 'integer|nullable|exists:countries,id';
-        $rules['custom_value1'] = 'bail|nullable|sometimes|string';
-        $rules['custom_value2'] = 'bail|nullable|sometimes|string';
-        $rules['custom_value3'] = 'bail|nullable|sometimes|string';
-        $rules['custom_value4'] = 'bail|nullable|sometimes|string';
+        $rules['custom_value1'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            }];
+        $rules['custom_value2'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            }];
+        $rules['custom_value3'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            }];
+        $rules['custom_value4'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                    $fail("The $attribute must not be an array.");
+                }
+            }];
 
         return $rules;
     }
@@ -101,7 +117,7 @@ class StoreClientRequest extends Request
         $settings = (array)ClientSettings::defaults();
 
         /* Stub settings if they don't exist */
-        if (!array_key_exists('settings', $input)) {
+        if (!array_key_exists('settings', $input) || is_null($input['settings'])) {
             $input['settings'] = [];
         } elseif (is_object($input['settings'])) {
             $input['settings'] = (array)$input['settings'];

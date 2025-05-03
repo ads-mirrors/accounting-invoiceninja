@@ -170,7 +170,7 @@ class AutoBillInvoice extends AbstractService
             $this->invoice->increment('auto_bill_tries', 1);
             $this->invoice->refresh();
 
-            if ($this->invoice->auto_bill_tries == 3) {
+            if ($this->invoice->auto_bill_tries == 4) {
 
                 \App\Models\Invoice::where('id', $this->invoice->id)->update([
                     'auto_bill_enabled' => false,

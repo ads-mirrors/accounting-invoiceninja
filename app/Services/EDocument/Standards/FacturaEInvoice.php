@@ -485,7 +485,7 @@ class FacturaEInvoice extends AbstractService
             "taxNumber" => $company->settings->vat_number,
             "name" => substr($company->present()->name(), 0, 40),
             "address" => substr($company->settings->address1, 0, 80),
-            "postCode" => substr($this->invoice->client->postal_code, 0, 5),
+            "postCode" => substr($company->settings->postal_code, 0, 5),
             "town" => substr($company->settings->city, 0, 50),
             "province" => substr($company->settings->state, 0, 20),
             "countryCode" => $company->country()->iso_3166_3,  // Se asume España si se omite

@@ -148,7 +148,7 @@ class UpdatePaymentMethods
             $additional_data = ['gateway_customer_reference' => $customer->id];
 
             if ($customer->default_source === $method->id) {
-                $additional_data = ['gateway_customer_reference' => $customer->id, 'is_default' => 1];
+                $additional_data = ['gateway_customer_reference' => $customer->id, 'is_default' => 0];
             }
 
             $this->stripe->storeGatewayToken($data, $additional_data);
@@ -191,7 +191,7 @@ class UpdatePaymentMethods
             $additional_data = ['gateway_customer_reference' => $customer->id];
 
             if ($customer->default_source === $method->id) {
-                $additional_data = ['gateway_customer_reference' => $customer->id, 'is_default' => 1];
+                $additional_data = ['gateway_customer_reference' => $customer->id, 'is_default' => 0];
             }
 
             $this->stripe->storeGatewayToken($data, $additional_data);

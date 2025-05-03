@@ -75,10 +75,28 @@ class UpdateClientRequest extends Request
             //'regex:/[@$!%*#?&.]/', // must contain a special character
         ];
 
-        $rules['custom_value1'] = 'bail|nullable|sometimes|string';
-        $rules['custom_value2'] = 'bail|nullable|sometimes|string';
-        $rules['custom_value3'] = 'bail|nullable|sometimes|string';
-        $rules['custom_value4'] = 'bail|nullable|sometimes|string';
+
+        $rules['custom_value1'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                $fail("The $attribute must not be an array.");
+            }
+        }];
+        $rules['custom_value2'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                $fail("The $attribute must not be an array.");
+            }
+        }];
+        $rules['custom_value3'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                $fail("The $attribute must not be an array.");
+            }
+        }];
+        $rules['custom_value4'] = ['bail','nullable','sometimes',function ($attribute, $value, $fail) {
+            if (is_array($value)) {
+                $fail("The $attribute must not be an array.");
+            }
+        }];
+
 
         return $rules;
     }
@@ -141,6 +159,13 @@ class UpdateClientRequest extends Request
         if (isset($input['e_invoice']) && is_array($input['e_invoice'])) {
             //ensure it is normalized first!
             $input['e_invoice'] = $this->client->filterNullsRecursive($input['e_invoice']);
+        }
+
+        if (isset($input['public_notes']) && $this->hasHeader('X-REACT')) {
+            $input['public_notes'] = str_replace("\n", "", $input['public_notes']);
+        }
+        if (isset($input['private_notes']) && $this->hasHeader('X-REACT')) {
+            $input['private_notes'] = str_replace("\n", "", $input['private_notes']);
         }
 
         $this->replace($input);

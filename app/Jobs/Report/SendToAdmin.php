@@ -45,6 +45,8 @@ class SendToAdmin implements ShouldQueue
 
     protected string $file_name;
 
+    public $tries = 1;
+
     /**
      * Create a new job instance.
      */
@@ -90,8 +92,15 @@ class SendToAdmin implements ShouldQueue
 
     }
 
-    public function middleware()
+    // public function middleware()
+    // {
+    //     return [(new WithoutOverlapping("report-{$this->company->company_key}-{$this->report_class}"))->expireAfter(60)];
+    // }
+
+    public function failed(\Throwable $exception = null)
     {
-        return [new WithoutOverlapping("report-{$this->company->company_key}-{$this->report_class}")];
+        if($exception) {
+            nlog("EXCEPTION:: SendToAdmin:: could not email report for" . $exception->getMessage());
+        }
     }
 }

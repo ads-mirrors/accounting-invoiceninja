@@ -32,7 +32,24 @@ class GmailTransport extends AbstractTransport
     protected function doSend(SentMessage $message): void
     {
         nlog("In Do Send");
+
+        /** @var \Symfony\Component\Mime\Email $message */
         $message = MessageConverter::toEmail($message->getOriginalMessage()); //@phpstan-ignore-line
+
+        //ensure utf-8 encoding of subject
+        $subject = $message->getSubject();
+
+        if (!mb_check_encoding($subject, 'UTF-8') || preg_match('/Ã.|â.|Â./', $subject)) {
+
+            $converted = mb_convert_encoding($subject, 'UTF-8', 'Windows-1252');
+
+            if (mb_check_encoding($converted, 'UTF-8')) {
+                $subject = $converted;
+            }
+
+        }
+
+        $message->subject($subject);
 
         /** @phpstan-ignore-next-line **/
         $token = $message->getHeaders()->get('gmailtoken')->getValue(); // @phpstan-ignore-line
@@ -70,7 +87,8 @@ class GmailTransport extends AbstractTransport
 
     private function base64_encode($data)
     {
-        return rtrim(strtr(base64_encode($data), ['+' => '-', '/' => '_']), '=');
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+        // return rtrim(strtr(base64_encode($data), ['+' => '-', '/' => '_']), '=');
     }
 
     public function __toString(): string

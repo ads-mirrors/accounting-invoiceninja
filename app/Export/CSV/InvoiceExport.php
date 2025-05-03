@@ -199,21 +199,27 @@ class InvoiceExport extends BaseExport
                 $entity[$key] = $transformed_invoice[$parts[1]];
             } elseif ($decorated_value = $this->decorator->transform($key, $invoice)) {
                 $entity[$key] = $decorated_value;
-            } elseif (count($this->tax_names) > 0) {
-
-                $calc = $invoice->calc();
-                $taxes = $calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray();
-                nlog($this->tax_names);
-                foreach ($this->tax_names as $tax_name) {
-                    $entity[$tax_name] = 0;
-                }
-
-                foreach ($taxes as $tax) {
-                    $entity[$tax['name']] += $tax['total'];
-                }
+            } else {
+                $entity[$key] = '';
             }
 
         }
+
+        
+        if (count($this->tax_names) > 0) {
+
+            $calc = $invoice->calc();
+            $taxes = $calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray();
+
+            foreach ($this->tax_names as $tax_name) {
+                $entity[$tax_name] = 0;
+            }
+
+            foreach ($taxes as $tax) {
+                $entity[$tax['name']] += $tax['total'];
+            }
+        }
+
 
         $entity = $this->decorateAdvancedFields($invoice, $entity);
 

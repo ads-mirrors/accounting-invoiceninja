@@ -101,8 +101,11 @@ class Nordigen
             return Arr::first(
                 $this->client->endUserAgreement->getEndUserAgreements()['results'],
                 function (array $eua) use ($institutionId, $requiredScopes, $accessDays, $txDays): bool {
+                    $isNotExpired = !isset($eua['status']) || $eua['status'] !== 'EXPIRED';
+                    
                     return $eua['institution_id'] === $institutionId
                         && $eua['accepted'] === null
+                        && $isNotExpired
                         && $eua['max_historical_days'] >= $txDays
                         && $eua['access_valid_for_days'] >= $accessDays
                         && !array_diff($requiredScopes, $eua['access_scope'] ?? []);

@@ -1506,6 +1506,7 @@ class BaseExport
 
     public function processMetaData(array $row, $resource): array
     {
+        nlog($row);
         $class = get_class($resource);
 
         $entity = '';
