@@ -7,22 +7,8 @@
  */
 namespace App\Services\EDocument\Standards\Verifactu;
 
-use App\Services\EDocument\Standards\Verifactu\Types\RegFactuSistemaFacturacion;
-use App\Services\EDocument\Standards\Verifactu\Types\RegistroFactura;
-use App\Services\EDocument\Standards\Verifactu\Types\RegistroFacturacionAlta;
-use App\Services\EDocument\Standards\Verifactu\Types\RegistroFacturacionAnulacion;
-use App\Services\EDocument\Standards\Verifactu\Types\RegistroFacturacionSubsanacion;
-use App\Services\EDocument\Standards\Verifactu\Types\Subsanacion;
-use App\Services\EDocument\Standards\Verifactu\Types\ImporteSgn14_2;
-use App\Services\EDocument\Standards\Verifactu\Types\Incidencia;
-use App\Services\EDocument\Standards\Verifactu\Types\ObligadoEmision;
-use App\Services\EDocument\Standards\Verifactu\Types\OperacionExenta;
-use App\Services\EDocument\Standards\Verifactu\Types\PersonaFisicaJuridica;
-use App\Services\EDocument\Standards\Verifactu\Types\PersonaFisicaJuridicaES;
-use App\Services\EDocument\Standards\Verifactu\Types\RechazoPrevio;
-use App\Services\EDocument\Standards\Verifactu\Types\RegistroAlta;
-use App\Services\EDocument\Standards\Verifactu\Types\RegistroAnterior;
-use App\Services\EDocument\Standards\Verifactu\Types\SistemaInformatico;
+
+
 use App\Services\EDocument\Standards\Verifactu\Types\Cabecera;
 use App\Services\EDocument\Standards\Verifactu\Types\Desglose;
 use App\Services\EDocument\Standards\Verifactu\Types\DesgloseRectificacion;
@@ -35,7 +21,21 @@ use App\Services\EDocument\Standards\Verifactu\Types\IDFactura;
 use App\Services\EDocument\Standards\Verifactu\Types\IDFacturaAR;
 use App\Services\EDocument\Standards\Verifactu\Types\IDFacturaExpedida;
 use App\Services\EDocument\Standards\Verifactu\Types\IDOtro;
-
+use App\Services\EDocument\Standards\Verifactu\Types\ImporteSgn14_2;
+use App\Services\EDocument\Standards\Verifactu\Types\Incidencia;
+use App\Services\EDocument\Standards\Verifactu\Types\ObligadoEmision;
+use App\Services\EDocument\Standards\Verifactu\Types\OperacionExenta;
+use App\Services\EDocument\Standards\Verifactu\Types\PersonaFisicaJuridica;
+use App\Services\EDocument\Standards\Verifactu\Types\PersonaFisicaJuridicaES;
+use App\Services\EDocument\Standards\Verifactu\Types\RechazoPrevio;
+use App\Services\EDocument\Standards\Verifactu\Types\RegFactuSistemaFacturacion;
+use App\Services\EDocument\Standards\Verifactu\Types\RegistroAlta;
+use App\Services\EDocument\Standards\Verifactu\Types\RegistroAnterior;
+use App\Services\EDocument\Standards\Verifactu\Types\RegistroFactura;
+use App\Services\EDocument\Standards\Verifactu\Types\RegistroFacturacionAlta;
+use App\Services\EDocument\Standards\Verifactu\Types\RegistroFacturacionAnulacion;
+use App\Services\EDocument\Standards\Verifactu\Types\SistemaInformatico;
+use App\Services\EDocument\Standards\Verifactu\Types\Subsanacion;
 
 class VerifactuClient
 {
@@ -70,7 +70,7 @@ class VerifactuClient
         $endpoint    = self::$endpoints[$mode];
         $wsdlPath    = $wsdl ?: __DIR__ . '/xsd/SistemaFacturacion.wsdl';
 
-        // Default SOAP client options with classmap for generated Types
+        // Default SOAP client options with classmap for generated s
         $defaultOpts = [
             'trace'        => true,
             'exceptions'   => true,
@@ -126,7 +126,7 @@ class VerifactuClient
         $factura->setRegistroAlta($registro);
 
         $wrapper = new RegFactuSistemaFacturacion();
-        $wrapper->addRegistroFactura($factura);
+        $wrapper->addToRegistroFactura($factura);
 
         return $this->sendRegistroFactura($wrapper);
     }
@@ -144,7 +144,7 @@ class VerifactuClient
         $factura->setRegistroAnulacion($registro);
 
         $wrapper = new RegFactuSistemaFacturacion();
-        $wrapper->addRegistroFactura($factura);
+        $wrapper->addToRegistroFactura($factura);
 
         return $this->sendRegistroFactura($wrapper);
     }
