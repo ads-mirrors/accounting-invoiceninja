@@ -315,9 +315,8 @@ class PayPalWebhook implements ShouldQueue
     {
         // nlog($this->headers);
 
-        if(!isset($this->headers['paypal-auth-algo'][0])){
-          nlog(array_merge(["no paypal-auth-algo"], $this->webhook_request));
-        }
+        if(!isset($this->headers['paypal-auth-algo'][0]))
+          return false;
 
         $request = [
             'auth_algo' => $this->headers['paypal-auth-algo'][0],
