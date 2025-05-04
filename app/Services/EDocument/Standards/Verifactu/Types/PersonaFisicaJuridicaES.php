@@ -21,7 +21,10 @@ class PersonaFisicaJuridicaES
 
     public function setNIF(string $nif): self
     {
-        // TODO: Add NIF validation
+        // Validate NIF format (letter or number followed by 8 numbers)
+        if (!preg_match('/^[A-Z0-9][0-9]{8}$/', $nif)) {
+            throw new \InvalidArgumentException('NIF must be a valid format (letter/number followed by 8 numbers)');
+        }
         $this->NIF = $nif;
         return $this;
     }

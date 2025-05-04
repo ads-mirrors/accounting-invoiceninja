@@ -50,6 +50,14 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
     #[SerializedName('sum1:Web')]
     protected $Web;
 
+    /** @var string */
+    #[SerializedName('sum1:NombreRazon')]
+    protected $NombreRazon;
+
+    /** @var string */
+    #[SerializedName('sum1:NIFRepresentante')]
+    protected $NIFRepresentante;
+
     public function getTipoPersona(): ?string
     {
         return $this->TipoPersona;
@@ -206,6 +214,34 @@ class ObligadoEmision extends PersonaFisicaJuridicaES
             throw new \InvalidArgumentException('Web must not exceed 250 characters');
         }
         $this->Web = $web;
+        return $this;
+    }
+
+    public function getNombreRazon(): string
+    {
+        return $this->NombreRazon;
+    }
+
+    public function setNombreRazon(string $nombreRazon): self
+    {
+        if (strlen($nombreRazon) > 120) {
+            throw new \InvalidArgumentException('NombreRazon must not exceed 120 characters');
+        }
+        $this->NombreRazon = $nombreRazon;
+        return $this;
+    }
+
+    public function getNIFRepresentante(): string
+    {
+        return $this->NIFRepresentante;
+    }
+
+    public function setNIFRepresentante(string $nifRepresentante): self
+    {
+        if (!preg_match('/^[A-Z0-9]{9}$/', $nifRepresentante)) {
+            throw new \InvalidArgumentException('NIFRepresentante must be a valid NIF (9 alphanumeric characters)');
+        }
+        $this->NIFRepresentante = $nifRepresentante;
         return $this;
     }
 } 

@@ -83,7 +83,7 @@ class Detalle
                 throw new \InvalidArgumentException('CalificacionOperacion must be a letter followed by a digit');
             }
             if ($this->OperacionExenta !== null) {
-                throw new \InvalidArgumentException('Cannot set both CalificacionOperacion and OperacionExenta');
+                throw new \InvalidArgumentException('Cannot set CalificacionOperacion when OperacionExenta is set');
             }
         }
         $this->CalificacionOperacion = $calificacionOperacion;
@@ -102,7 +102,7 @@ class Detalle
                 throw new \InvalidArgumentException('OperacionExenta must be a letter followed by a digit');
             }
             if ($this->CalificacionOperacion !== null) {
-                throw new \InvalidArgumentException('Cannot set both CalificacionOperacion and OperacionExenta');
+                throw new \InvalidArgumentException('Cannot set OperacionExenta when CalificacionOperacion is set');
             }
         }
         $this->OperacionExenta = $operacionExenta;

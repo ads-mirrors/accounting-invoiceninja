@@ -182,25 +182,6 @@ class RegistroFacturacionAlta
         return $this;
     }
 
-    // Add remaining getters and setters with appropriate validation...
-
-    /**
-     * @return PersonaFisicaJuridica[]
-     */
-    public function getDestinatarios(): array
-    {
-        return $this->Destinatarios;
-    }
-
-    public function addDestinatario(PersonaFisicaJuridica $destinatario): self
-    {
-        if (count($this->Destinatarios) >= 1000) {
-            throw new \RuntimeException('Maximum number of Destinatarios (1000) exceeded');
-        }
-        $this->Destinatarios[] = $destinatario;
-        return $this;
-    }
-
     public function getHuella(): string
     {
         return $this->Huella;
@@ -212,6 +193,306 @@ class RegistroFacturacionAlta
             throw new \InvalidArgumentException('Huella must not exceed 64 characters');
         }
         $this->Huella = $huella;
+        return $this;
+    }
+
+    public function getSignature(): ?string
+    {
+        return $this->Signature;
+    }
+
+    public function setSignature(?string $signature): self
+    {
+        $this->Signature = $signature;
+        return $this;
+    }
+
+    public function getFechaHoraHusoGenRegistro(): \DateTime
+    {
+        return $this->FechaHoraHusoGenRegistro;
+    }
+
+    public function setFechaHoraHusoGenRegistro(\DateTime $fechaHoraHusoGenRegistro): self
+    {
+        $this->FechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
+        return $this;
+    }
+
+    public function getNumRegistroAcuerdoFacturacion(): ?string
+    {
+        return $this->NumRegistroAcuerdoFacturacion;
+    }
+
+    public function setNumRegistroAcuerdoFacturacion(?string $numRegistroAcuerdoFacturacion): self
+    {
+        if ($numRegistroAcuerdoFacturacion !== null && strlen($numRegistroAcuerdoFacturacion) > 15) {
+            throw new \InvalidArgumentException('NumRegistroAcuerdoFacturacion must not exceed 15 characters');
+        }
+        $this->NumRegistroAcuerdoFacturacion = $numRegistroAcuerdoFacturacion;
+        return $this;
+    }
+
+    public function getIDAcuerdoSistemaInformatico(): ?string
+    {
+        return $this->IDAcuerdoSistemaInformatico;
+    }
+
+    public function setIDAcuerdoSistemaInformatico(?string $idAcuerdoSistemaInformatico): self
+    {
+        if ($idAcuerdoSistemaInformatico !== null && strlen($idAcuerdoSistemaInformatico) > 16) {
+            throw new \InvalidArgumentException('IDAcuerdoSistemaInformatico must not exceed 16 characters');
+        }
+        $this->IDAcuerdoSistemaInformatico = $idAcuerdoSistemaInformatico;
+        return $this;
+    }
+
+    public function getTipoHuella(): string
+    {
+        return $this->TipoHuella;
+    }
+
+    public function setTipoHuella(string $tipoHuella): self
+    {
+        if ($tipoHuella !== '01') {
+            throw new \InvalidArgumentException('TipoHuella must be "01" (SHA-256)');
+        }
+        $this->TipoHuella = $tipoHuella;
+        return $this;
+    }
+
+    public function getFacturasRectificadas(): array
+    {
+        return $this->FacturasRectificadas;
+    }
+
+    public function addFacturaRectificada(IDFacturaAR $facturaRectificada): self
+    {
+        $this->FacturasRectificadas[] = $facturaRectificada;
+        return $this;
+    }
+
+    public function getFacturasSustituidas(): array
+    {
+        return $this->FacturasSustituidas;
+    }
+
+    public function addFacturaSustituida(IDFacturaAR $facturaSustituida): self
+    {
+        $this->FacturasSustituidas[] = $facturaSustituida;
+        return $this;
+    }
+
+    public function getImporteRectificacion(): ?DesgloseRectificacion
+    {
+        return $this->ImporteRectificacion;
+    }
+
+    public function setImporteRectificacion(?DesgloseRectificacion $importeRectificacion): self
+    {
+        $this->ImporteRectificacion = $importeRectificacion;
+        return $this;
+    }
+
+    public function getFechaOperacion(): ?string
+    {
+        return $this->FechaOperacion;
+    }
+
+    public function setFechaOperacion(?string $fechaOperacion): self
+    {
+        if ($fechaOperacion !== null) {
+            if (!preg_match('/^\d{2}-\d{2}-\d{4}$/', $fechaOperacion)) {
+                throw new \InvalidArgumentException('FechaOperacion must be in DD-MM-YYYY format');
+            }
+            list($day, $month, $year) = explode('-', $fechaOperacion);
+            if (!checkdate((int)$month, (int)$day, (int)$year)) {
+                throw new \InvalidArgumentException('Invalid date in FechaOperacion');
+            }
+        }
+        $this->FechaOperacion = $fechaOperacion;
+        return $this;
+    }
+
+    public function getDescripcionOperacion(): string
+    {
+        return $this->DescripcionOperacion;
+    }
+
+    public function setDescripcionOperacion(string $descripcionOperacion): self
+    {
+        if (strlen($descripcionOperacion) > 500) {
+            throw new \InvalidArgumentException('DescripcionOperacion must not exceed 500 characters');
+        }
+        $this->DescripcionOperacion = $descripcionOperacion;
+        return $this;
+    }
+
+    public function getFacturaSimplificadaArt7273(): ?string
+    {
+        return $this->FacturaSimplificadaArt7273;
+    }
+
+    public function setFacturaSimplificadaArt7273(?string $facturaSimplificadaArt7273): self
+    {
+        if ($facturaSimplificadaArt7273 !== null && !in_array($facturaSimplificadaArt7273, ['S', 'N'])) {
+            throw new \InvalidArgumentException('FacturaSimplificadaArt7273 must be either "S" or "N"');
+        }
+        $this->FacturaSimplificadaArt7273 = $facturaSimplificadaArt7273;
+        return $this;
+    }
+
+    public function getFacturaSinIdentifDestinatarioArt61d(): ?string
+    {
+        return $this->FacturaSinIdentifDestinatarioArt61d;
+    }
+
+    public function setFacturaSinIdentifDestinatarioArt61d(?string $facturaSinIdentifDestinatarioArt61d): self
+    {
+        if ($facturaSinIdentifDestinatarioArt61d !== null && !in_array($facturaSinIdentifDestinatarioArt61d, ['S', 'N'])) {
+            throw new \InvalidArgumentException('FacturaSinIdentifDestinatarioArt61d must be either "S" or "N"');
+        }
+        $this->FacturaSinIdentifDestinatarioArt61d = $facturaSinIdentifDestinatarioArt61d;
+        return $this;
+    }
+
+    public function getMacrodato(): ?string
+    {
+        return $this->Macrodato;
+    }
+
+    public function setMacrodato(?string $macrodato): self
+    {
+        if ($macrodato !== null && !in_array($macrodato, ['S', 'N'])) {
+            throw new \InvalidArgumentException('Macrodato must be either "S" or "N"');
+        }
+        $this->Macrodato = $macrodato;
+        return $this;
+    }
+
+    public function getEmitidaPorTerceroODestinatario(): ?string
+    {
+        return $this->EmitidaPorTerceroODestinatario;
+    }
+
+    public function setEmitidaPorTerceroODestinatario(?string $emitidaPorTerceroODestinatario): self
+    {
+        if ($emitidaPorTerceroODestinatario !== null && !in_array($emitidaPorTerceroODestinatario, ['S', 'N'])) {
+            throw new \InvalidArgumentException('EmitidaPorTerceroODestinatario must be either "S" or "N"');
+        }
+        $this->EmitidaPorTerceroODestinatario = $emitidaPorTerceroODestinatario;
+        return $this;
+    }
+
+    public function getTercero(): ?PersonaFisicaJuridica
+    {
+        return $this->Tercero;
+    }
+
+    public function setTercero(?PersonaFisicaJuridica $tercero): self
+    {
+        $this->Tercero = $tercero;
+        return $this;
+    }
+
+    public function getDestinatarios(): array
+    {
+        return $this->Destinatarios;
+    }
+
+    public function addDestinatario(PersonaFisicaJuridica $destinatario): self
+    {
+        if (count($this->Destinatarios) >= 1000) {
+            throw new \InvalidArgumentException('Maximum number of Destinatarios (1000) exceeded');
+        }
+        $this->Destinatarios[] = $destinatario;
+        return $this;
+    }
+
+    public function getCupon(): ?array
+    {
+        return $this->Cupon;
+    }
+
+    public function setCupon(?array $cupon): self
+    {
+        $this->Cupon = $cupon;
+        return $this;
+    }
+
+    public function getDesglose(): Desglose
+    {
+        return $this->Desglose;
+    }
+
+    public function setDesglose(Desglose $desglose): self
+    {
+        $this->Desglose = $desglose;
+        return $this;
+    }
+
+    public function getCuotaTotal(): float
+    {
+        return $this->CuotaTotal;
+    }
+
+    public function setCuotaTotal(float $cuotaTotal): self
+    {
+        $parts = explode('.', (string)$cuotaTotal);
+        $integerPart = $parts[0];
+        $decimalPart = $parts[1] ?? '';
+
+        if (strlen($integerPart) > 12) {
+            throw new \InvalidArgumentException('CuotaTotal must have at most 12 digits before decimal point');
+        }
+        if (strlen($decimalPart) > 2) {
+            throw new \InvalidArgumentException('CuotaTotal must have at most 2 decimal places');
+        }
+
+        $this->CuotaTotal = $cuotaTotal;
+        return $this;
+    }
+
+    public function getImporteTotal(): float
+    {
+        return $this->ImporteTotal;
+    }
+
+    public function setImporteTotal(float $importeTotal): self
+    {
+        $parts = explode('.', (string)$importeTotal);
+        $integerPart = $parts[0];
+        $decimalPart = $parts[1] ?? '';
+
+        if (strlen($integerPart) > 12) {
+            throw new \InvalidArgumentException('ImporteTotal must have at most 12 digits before decimal point');
+        }
+        if (strlen($decimalPart) > 2) {
+            throw new \InvalidArgumentException('ImporteTotal must have at most 2 decimal places');
+        }
+
+        $this->ImporteTotal = $importeTotal;
+        return $this;
+    }
+
+    public function getEncadenamiento(): array
+    {
+        return $this->Encadenamiento;
+    }
+
+    public function setEncadenamiento(array $encadenamiento): self
+    {
+        $this->Encadenamiento = $encadenamiento;
+        return $this;
+    }
+
+    public function getSistemaInformatico(): SistemaInformatico
+    {
+        return $this->SistemaInformatico;
+    }
+
+    public function setSistemaInformatico(SistemaInformatico $sistemaInformatico): self
+    {
+        $this->SistemaInformatico = $sistemaInformatico;
         return $this;
     }
 } 

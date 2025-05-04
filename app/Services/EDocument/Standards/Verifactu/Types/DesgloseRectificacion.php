@@ -15,8 +15,8 @@ class DesgloseRectificacion
     protected $CuotaRectificada;
 
     /** @var float|null */
-    #[SerializedName('sum1:CuotaRecargoRectificada')]
-    protected $CuotaRecargoRectificada;
+    #[SerializedName('sum1:CuotaRecargoRectificado')]
+    protected $CuotaRecargoRectificado;
 
     public function getBaseRectificada(): float
     {
@@ -64,28 +64,28 @@ class DesgloseRectificacion
         return $this;
     }
 
-    public function getCuotaRecargoRectificada(): ?float
+    public function getCuotaRecargoRectificado(): ?float
     {
-        return $this->CuotaRecargoRectificada;
+        return $this->CuotaRecargoRectificado;
     }
 
-    public function setCuotaRecargoRectificada(?float $cuotaRecargoRectificada): self
+    public function setCuotaRecargoRectificado(?float $cuotaRecargoRectificado): self
     {
-        if ($cuotaRecargoRectificada !== null) {
+        if ($cuotaRecargoRectificado !== null) {
             // Validate format: max 12 digits before decimal point, 2 after
-            $parts = explode('.', (string)$cuotaRecargoRectificada);
+            $parts = explode('.', (string)$cuotaRecargoRectificado);
             $integerPart = $parts[0];
             $decimalPart = $parts[1] ?? '';
 
             if (strlen($integerPart) > 12) {
-                throw new \InvalidArgumentException('CuotaRecargoRectificada must have at most 12 digits before decimal point');
+                throw new \InvalidArgumentException('CuotaRecargoRectificado must have at most 12 digits before decimal point');
             }
             if (strlen($decimalPart) > 2) {
-                throw new \InvalidArgumentException('CuotaRecargoRectificada must have at most 2 decimal places');
+                throw new \InvalidArgumentException('CuotaRecargoRectificado must have at most 2 decimal places');
             }
         }
 
-        $this->CuotaRecargoRectificada = $cuotaRecargoRectificada;
+        $this->CuotaRecargoRectificado = $cuotaRecargoRectificado;
         return $this;
     }
 } 

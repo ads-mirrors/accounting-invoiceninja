@@ -6,21 +6,24 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class Destinatarios
 {
-    /** @var array<IDDestinatario> */
+    /** @var IDDestinatario[] */
     #[SerializedName('sum1:IDDestinatario')]
     protected $IDDestinatario = [];
 
     /**
-     * @return array<IDDestinatario>
+     * @return IDDestinatario[]
      */
     public function getIDDestinatario(): array
     {
         return $this->IDDestinatario;
     }
 
-    public function addIDDestinatario(IDDestinatario $destinatario): self
+    public function addIDDestinatario(IDDestinatario $idDestinatario): self
     {
-        $this->IDDestinatario[] = $destinatario;
+        if (count($this->IDDestinatario) >= 1000) {
+            throw new \InvalidArgumentException('Maximum number of IDDestinatario (1000) exceeded');
+        }
+        $this->IDDestinatario[] = $idDestinatario;
         return $this;
     }
 

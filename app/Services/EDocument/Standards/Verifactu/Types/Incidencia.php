@@ -26,6 +26,14 @@ class Incidencia
     #[SerializedName('sum1:FechaHora')]
     protected $FechaHora;
 
+    /** @var string */
+    #[SerializedName('sum1:CodigoIncidencia')]
+    protected $CodigoIncidencia;
+
+    /** @var string */
+    #[SerializedName('sum1:DescripcionIncidencia')]
+    protected $DescripcionIncidencia;
+
     public function getCodigo(): string
     {
         return $this->Codigo;
@@ -93,6 +101,34 @@ class Incidencia
             }
         }
         $this->FechaHora = $fechaHora;
+        return $this;
+    }
+
+    public function getCodigoIncidencia(): string
+    {
+        return $this->CodigoIncidencia;
+    }
+
+    public function setCodigoIncidencia(string $codigoIncidencia): self
+    {
+        if (!preg_match('/^\d{3}$/', $codigoIncidencia)) {
+            throw new \InvalidArgumentException('CodigoIncidencia must be a 3-digit number');
+        }
+        $this->CodigoIncidencia = $codigoIncidencia;
+        return $this;
+    }
+
+    public function getDescripcionIncidencia(): string
+    {
+        return $this->DescripcionIncidencia;
+    }
+
+    public function setDescripcionIncidencia(string $descripcionIncidencia): self
+    {
+        if (strlen($descripcionIncidencia) > 500) {
+            throw new \InvalidArgumentException('DescripcionIncidencia must not exceed 500 characters');
+        }
+        $this->DescripcionIncidencia = $descripcionIncidencia;
         return $this;
     }
 } 

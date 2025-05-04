@@ -25,7 +25,10 @@ class IDFactura
 
     public function setIDEmisorFactura(string $idEmisorFactura): self
     {
-        // TODO: Add NIF validation
+        // Validate NIF format (letter or number followed by 8 numbers)
+        if (!preg_match('/^[A-Z0-9][0-9]{8}$/', $idEmisorFactura)) {
+            throw new \InvalidArgumentException('IDEmisorFactura must be a valid NIF (letter/number followed by 8 numbers)');
+        }
         $this->IDEmisorFactura = $idEmisorFactura;
         return $this;
     }

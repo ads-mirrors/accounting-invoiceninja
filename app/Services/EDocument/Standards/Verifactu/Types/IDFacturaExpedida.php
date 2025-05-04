@@ -6,7 +6,7 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class IDFacturaExpedida
 {
-    /** @var string NIF format */
+    /** @var string */
     #[SerializedName('sum1:IDEmisorFactura')]
     protected $IDEmisorFactura;
 
@@ -14,7 +14,7 @@ class IDFacturaExpedida
     #[SerializedName('sum1:NumSerieFactura')]
     protected $NumSerieFactura;
 
-    /** @var string Date format YYYY-MM-DD */
+    /** @var string */
     #[SerializedName('sum1:FechaExpedicionFactura')]
     protected $FechaExpedicionFactura;
 
@@ -25,7 +25,10 @@ class IDFacturaExpedida
 
     public function setIDEmisorFactura(string $idEmisorFactura): self
     {
-        // TODO: Add NIF validation
+        // Validate NIF format
+        if (!preg_match('/^[A-Z0-9]{9}$/', $idEmisorFactura)) {
+            throw new \InvalidArgumentException('IDEmisorFactura must be a valid NIF (9 alphanumeric characters)');
+        }
         $this->IDEmisorFactura = $idEmisorFactura;
         return $this;
     }
@@ -37,6 +40,9 @@ class IDFacturaExpedida
 
     public function setNumSerieFactura(string $numSerieFactura): self
     {
+        if (strlen($numSerieFactura) > 60) {
+            throw new \InvalidArgumentException('NumSerieFactura must not exceed 60 characters');
+        }
         $this->NumSerieFactura = $numSerieFactura;
         return $this;
     }
@@ -48,9 +54,12 @@ class IDFacturaExpedida
 
     public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
     {
-        // Validate date format
-        if (!\DateTime::createFromFormat('Y-m-d', $fechaExpedicionFactura)) {
-            throw new \InvalidArgumentException('FechaExpedicionFactura must be in YYYY-MM-DD format');
+        if (!preg_match('/^\d{2}-\d{2}-\d{4}$/', $fechaExpedicionFactura)) {
+            throw new \InvalidArgumentException('FechaExpedicionFactura must be in DD-MM-YYYY format');
+        }
+        list($day, $month, $year) = explode('-', $fechaExpedicionFactura);
+        if (!checkdate((int)$month, (int)$day, (int)$year)) {
+            throw new \InvalidArgumentException('Invalid date in FechaExpedicionFactura');
         }
         $this->FechaExpedicionFactura = $fechaExpedicionFactura;
         return $this;

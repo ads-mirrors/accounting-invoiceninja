@@ -17,6 +17,14 @@ class OperacionExenta
     #[SerializedName('sum1:Value')]
     protected $Value;
 
+    /** @var string */
+    #[SerializedName('sum1:CausaExencion')]
+    protected $CausaExencion;
+
+    /** @var float */
+    #[SerializedName('sum1:BaseImponible')]
+    protected $BaseImponible;
+
     public function __construct(string $value)
     {
         $this->setValue($value);
@@ -52,5 +60,41 @@ class OperacionExenta
     public function __toString(): string
     {
         return $this->Value;
+    }
+
+    public function getCausaExencion(): string
+    {
+        return $this->CausaExencion;
+    }
+
+    public function setCausaExencion(string $causaExencion): self
+    {
+        if (!preg_match('/^[A-Z]\d{2}$/', $causaExencion)) {
+            throw new \InvalidArgumentException('CausaExencion must be a letter followed by two digits');
+        }
+        $this->CausaExencion = $causaExencion;
+        return $this;
+    }
+
+    public function getBaseImponible(): float
+    {
+        return $this->BaseImponible;
+    }
+
+    public function setBaseImponible(float $baseImponible): self
+    {
+        $parts = explode('.', (string)$baseImponible);
+        $integerPart = $parts[0];
+        $decimalPart = $parts[1] ?? '';
+
+        if (strlen($integerPart) > 12) {
+            throw new \InvalidArgumentException('BaseImponible must have at most 12 digits before decimal point');
+        }
+        if (strlen($decimalPart) > 2) {
+            throw new \InvalidArgumentException('BaseImponible must have at most 2 decimal places');
+        }
+
+        $this->BaseImponible = $baseImponible;
+        return $this;
     }
 } 

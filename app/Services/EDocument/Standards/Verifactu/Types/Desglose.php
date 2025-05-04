@@ -6,21 +6,21 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class Desglose
 {
-    /** @var array<DetalleDesglose> */
+    /** @var DetalleDesglose[] */
     #[SerializedName('sum1:DetalleDesglose')]
     protected $DetalleDesglose = [];
 
     /**
-     * @return array<DetalleDesglose>
+     * @return DetalleDesglose[]
      */
     public function getDetalleDesglose(): array
     {
         return $this->DetalleDesglose;
     }
 
-    public function addDetalleDesglose(DetalleDesglose $detalle): self
+    public function addDetalleDesglose(DetalleDesglose $detalleDesglose): self
     {
-        $this->DetalleDesglose[] = $detalle;
+        $this->DetalleDesglose[] = $detalleDesglose;
         return $this;
     }
 

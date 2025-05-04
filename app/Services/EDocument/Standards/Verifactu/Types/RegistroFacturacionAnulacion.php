@@ -191,7 +191,7 @@ class RegistroFacturacionAnulacion
     public function setIDAcuerdoSistemaInformatico(?string $idAcuerdoSistemaInformatico): self
     {
         if ($idAcuerdoSistemaInformatico !== null && strlen($idAcuerdoSistemaInformatico) > 16) {
-            throw new \InvalidArgumentException('IdAcuerdoSistemaInformatico must not exceed 16 characters');
+            throw new \InvalidArgumentException('IDAcuerdoSistemaInformatico must not exceed 16 characters');
         }
         $this->IDAcuerdoSistemaInformatico = $idAcuerdoSistemaInformatico;
         return $this;
@@ -204,6 +204,9 @@ class RegistroFacturacionAnulacion
 
     public function setTipoHuella(string $tipoHuella): self
     {
+        if ($tipoHuella !== '01') {
+            throw new \InvalidArgumentException('TipoHuella must be "01" (SHA-256)');
+        }
         $this->TipoHuella = $tipoHuella;
         return $this;
     }

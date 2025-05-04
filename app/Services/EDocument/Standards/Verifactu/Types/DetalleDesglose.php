@@ -99,10 +99,8 @@ class DetalleDesglose
 
     public function setTipoImpositivo(?float $tipoImpositivo): self
     {
-        if ($tipoImpositivo !== null) {
-            if ($tipoImpositivo < 0 || $tipoImpositivo > 100) {
-                throw new \InvalidArgumentException('TipoImpositivo must be between 0 and 100');
-            }
+        if ($tipoImpositivo !== null && ($tipoImpositivo < 0 || $tipoImpositivo > 100)) {
+            throw new \InvalidArgumentException('TipoImpositivo must be between 0 and 100');
         }
         $this->TipoImpositivo = $tipoImpositivo;
         return $this;
@@ -115,6 +113,17 @@ class DetalleDesglose
 
     public function setBaseImponibleOimporteNoSujeto(float $baseImponibleOimporteNoSujeto): self
     {
+        $parts = explode('.', (string)$baseImponibleOimporteNoSujeto);
+        $integerPart = $parts[0];
+        $decimalPart = $parts[1] ?? '';
+
+        if (strlen($integerPart) > 12) {
+            throw new \InvalidArgumentException('BaseImponibleOimporteNoSujeto must have at most 12 digits before decimal point');
+        }
+        if (strlen($decimalPart) > 2) {
+            throw new \InvalidArgumentException('BaseImponibleOimporteNoSujeto must have at most 2 decimal places');
+        }
+
         $this->BaseImponibleOimporteNoSujeto = $baseImponibleOimporteNoSujeto;
         return $this;
     }
@@ -126,6 +135,18 @@ class DetalleDesglose
 
     public function setBaseImponibleACoste(?float $baseImponibleACoste): self
     {
+        if ($baseImponibleACoste !== null) {
+            $parts = explode('.', (string)$baseImponibleACoste);
+            $integerPart = $parts[0];
+            $decimalPart = $parts[1] ?? '';
+
+            if (strlen($integerPart) > 12) {
+                throw new \InvalidArgumentException('BaseImponibleACoste must have at most 12 digits before decimal point');
+            }
+            if (strlen($decimalPart) > 2) {
+                throw new \InvalidArgumentException('BaseImponibleACoste must have at most 2 decimal places');
+            }
+        }
         $this->BaseImponibleACoste = $baseImponibleACoste;
         return $this;
     }
@@ -137,6 +158,18 @@ class DetalleDesglose
 
     public function setCuotaRepercutida(?float $cuotaRepercutida): self
     {
+        if ($cuotaRepercutida !== null) {
+            $parts = explode('.', (string)$cuotaRepercutida);
+            $integerPart = $parts[0];
+            $decimalPart = $parts[1] ?? '';
+
+            if (strlen($integerPart) > 12) {
+                throw new \InvalidArgumentException('CuotaRepercutida must have at most 12 digits before decimal point');
+            }
+            if (strlen($decimalPart) > 2) {
+                throw new \InvalidArgumentException('CuotaRepercutida must have at most 2 decimal places');
+            }
+        }
         $this->CuotaRepercutida = $cuotaRepercutida;
         return $this;
     }
@@ -148,10 +181,8 @@ class DetalleDesglose
 
     public function setTipoRecargoEquivalencia(?float $tipoRecargoEquivalencia): self
     {
-        if ($tipoRecargoEquivalencia !== null) {
-            if ($tipoRecargoEquivalencia < 0 || $tipoRecargoEquivalencia > 100) {
-                throw new \InvalidArgumentException('TipoRecargoEquivalencia must be between 0 and 100');
-            }
+        if ($tipoRecargoEquivalencia !== null && ($tipoRecargoEquivalencia < 0 || $tipoRecargoEquivalencia > 100)) {
+            throw new \InvalidArgumentException('TipoRecargoEquivalencia must be between 0 and 100');
         }
         $this->TipoRecargoEquivalencia = $tipoRecargoEquivalencia;
         return $this;

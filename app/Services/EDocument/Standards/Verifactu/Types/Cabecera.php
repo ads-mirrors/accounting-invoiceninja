@@ -89,10 +89,9 @@ class Cabecera
     public function setRemisionRequerimiento(?array $remisionRequerimiento): self
     {
         if ($remisionRequerimiento !== null) {
-            if (!isset($remisionRequerimiento['RefRequerimiento'])) {
-                throw new \InvalidArgumentException('RefRequerimiento is required in RemisionRequerimiento');
+            if (strlen($remisionRequerimiento['RefRequerimiento']) > 18) {
+                throw new \InvalidArgumentException('RefRequerimiento must not exceed 18 characters');
             }
-
             if (isset($remisionRequerimiento['FinRequerimiento'])) {
                 // Validate date format DD-MM-YYYY
                 if (!preg_match('/^\d{2}-\d{2}-\d{4}$/', $remisionRequerimiento['FinRequerimiento'])) {
