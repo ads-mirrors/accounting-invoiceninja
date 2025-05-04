@@ -91,7 +91,6 @@ class Location extends BaseModel
         'is_shipping_location',
         'client_id',
         'vendor_id',
-        'phone',
        ];
 
     protected $casts = [
