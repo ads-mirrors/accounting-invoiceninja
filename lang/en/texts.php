@@ -5574,6 +5574,7 @@ $lang = array(
     'selected_products' => 'Selected Products',
     'create_company_error_unauthorized' => 'You are not authorized to create a company. Only the account owner can create a company.',
     'deleted_location' => 'Location Deleted',
+    'currency_caribbean_guilder' => 'Caribbean Guilder',
 );
 
 return $lang;

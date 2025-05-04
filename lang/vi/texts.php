@@ -5571,6 +5571,9 @@ $lang = array(
     'start_and_end_date_required' => 'Bắt đầu và ngày kết thúc là bắt buộc',
     'project_value' => 'Giá trị dự án',
     'invalid_csv_data' => 'Dữ liệu CSV không hợp lệ, quá trình nhập của bạn đã bị hủy.',
+    'selected_products' => 'Sản phẩm được chọn',
+    'create_company_error_unauthorized' => 'Bạn không được phép đến một công Tạo . Chỉ chủ tài khoản mới có thể Tạo công ty.',
+    'deleted_location' => 'Vị trí đã xóa',
 );
 
 return $lang;
