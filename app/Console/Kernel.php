@@ -132,6 +132,8 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('ninja:check-data --database=db-ninja-02')->dailyAt('02:20')->withoutOverlapping()->name('check-data-db-2-job')->onOneServer();
 
+            $schedule->command('ninja:check-data --database=db-ninja-03')->dailyAt('02:30')->withoutOverlapping()->name('check-data-db-2-job')->onOneServer();
+
             $schedule->command('ninja:s3-cleanup')->dailyAt('23:15')->withoutOverlapping()->name('s3-cleanup-job')->onOneServer();
         }
 
