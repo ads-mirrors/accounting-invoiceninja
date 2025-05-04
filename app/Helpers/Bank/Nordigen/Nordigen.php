@@ -224,29 +224,28 @@ class Nordigen
      * isAccountActive
      *
      * @param  string $account_id
-     * @return bool
+     * @return array
      */
-    public function isAccountActive(string $account_id): bool
+    public function isAccountActive(string $account_id): array
     {
         try {
             $account = $this->client->account($account_id)->getAccountMetaData();
 
             if ($account['status'] != 'READY') {
                 nlog("Nordigen account '{$account_id}' is not ready (status={$account['status']})");
-
-                return false;
             }
 
-            return true;
+            return $account;
+
         } catch (\Exception $e) {
 
             nlog("Nordigen:: AccountActiveStatus:: {$e->getMessage()} {$e->getCode()}");
 
             if (strpos($e->getMessage(), 'Invalid Account ID') !== false) {
-                return false;
+                ['status' => 'Invalid Account ID'];
             }
 
-            throw $e;
+            return ['status' => 'EXPIRED'];
         }
     }
 

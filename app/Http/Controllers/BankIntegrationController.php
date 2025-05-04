@@ -291,7 +291,7 @@ class BankIntegrationController extends BaseController
 
                 $nordigen->disabledAccountEmail($bank_integration);
                 return;
-            } elseif (!$is_account_active || !$account || isset($account['requisition'])) {
+            } elseif ($is_account_active['status'] != 'READY' || !$account || isset($account['requisition'])) {
                 $bank_integration->disabled_upstream = true;
                 $bank_integration->save();
 
