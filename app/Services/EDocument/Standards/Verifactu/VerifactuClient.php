@@ -116,11 +116,11 @@ class VerifactuClient
     /**
      * Send an invoice registration (alta) request
      *
-     * @param RegistroFacturacionAlta $registro
+     * @param RegistroAlta $registro
      * @return mixed The SOAP response
      * @throws \SoapFault
      */
-    public function sendRegistroAlta(RegistroFacturacionAlta $registro)
+    public function sendRegistroAlta(RegistroAlta $registro)
     {
         $factura = new RegistroFactura();
         $factura->setRegistroAlta($registro);

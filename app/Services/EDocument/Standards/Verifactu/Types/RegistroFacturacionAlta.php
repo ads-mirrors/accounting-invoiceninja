@@ -495,4 +495,38 @@ class RegistroFacturacionAlta
         $this->SistemaInformatico = $sistemaInformatico;
         return $this;
     }
+
+    public function toRegistroAlta(): RegistroAlta
+    {
+        $registroAlta = new RegistroAlta();
+        $registroAlta->setIDVersion($this->getIDVersion());
+        
+        // Convert IDFacturaExpedida to IDFactura
+        $idFactura = new IDFactura();
+        $idFactura->setIDEmisorFactura($this->getIDFactura()->getIDEmisorFactura());
+        $idFactura->setNumSerieFactura($this->getIDFactura()->getNumSerieFactura());
+        $idFactura->setFechaExpedicionFactura($this->getIDFactura()->getFechaExpedicionFactura());
+        $registroAlta->setIDFactura($idFactura);
+        
+        $registroAlta->setNombreRazonEmisor($this->getNombreRazonEmisor());
+        $registroAlta->setTipoFactura($this->getTipoFactura());
+        $registroAlta->setDescripcionOperacion($this->getDescripcionOperacion());
+        
+        // Convert array of Destinatarios to Destinatarios object
+        $destinatarios = new Destinatarios();
+        foreach ($this->getDestinatarios() as $destinatario) {
+            $destinatarios->addDestinatario($destinatario);
+        }
+        $registroAlta->setDestinatarios($destinatarios);
+        
+        $registroAlta->setDesglose($this->getDesglose());
+        $registroAlta->setCuotaTotal($this->getCuotaTotal());
+        $registroAlta->setImporteTotal($this->getImporteTotal());
+        $registroAlta->setSistemaInformatico($this->getSistemaInformatico());
+        $registroAlta->setFechaHoraHusoGenRegistro($this->getFechaHoraHusoGenRegistro()->format('Y-m-d\TH:i:sP'));
+        $registroAlta->setTipoHuella($this->getTipoHuella());
+        $registroAlta->setHuella($this->getHuella());
+        
+        return $registroAlta;
+    }
 } 

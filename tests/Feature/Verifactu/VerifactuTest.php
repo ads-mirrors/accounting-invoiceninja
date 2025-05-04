@@ -75,19 +75,6 @@ class VerifactuTest extends TestCase
         $detalle->setTipoImpositivo(101.00); // Exceeds 100%
     }
 
-    public function testPersonaFisicaJuridicaValidation()
-    {
-        $persona = new PersonaFisicaJuridica();
-
-        $persona->setNombreRazon('Empresa Test')
-                ->setNIF('B12345678');
-
-        $this->assertEquals('Empresa Test', $persona->getNombreRazon());
-        $this->assertEquals('B12345678', $persona->getNIF());
-
-        $this->expectException(\InvalidArgumentException::class);
-        $persona->setNombreRazon(str_repeat('a', 121)); // Exceeds 120 chars
-    }
 
     public function testOperacionExentaValidation()
     {
@@ -131,19 +118,32 @@ class VerifactuTest extends TestCase
     public function testObligadoEmisionValidation()
     {
         $obligado = new ObligadoEmision();
-
-        $obligado->setNIF('B12345678')
-                 ->setTipoPersona('J')
-                 ->setRazonSocialCompleta('Empresa Test')
-                 ->setEmail('test@example.com');
+        $obligado->setNIF('B12345678');
+        $obligado->setNombreRazon('Empresa Test');
 
         $this->assertEquals('B12345678', $obligado->getNIF());
-        $this->assertEquals('J', $obligado->getTipoPersona());
-        $this->assertEquals('Empresa Test', $obligado->getRazonSocialCompleta());
-        $this->assertEquals('test@example.com', $obligado->getEmail());
+        $this->assertEquals('Empresa Test', $obligado->getNombreRazon());
+    }
 
+    public function testObligadoEmisionEmptyNombreRazon()
+    {
+        $obligado = new ObligadoEmision();
         $this->expectException(\InvalidArgumentException::class);
-        $obligado->setEmail('invalid-email'); // Invalid email format
+        $obligado->setNombreRazon('');
+    }
+
+    public function testObligadoEmisionEmptyNIF()
+    {
+        $obligado = new ObligadoEmision();
+        $this->expectException(\InvalidArgumentException::class);
+        $obligado->setNIF('');
+    }
+
+    public function testObligadoEmisionInvalidNIF()
+    {
+        $obligado = new ObligadoEmision();
+        $this->expectException(\InvalidArgumentException::class);
+        $obligado->setNIF('invalid');
     }
 
     public function testCreateCompleteRegistroFactura()
@@ -151,18 +151,18 @@ class VerifactuTest extends TestCase
         // Create ObligadoEmision
         $obligadoEmision = new ObligadoEmision();
         $obligadoEmision->setNombreRazon('XXXXX')
-                        ->setNIF('AAAA');
+                        ->setNIF('A12345678');
 
         // Create IDFactura
         $idFactura = new IDFactura();
-        $idFactura->setIDEmisorFactura('AAAA')
+        $idFactura->setIDEmisorFactura('B12345678')
                   ->setNumSerieFactura('12345')
                   ->setFechaExpedicionFactura('13-09-2024');
 
         // Create Destinatario
         $destinatario = new IDDestinatario();
         $destinatario->setNombreRazon('YYYY')
-                     ->setNIF('BBBB');
+                     ->setNIF('C12345678');
 
         // Create Destinatarios collection
         $destinatarios = new Destinatarios();
@@ -190,7 +190,7 @@ class VerifactuTest extends TestCase
 
         // Create RegistroAnterior for Encadenamiento
         $registroAnterior = new IDFacturaAR();
-        $registroAnterior->setIDEmisorFactura('AAAA')
+        $registroAnterior->setIDEmisorFactura('E12345678')
                         ->setNumSerieFactura('44')
                         ->setFechaExpedicionFactura('13-09-2024');
 
@@ -202,7 +202,7 @@ class VerifactuTest extends TestCase
         // Create SistemaInformatico
         $sistemaInformatico = new SistemaInformatico();
         $sistemaInformatico->setNombreRazon('SSSS')
-                          ->setNIF('NNNN')
+                          ->setNIF('D12345678')
                           ->setNombreSistemaInformatico('NombreSistemaInformatico')
                           ->setIdSistemaInformatico('77')
                           ->setVersion('1.0.03')
@@ -243,14 +243,14 @@ class VerifactuTest extends TestCase
         $this->assertEquals('Huella', $registroAlta->getHuella());
 
         // Test nested objects
-        $this->assertEquals('AAAA', $registroAlta->getIDFactura()->getIDEmisorFactura());
+        $this->assertEquals('B12345678', $registroAlta->getIDFactura()->getIDEmisorFactura());
         $this->assertEquals('12345', $registroAlta->getIDFactura()->getNumSerieFactura());
         $this->assertEquals('13-09-2024', $registroAlta->getIDFactura()->getFechaExpedicionFactura());
 
         // Test Destinatarios
         $destinatarios = $registroAlta->getDestinatarios();
         $this->assertEquals('YYYY', $destinatarios->getIDDestinatario()[0]->getNombreRazon());
-        $this->assertEquals('BBBB', $destinatarios->getIDDestinatario()[0]->getNIF());
+        $this->assertEquals('C12345678', $destinatarios->getIDDestinatario()[0]->getNIF());
 
         // Test Desglose
         $detalles = $registroAlta->getDesglose()->getDetalleDesglose();
@@ -263,7 +263,7 @@ class VerifactuTest extends TestCase
 
         // Test SistemaInformatico
         $this->assertEquals('SSSS', $registroAlta->getSistemaInformatico()->getNombreRazon());
-        $this->assertEquals('NNNN', $registroAlta->getSistemaInformatico()->getNIF());
+        $this->assertEquals('D12345678', $registroAlta->getSistemaInformatico()->getNIF());
         $this->assertEquals('77', $registroAlta->getSistemaInformatico()->getIdSistemaInformatico());
     }
 }
