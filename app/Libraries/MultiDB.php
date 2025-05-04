@@ -717,6 +717,8 @@ class MultiDB
     {
         /* This will set the database connection for the request */
         config(['database.default' => $database]);
+        config(['queue.batching.database' => $database]);
+
     }
 
     public static function setDefaultDatabase()
