@@ -4,6 +4,7 @@ namespace App\Services\EDocument\Standards\Verifactu\Types;
 
 use Symfony\Component\Serializer\Annotation\SerializedName;
 
+// User type is a person submitting on behalf of the company.
 class PersonaFisicaJuridicaES
 {
     /** @var string NIF format */

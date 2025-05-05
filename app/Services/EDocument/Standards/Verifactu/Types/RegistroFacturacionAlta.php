@@ -124,7 +124,7 @@ class RegistroFacturacionAlta
 
     /** @var string Max length 64 characters */
     #[SerializedName('sum1:Huella')]
-    protected $Huella;
+    protected $Huella = '';
 
     /** @var string|null */
     #[SerializedName('sum1:Signature')]

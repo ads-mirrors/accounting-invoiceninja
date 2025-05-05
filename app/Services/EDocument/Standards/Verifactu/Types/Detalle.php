@@ -6,6 +6,13 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class Detalle
 {
+    public array $impuestos = [
+        '01', //IVA 
+        '02', //IPSI (Ceuta y Melilla)
+        '03', //IGIC (Canarias)
+        '05', //Otros   
+    ];
+    
     /** @var string|null */
     #[SerializedName('sum1:Impuesto')]
     protected $Impuesto;

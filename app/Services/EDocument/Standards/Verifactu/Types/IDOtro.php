@@ -6,8 +6,24 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class IDOtro
 {
+
+    // 01	NIFContraparte	Spanish Tax ID (NIF) of the counterparty	NIF de la contraparte (solo válido con NIF, no en IDOtro)
+    // 02	VATNumber	EU VAT Number	Número de IVA de operadores intracomunitarios
+    // 03	Passport/Foreign ID	National ID, passport, or similar from non-EU countries	Documento oficial de identificación expedido por otro país
+    // 04	Legal Entity ID	Tax ID for foreign legal entities	Código de identificación fiscal de personas jurídicas extranjeras
+    // 05	Residence Cert.	Certificate of residence issued by a tax authority	Certificado de residencia fiscal
+    // 06	Other	Other officially recognized identifier	Otro documento reconocido oficialmente
+    public array $id_types = [
+        '01',
+        '02',
+        '03',
+        '04',
+        '05',
+        '06',
+    ];
+
     /** @var string */
-    #[SerializedName('sum1:CodigoPais')]
+    #[SerializedName('sum1:CodigoPais')] // iso 2 country code
     protected $CodigoPais;
 
     /** @var string */
