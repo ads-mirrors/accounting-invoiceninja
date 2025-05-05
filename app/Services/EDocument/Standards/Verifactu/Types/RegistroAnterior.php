@@ -7,42 +7,51 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 class RegistroAnterior
 {
     /** @var string */
-    #[SerializedName('sum1:NumRegistroAcuerdoFacturacion')]
-    protected $NumRegistroAcuerdoFacturacion;
+    #[SerializedName('sum1:IDEmisorFactura')]
+    protected $IDEmisorFactura;
 
     /** @var string */
-    #[SerializedName('sum1:FechaHoraHusoGenRegistro')]
-    protected $FechaHoraHusoGenRegistro;
+    #[SerializedName('sum1:NumSerieFactura')]
+    protected $NumSerieFactura;
+
+    /** @var string */
+    #[SerializedName('sum1:FechaExpedicionFactura')]
+    protected $FechaExpedicionFactura;
 
     /** @var string */
     #[SerializedName('sum1:Huella')]
     protected $Huella;
 
-    public function getNumRegistroAcuerdoFacturacion(): string
+    public function getIDEmisorFactura(): string
     {
-        return $this->NumRegistroAcuerdoFacturacion;
+        return $this->IDEmisorFactura;
     }
 
-    public function setNumRegistroAcuerdoFacturacion(string $numRegistroAcuerdoFacturacion): self
+    public function setIDEmisorFactura(string $IDEmisorFactura): self
     {
-        if (strlen($numRegistroAcuerdoFacturacion) > 15) {
-            throw new \InvalidArgumentException('NumRegistroAcuerdoFacturacion must not exceed 15 characters');
-        }
-        $this->NumRegistroAcuerdoFacturacion = $numRegistroAcuerdoFacturacion;
+        $this->IDEmisorFactura = $IDEmisorFactura;
         return $this;
     }
 
-    public function getFechaHoraHusoGenRegistro(): string
+    public function getNumSerieFactura(): string
     {
-        return $this->FechaHoraHusoGenRegistro;
+        return $this->NumSerieFactura;
     }
 
-    public function setFechaHoraHusoGenRegistro(string $fechaHoraHusoGenRegistro): self
+    public function setNumSerieFactura(string $NumSerieFactura): self
     {
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/', $fechaHoraHusoGenRegistro)) {
-            throw new \InvalidArgumentException('FechaHoraHusoGenRegistro must be in ISO 8601 format with timezone (e.g. 2024-09-13T19:20:30+01:00)');
-        }
-        $this->FechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
+        $this->NumSerieFactura = $NumSerieFactura;
+        return $this;
+    }
+
+    public function getFechaExpedicionFactura(): string
+    {
+        return $this->FechaExpedicionFactura;
+    }
+
+    public function setFechaExpedicionFactura(string $FechaExpedicionFactura): self
+    {
+        $this->FechaExpedicionFactura = $FechaExpedicionFactura;
         return $this;
     }
 
@@ -51,12 +60,9 @@ class RegistroAnterior
         return $this->Huella;
     }
 
-    public function setHuella(string $huella): self
+    public function setHuella(string $Huella): self
     {
-        if (strlen($huella) > 64) {
-            throw new \InvalidArgumentException('Huella must not exceed 64 characters');
-        }
-        $this->Huella = $huella;
+        $this->Huella = $Huella;
         return $this;
     }
 } 

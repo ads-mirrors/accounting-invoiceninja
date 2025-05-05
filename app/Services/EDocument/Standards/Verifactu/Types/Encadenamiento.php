@@ -6,36 +6,36 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class Encadenamiento
 {
-    /** @var IDFacturaAR */
+    /** @var RegistroAnterior */
     #[SerializedName('sum1:RegistroAnterior')]
     protected $RegistroAnterior;
 
     /** @var string */
-    #[SerializedName('sum1:HuellaRegistroAnterior')]
-    protected $HuellaRegistroAnterior;
+    #[SerializedName('sum1:PrimerRegistro')]
+    protected $PrimerRegistro;
 
-    public function getRegistroAnterior(): IDFacturaAR
+    public function getRegistroAnterior(): RegistroAnterior
     {
         return $this->RegistroAnterior;
     }
 
-    public function setRegistroAnterior(IDFacturaAR $registroAnterior): self
+    public function setRegistroAnterior(RegistroAnterior $registroAnterior): self
     {
         $this->RegistroAnterior = $registroAnterior;
         return $this;
     }
 
-    public function getHuellaRegistroAnterior(): string
+    public function getPrimerRegistro(): string
     {
-        return $this->HuellaRegistroAnterior;
+        return $this->PrimerRegistro;
     }
 
-    public function setHuellaRegistroAnterior(string $huellaRegistroAnterior): self
+    public function setPrimerRegistro(string $primerRegistro): self
     {
-        if (strlen($huellaRegistroAnterior) > 64) {
+        if (strlen($primerRegistro) > 64) {
             throw new \InvalidArgumentException('HuellaRegistroAnterior must not exceed 64 characters');
         }
-        $this->HuellaRegistroAnterior = $huellaRegistroAnterior;
+        $this->PrimerRegistro = $primerRegistro;
         return $this;
     }
 } 

@@ -1,10 +1,16 @@
 <?php
 
 namespace Tests\Feature\Verifactu;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
+use App\Models\Invoice;
+use Tests\MockAccountData;
+use App\Helpers\Invoice\InvoiceSum;
+use Database\Factories\InvoiceFactory;
 use Symfony\Component\Serializer\Serializer;
+use App\Services\EDocument\Standards\Verifactu;
 use Symfony\Component\Serializer\Encoder\XmlEncoder;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -12,6 +18,7 @@ use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
 use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use App\Services\EDocument\Standards\Verifactu\Types\RegistroAlta;
 use App\Services\EDocument\Standards\Verifactu\Types\SoapEnvelope;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
@@ -20,46 +27,60 @@ use App\Services\EDocument\Standards\Verifactu\Types\RegFactuSistemaFacturacion;
 
 class SerializerTest extends TestCase
 {
+    
+    use MockAccountData;
+    use DatabaseTransactions;
+
+    public $invoice;
+    public $invoice_calc;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->makeTestData();
+
+        $this->invoice->line_items = $this->buildLineItems();
+
+        $this->invoice->uses_inclusive_taxes = true;
+
+        $this->invoice_calc = new InvoiceSum($this->invoice);
+    }
 
     public function testDeserialize()
     {
                 
         $document = file_get_contents(__DIR__ . '/invoice.xml');
-        $phpDocExtractor = new PhpDocExtractor();
-        $reflectionExtractor = new ReflectionExtractor();
 
-        // list of PropertyTypeExtractorInterface (any iterable)
-        $typeExtractors = [$reflectionExtractor,$phpDocExtractor];
+        $verifactu = new Verifactu($this->invoice);
 
-        // list of PropertyDescriptionExtractorInterface (any iterable)
-        $descriptionExtractors = [$phpDocExtractor];
+        $serializer = $verifactu->getSerializer();
 
-        // list of PropertyInitializableExtractorInterface (any iterable)
-        $propertyInitializableExtractors = [$reflectionExtractor];
+        $parent_class = SoapEnvelope::class;
 
-        $propertyInfo = new PropertyInfoExtractor(
-            $propertyInitializableExtractors,
-            $descriptionExtractors,
-            $typeExtractors,
-        );
+        $invoice = $serializer->deserialize($document, $parent_class, 'xml', [\Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer::SKIP_NULL_VALUES => true]);
+nlog($invoice);
+        $this->assertInstanceOf(SoapEnvelope::class, $invoice);
 
-        $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader());
+    }
 
-        $metadataAwareNameConverter = new MetadataAwareNameConverter($classMetadataFactory);
+    public function testSerializeXml()
+    {
 
-        $normalizer = new ObjectNormalizer($classMetadataFactory, $metadataAwareNameConverter, null, $propertyInfo);
+        $document = file_get_contents(__DIR__ . '/invoice-alta.xml');
+        
+        $verifactu = new Verifactu($this->invoice);
 
-        $normalizers = [new DateTimeNormalizer(), $normalizer,  new ArrayDenormalizer()];
-
-        $encoders = [new XmlEncoder(['xml_format_output' => true,\Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer::SKIP_NULL_VALUES => true]), new JsonEncoder()];
-
-        $serializer = new Serializer($normalizers, $encoders);
+        $serializer = $verifactu->getSerializer();
 
         $parent_class = SoapEnvelope::class;
 
         $invoice = $serializer->deserialize($document, $parent_class, 'xml', [\Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer::SKIP_NULL_VALUES => true]);
 
-        $this->assertInstanceOf(SoapEnvelope::class, $invoice);
+        nlog($invoice);
+        $xml = $verifactu->serializeXml($invoice);
 
+        nlog($xml);
+        $this->assertStringContainsString('RegistroAlta', $xml);
     }
 }

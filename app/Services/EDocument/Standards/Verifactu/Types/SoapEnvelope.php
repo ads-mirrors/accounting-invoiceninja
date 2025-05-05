@@ -2,11 +2,14 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Types;
 
+use Symfony\Component\Serializer\Annotation\XmlRoot;
 use Symfony\Component\Serializer\Annotation\SerializedName;
+use App\Services\EDocument\Standards\Verifactu\Types\SoapBody;
+use App\Services\EDocument\Standards\Verifactu\Types\SoapHeader;
 
 class SoapEnvelope
 {
-        /** @var SoapHeader */
+    /** @var SoapHeader */
     #[SerializedName('soapenv:Header')]
     protected $Header;
 
@@ -14,7 +17,7 @@ class SoapEnvelope
     #[SerializedName('soapenv:Body')]
     protected $Body;
 
-    public function getHeader(): SoapHeader
+    public function getHeader(): ?SoapHeader
     {
         return $this->Header;
     }
@@ -25,7 +28,7 @@ class SoapEnvelope
         return $this;
     }
 
-    public function getBody(): SoapBody
+    public function getBody(): ?SoapBody
     {
         return $this->Body;
     }

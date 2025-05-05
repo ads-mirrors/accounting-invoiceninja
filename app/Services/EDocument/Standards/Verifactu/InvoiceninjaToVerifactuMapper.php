@@ -16,7 +16,6 @@ use App\Services\EDocument\Standards\Verifactu\Types\Destinatarios;
 use App\Services\EDocument\Standards\Verifactu\Types\IDDestinatario;
 use App\Services\EDocument\Standards\Verifactu\Types\IDFacturaExpedida;
 use App\Services\EDocument\Standards\Verifactu\Types\PersonaFisicaJuridica;
-use App\Services\EDocument\Standards\Verifactu\Types\RegistroFacturacionAlta;
 
 class InvoiceninjaToVerifactuMapper
 {
@@ -62,46 +61,46 @@ class InvoiceninjaToVerifactuMapper
      * When generateing R type invoices, we will always use values
      * that substitute the original invoice, this requires settings
      * 
-     * $registroFacturacionAlta->setTipoRectificativa('S'); // for Substitutive
+     * $registroAlta->setTipoRectificativa('S'); // for Substitutive
      */ 
 
-    public function mapRegistroFacturacionAlta(Invoice $invoice): RegistroAlta // Registration Entry
+    public function mapRegistroAlta(Invoice $invoice): RegistroAlta // Registration Entry
     {
-        $registroFacturacionAlta = new RegistroAlta(); // Registration Entry
+        $registroAlta = new RegistroAlta(); // Registration Entry
 
         // Set version
-        $registroFacturacionAlta->setIDVersion('1.0');
+        $registroAlta->setIDVersion('1.0');
 
         // Set invoice ID (IDFactura)
         $idFactura = new IDFactura(); // Issued Invoice ID
         $idFactura->setIDEmisorFactura($invoice->company->settings->vat_number); // Invoice Issuer ID
         $idFactura->setNumSerieFactura($invoice->number); // Invoice Serial Number
         $idFactura->setFechaExpedicionFactura(\Carbon\Carbon::parse($invoice->date)->format('d-m-Y')); // Invoice Issue Date
-        $registroFacturacionAlta->setIDFactura($idFactura);
+        $registroAlta->setIDFactura($idFactura);
 
         // Set external reference (RefExterna) - The clients reference for this document - typically the PO Number, only apply if we have one.
         if(strlen($invoice->po_number) > 1) {
-            $registroFacturacionAlta->setRefExterna($invoice->po_number);
+            $registroAlta->setRefExterna($invoice->po_number);
         }
 
         // Set issuer name (NombreRazonEmisor)
-        $registroFacturacionAlta->setNombreRazonEmisor($invoice->company->present()->name());
+        $registroAlta->setNombreRazonEmisor($invoice->company->present()->name());
 
         // Set correction and previous rejection (Subsanacion y RechazoPrevio)
         //@todo we need to have logic surrounding these two fields if the are applicable to the current doc
         //@todo these _are_ optional fields 
-        // $registroFacturacionAlta->setSubsanacion('Subsanacion::VALUE_N'); // Correction
-        // $registroFacturacionAlta->setRechazoPrevio('RechazoPrevio::VALUE_N'); // Previous Rejection
+        // $registroAlta->setSubsanacion('Subsanacion::VALUE_N'); // Correction
+        // $registroAlta->setRechazoPrevio('RechazoPrevio::VALUE_N'); // Previous Rejection
 
         // Set invoice type (TipoFactura)
-        $registroFacturacionAlta->setTipoFactura($this->getInvoiceType($invoice));
+        $registroAlta->setTipoFactura($this->getInvoiceType($invoice));
 
         // Delivery Date of the goods or services (we force invoice->date for this.)
-        $registroFacturacionAlta->setFechaOperacion(\Carbon\Carbon::parse($invoice->date)->format('d-m-Y'));
+        $registroAlta->setFechaOperacion(\Carbon\Carbon::parse($invoice->date)->format('d-m-Y'));
 
         // Description of the operation (we use invoice->public_notes) BUT only if it's not empty
         if(strlen($invoice->public_notes ?? '') > 0) {
-            $registroFacturacionAlta->setDescripcionOperacion($invoice->public_notes);
+            $registroAlta->setDescripcionOperacion($invoice->public_notes);
         }
 
         // Set recipients (Destinatarios)
@@ -120,7 +119,7 @@ class InvoiceninjaToVerifactuMapper
         }
 
         $destinatarios->addIDDestinatario($destinatario);
-        $registroFacturacionAlta->setDestinatarios($destinatarios);
+        $registroAlta->setDestinatarios($destinatarios);
 
         // Set breakdown (Desglose) MAXIMUM 12 Line items!!!!!!!!
         $desglose = new Desglose(); // Breakdown
@@ -134,21 +133,21 @@ class InvoiceninjaToVerifactuMapper
             $desglose->addToDetalleDesglose($detalle);
         }
 
-        $registroFacturacionAlta->setDesglose($desglose);
+        $registroAlta->setDesglose($desglose);
 
         // Set total amounts (CuotaTotal e ImporteTotal)
-        $registroFacturacionAlta->setCuotaTotal($invoice->total_taxes); //@todo this is not correct
-        $registroFacturacionAlta->setImporteTotal($invoice->amount); //@todo this is not correct
+        $registroAlta->setCuotaTotal($invoice->total_taxes); //@todo this is not correct
+        $registroAlta->setImporteTotal($invoice->amount); //@todo this is not correct
 
         // Set fingerprint type and value (TipoHuella y Huella)
-        $registroFacturacionAlta->setTipoHuella('01');
+        $registroAlta->setTipoHuella('01');
         
         // Set generation date (FechaHoraHusoGenRegistro)
-        $registroFacturacionAlta->setFechaHoraHusoGenRegistro(\Carbon\Carbon::now()->format('Y-m-d\TH:i:sP')); //@todo set the timezone to the company locale
+        $registroAlta->setFechaHoraHusoGenRegistro(\Carbon\Carbon::now()->format('Y-m-d\TH:i:sP')); //@todo set the timezone to the company locale
 
-        $registroFacturacionAlta->setHuella($this->getHash($invoice, $registroFacturacionAlta)); // Digital Fingerprint
+        $registroAlta->setHuella($this->getHash($invoice, $registroAlta)); // Digital Fingerprint
 
-        return $registroFacturacionAlta;
+        return $registroAlta;
     }
         
     /**
