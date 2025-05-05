@@ -41,7 +41,7 @@ class Verifactu
     {
 
         $client = new VerifactuClient(VerifactuClient::MODE_PROD);
-        $response =$client->sendRegistroAlta($this->getRegistroAlta());
+        $response = $client->sendRegistroAlta($this->getRegistroAlta());
 
         var_dump($response);
 
@@ -56,12 +56,16 @@ class Verifactu
         $soapBody = new SoapBody();
         
         $RegFactuSistemaFacturacion = new RegFactuSistemaFacturacion();
+        
+        //The User or Corp that generated AND sends the invoice (ie Invoice Ninja!)
         $cabecera = new Cabecera();
         $obligadoEmision = new ObligadoEmision();
         $obligadoEmision->setNombreRazon($this->invoice->company->present()->name());
         $obligadoEmision->setNIF($this->invoice->company->settings->vat_number);
         $cabecera->setObligadoEmision($obligadoEmision);
         $RegFactuSistemaFacturacion->setCabecera($cabecera);
+
+        //The invoice itself
         $RegFactuSistemaFacturacion->setRegistroAlta($regAlta);
 
         $soapBody->setRegFactuSistemaFacturacion($RegFactuSistemaFacturacion);

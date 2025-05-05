@@ -72,7 +72,7 @@ class InvoiceninjaToVerifactuMapper
         $registroAlta->setIDVersion('1.0');
 
         // Set invoice ID (IDFactura)
-        $idFactura = new IDFactura(); // Issued Invoice ID
+        $idFactura = new IDFactura(); // Issued Invoice ID (Invoice)
         $idFactura->setIDEmisorFactura($invoice->company->settings->vat_number); // Invoice Issuer ID
         $idFactura->setNumSerieFactura($invoice->number); // Invoice Serial Number
         $idFactura->setFechaExpedicionFactura(\Carbon\Carbon::parse($invoice->date)->format('d-m-Y')); // Invoice Issue Date
