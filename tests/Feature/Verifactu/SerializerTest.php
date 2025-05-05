@@ -79,7 +79,7 @@ class SerializerTest extends TestCase
 
         $xml = $verifactu->serializeXml($invoice);
 
-        nlog($xml);
-        // $this->assertStringContainsString('SoapEnvelope', $xml);
+        // nlog($xml);
+        $this->assertStringContainsString('soapenv:Envelope', $xml);
     }
 }

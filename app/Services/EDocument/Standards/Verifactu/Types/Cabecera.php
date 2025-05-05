@@ -6,7 +6,7 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class Cabecera
 {
-    /** @var PersonaFisicaJuridicaES */
+    /** @var ObligadoEmision */
     #[SerializedName('sum1:ObligadoEmision')]
     protected $ObligadoEmision;
 
@@ -22,12 +22,12 @@ class Cabecera
     #[SerializedName('sum1:RemisionRequerimiento')]
     protected $RemisionRequerimiento;
 
-    public function getObligadoEmision(): PersonaFisicaJuridicaES
+    public function getObligadoEmision(): ObligadoEmision
     {
         return $this->ObligadoEmision;
     }
 
-    public function setObligadoEmision(PersonaFisicaJuridicaES $obligadoEmision): self
+    public function setObligadoEmision(ObligadoEmision $obligadoEmision): self
     {
         $this->ObligadoEmision = $obligadoEmision;
         return $this;
