@@ -10,6 +10,8 @@ use App\DataMapper\Tax\BaseRule;
 use App\Services\EDocument\Standards\Verifactu\Types\IDOtro;
 use App\Services\EDocument\Standards\Verifactu\Types\Detalle;
 use App\Services\EDocument\Standards\Verifactu\Types\Desglose;
+use App\Services\EDocument\Standards\Verifactu\Types\IDFactura;
+use App\Services\EDocument\Standards\Verifactu\Types\RegistroAlta;
 use App\Services\EDocument\Standards\Verifactu\Types\Destinatarios;
 use App\Services\EDocument\Standards\Verifactu\Types\IDDestinatario;
 use App\Services\EDocument\Standards\Verifactu\Types\IDFacturaExpedida;
@@ -63,15 +65,15 @@ class InvoiceninjaToVerifactuMapper
      * $registroFacturacionAlta->setTipoRectificativa('S'); // for Substitutive
      */ 
 
-    public function mapRegistroFacturacionAlta(Invoice $invoice): RegistroFacturacionAlta // Registration Entry
+    public function mapRegistroFacturacionAlta(Invoice $invoice): RegistroAlta // Registration Entry
     {
-        $registroFacturacionAlta = new RegistroFacturacionAlta(); // Registration Entry
+        $registroFacturacionAlta = new RegistroAlta(); // Registration Entry
 
         // Set version
-        $registroFacturacionAlta->setIDVersion('');
+        $registroFacturacionAlta->setIDVersion('1.0');
 
         // Set invoice ID (IDFactura)
-        $idFactura = new IDFacturaExpedida(); // Issued Invoice ID
+        $idFactura = new IDFactura(); // Issued Invoice ID
         $idFactura->setIDEmisorFactura($invoice->company->settings->vat_number); // Invoice Issuer ID
         $idFactura->setNumSerieFactura($invoice->number); // Invoice Serial Number
         $idFactura->setFechaExpedicionFactura(\Carbon\Carbon::parse($invoice->date)->format('d-m-Y')); // Invoice Issue Date
@@ -92,7 +94,7 @@ class InvoiceninjaToVerifactuMapper
         // $registroFacturacionAlta->setRechazoPrevio('RechazoPrevio::VALUE_N'); // Previous Rejection
 
         // Set invoice type (TipoFactura)
-        $registroFacturacionAlta->setTipoFactura($this->getInvoiceType());
+        $registroFacturacionAlta->setTipoFactura($this->getInvoiceType($invoice));
 
         // Delivery Date of the goods or services (we force invoice->date for this.)
         $registroFacturacionAlta->setFechaOperacion(\Carbon\Carbon::parse($invoice->date)->format('d-m-Y'));
@@ -142,7 +144,7 @@ class InvoiceninjaToVerifactuMapper
         $registroFacturacionAlta->setTipoHuella('01');
         
         // Set generation date (FechaHoraHusoGenRegistro)
-        $registroFacturacionAlta->setFechaHoraHusoGenRegistro(new \DateTime()); //@todo set the timezone to the company locale
+        $registroFacturacionAlta->setFechaHoraHusoGenRegistro(\Carbon\Carbon::now()->format('Y-m-d\TH:i:sP')); //@todo set the timezone to the company locale
 
         $registroFacturacionAlta->setHuella($this->getHash($invoice, $registroFacturacionAlta)); // Digital Fingerprint
 
@@ -187,10 +189,10 @@ class InvoiceninjaToVerifactuMapper
      * Based on the type of record, the hash will need to be calculated differently.
      * 
      * @param  Invoice $invoice
-     * @param  RegistroFacturacionAlta $registroFacturacionAlta
+     * @param  RegistroAlta $registroAlta
      * @return string
      */
-    private function getHash(Invoice $invoice, RegistroFacturacionAlta $registroFacturacionAlta): string
+    private function getHash(Invoice $invoice, RegistroAlta $registroAlta): string
     {
         // $hash = '';
         // Tipo de factura	Invoice type
@@ -207,14 +209,14 @@ class InvoiceninjaToVerifactuMapper
         // Serie	Invoice series
         // Concepto	Concept or description of the invoice
 
-        $hash = "IDEmisorFactura=" . $registroFacturacionAlta->getIDFactura()->getIDEmisorFactura() .
-            "&NumSerieFactura=" . $registroFacturacionAlta->getIDFactura()->getNumSerieFactura() .
-            "&FechaExpedicionFactura=" . $registroFacturacionAlta->getIDFactura()->getFechaExpedicionFactura() .
-            "&TipoFactura=" . $registroFacturacionAlta->getTipoFactura() .
-            "&CuotaTotal=" . $registroFacturacionAlta->getCuotaTotal() .
-            "&ImporteTotal=" . $registroFacturacionAlta->getImporteTotal() .
-            "&Huella=" . $registroFacturacionAlta->getHuella() . // Fingerprint of the previous record
-            "&FechaHoraHusoGenRegistro=" . $registroFacturacionAlta->getFechaHoraHusoGenRegistro()->format('Y-m-d\TH:i:sP');
+        $hash = "IDEmisorFactura=" . $registroAlta->getIDFactura()->getIDEmisorFactura() .
+            "&NumSerieFactura=" . $registroAlta->getIDFactura()->getNumSerieFactura() .
+            "&FechaExpedicionFactura=" . $registroAlta->getIDFactura()->getFechaExpedicionFactura() .
+            "&TipoFactura=" . $registroAlta->getTipoFactura() .
+            "&CuotaTotal=" . $registroAlta->getCuotaTotal() .
+            "&ImporteTotal=" . $registroAlta->getImporteTotal() .
+            "&Huella=" . $registroAlta->getHuella() . // Fingerprint of the previous record
+            "&FechaHoraHusoGenRegistro=" . $registroAlta->getFechaHoraHusoGenRegistro();
 
         $hash = utf8_encode($hash);
 
@@ -234,18 +236,18 @@ class InvoiceninjaToVerifactuMapper
      * - Huella: Hash of the cancelled invoice
      * - FechaHoraHusoGenRegistro: Date and time of record generation
      */
-    private function getHashForCancellation(RegistroFacturacionAnulacion $registroAnulacion): string
-    {
-        $hash = "IDEmisorFacturaAnulada=" . $registroAnulacion->getIDFactura()->getIDEmisorFactura() .
-            "&NumSerieFacturaAnulada=" . $registroAnulacion->getIDFactura()->getNumSerieFactura() .
-            "&FechaExpedicionFacturaAnulada=" . $registroAnulacion->getIDFactura()->getFechaExpedicionFactura() .
-            "&Huella=" . $registroAnulacion->getHuella() . // Hash of the cancelled invoice //@todo, when we init the doc, we need to set this!!
-            "&FechaHoraHusoGenRegistro=" . $registroAnulacion->getFechaHoraHusoGenRegistro()->format('Y-m-d\TH:i:sP');
+    // private function getHashForCancellation(RegistroFacturacionAnulacion $registroAnulacion): string
+    // {
+    //     $hash = "IDEmisorFacturaAnulada=" . $registroAnulacion->getIDFactura()->getIDEmisorFactura() .
+    //         "&NumSerieFacturaAnulada=" . $registroAnulacion->getIDFactura()->getNumSerieFactura() .
+    //         "&FechaExpedicionFacturaAnulada=" . $registroAnulacion->getIDFactura()->getFechaExpedicionFactura() .
+    //         "&Huella=" . $registroAnulacion->getHuella() . // Hash of the cancelled invoice //@todo, when we init the doc, we need to set this!!
+    //         "&FechaHoraHusoGenRegistro=" . $registroAnulacion->getFechaHoraHusoGenRegistro();
 
-        $hash = utf8_encode($hash);
+    //     $hash = utf8_encode($hash);
     
-        return strtoupper(hash('sha256', $hash));
-    }
+    //     return strtoupper(hash('sha256', $hash));
+    // }
     /**
      * getInvoiceType
      *
