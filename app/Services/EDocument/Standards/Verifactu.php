@@ -66,17 +66,19 @@ class Verifactu
 
         $soapBody->setRegFactuSistemaFacturacion($RegFactuSistemaFacturacion);
         $soapEnvelope->setBody($soapBody);
-nlog($soapEnvelope);
 
         return $this->serializeXml($soapEnvelope);
     }
     
-    public function serializeXml(RegistroAlta $registro): string
+    public function serializeXml(SoapEnvelope $registro): string
     {
         
         $serializer = $this->getSerializer();
 
-        $context = [\Symfony\Component\Serializer\Normalizer\DateTimeNormalizer::FORMAT_KEY => 'd-m-Y', \Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer::SKIP_NULL_VALUES => true];
+        $context = [
+            \Symfony\Component\Serializer\Normalizer\DateTimeNormalizer::FORMAT_KEY => 'd-m-Y', 
+            \Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer::SKIP_NULL_VALUES => true
+        ];
 
         $object = $serializer->normalize($registro, null, [\Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer::SKIP_NULL_VALUES => true]);
 
