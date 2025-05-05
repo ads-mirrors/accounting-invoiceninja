@@ -46,8 +46,8 @@ class MultiDB
 {
     public const DB_PREFIX = 'db-ninja-';
 
-    public static $dbs = ['db-ninja-01', 'db-ninja-02'];
-    // public static $dbs = ['db-ninja-01', 'db-ninja-02', 'db-ninja-03'];
+    // public static $dbs = ['db-ninja-01', 'db-ninja-02'];
+    public static $dbs = ['db-ninja-01', 'db-ninja-02', 'db-ninja-03'];
 
     private static $protected_domains = [
         'www',
@@ -717,7 +717,6 @@ class MultiDB
     {
         /* This will set the database connection for the request */
         config(['database.default' => $database]);
-        config(['queue.batching.database' => $database]);
 
     }
 
