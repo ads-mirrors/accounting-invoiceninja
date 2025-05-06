@@ -73,9 +73,20 @@ class StorePaymentRequest extends Request
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
+        $input = $this->all();
+
         $client_id = is_string($this->input('client_id', '')) ? $this->input('client_id') : '';
 
-        if (\Illuminate\Support\Facades\Cache::has($this->ip()."|".$this->input('amount', 0)."|".$client_id."|".$user->company()->company_key)) {
+        if(isset($input['invoices'][0]['invoice_id'])) {
+            $hash_key = implode(',', array_column($input['invoices'], 'invoice_id'));
+        } 
+        else {
+            $hash_key = $this->input('amount', 0);
+        }
+
+        $hash = $this->ip()."|".$hash_key."|".$client_id."|".$user->company()->company_key;
+
+        if (\Illuminate\Support\Facades\Cache::has($hash)) {
             throw new DuplicatePaymentException('Duplicate request.', 429);
         }
 
@@ -87,9 +98,8 @@ class StorePaymentRequest extends Request
             $this->files->set('file', [$this->file('file')]);
         }
 
-        \Illuminate\Support\Facades\Cache::put(($this->ip()."|".$this->input('amount', 0)."|".$client_id."|".$user->company()->company_key), true, 1);
+        \Illuminate\Support\Facades\Cache::put($hash, true, 1);
 
-        $input = $this->all();
 
         $invoices_total = 0;
         $credits_total = 0;

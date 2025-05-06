@@ -95,6 +95,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
             $data = $authorise_transaction->chargeCustomer($gateway_customer_reference, $data);
 
             $transaction_id = $data['transaction_id'];
+
             nlog($transaction_id);
 
         }
@@ -224,6 +225,8 @@ class AuthorizeCreditCard implements LivewireMethodInterface
         $payment_record['gateway_type_id'] = GatewayType::CREDIT_CARD;
         $payment_record['transaction_reference'] = $response->getTransId();
 
+        $fds_review = $response->getResponseCode();
+        
         $payment = $this->authorize->createPayment($payment_record);
 
         return $payment;

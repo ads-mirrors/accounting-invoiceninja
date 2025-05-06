@@ -149,7 +149,7 @@ class AuthorizeTransaction
                 nlog(' Description : '.$tresponse->getMessages()[0]->getDescription());
                 nlog(print_r($tresponse->getMessages()[0], 1));
 
-                if ($tresponse->getResponseCode() == "4") {
+                if (in_array($tresponse->getResponseCode(), [ "4", "253" ])) {
                     //notify user that this transaction is being held under FDS review:
                     FDSReview::dispatch((string)$tresponse->getTransId(), $this->authorize->payment_hash, $this->authorize->company_gateway->company->db);
                 }
