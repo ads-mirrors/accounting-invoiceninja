@@ -61,14 +61,6 @@ class RefundTransaction
         // Set the transaction's refId
         $refId = 'ref'.time();
 
-        // $paymentProfile = new PaymentProfileType();
-        // $paymentProfile->setPaymentProfileId($transaction_details->getTransaction()->getProfile()->getCustomerPaymentProfileId());
-
-        // // // set customer profile
-        // $customerProfile = new CustomerProfilePaymentType();
-        // $customerProfile->setCustomerProfileId($transaction_details->getTransaction()->getProfile()->getCustomerProfileId());
-        // $customerProfile->setPaymentProfile($paymentProfile);
-
         $creditCard = new CreditCardType();
         $creditCard->setCardNumber($creditCardNumber);
         $creditCard->setExpirationDate($creditCardExpiry);
