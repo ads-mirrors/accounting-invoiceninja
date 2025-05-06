@@ -894,6 +894,7 @@ class BaseDriver extends AbstractPaymentDriver
 
         return ctrans('texts.gateway_payment_text', [
             'invoices' => $invoices_string,
+            'invoice' => $invoices_string,
             'amount' => $amount,
             'client' => $this->client->present()->name(),
         ]);
