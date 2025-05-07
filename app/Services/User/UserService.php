@@ -36,6 +36,10 @@ class UserService
             $nmo->to_user = $this->user;
             $nmo->settings = $company->settings;
 
+            if(\App\Utils\Ninja::isHosted()) {
+                $nmo->transport = 'default';
+            }
+
             NinjaMailerJob::dispatch($nmo, true);
 
             Ninja::registerNinjaUser($this->user);
