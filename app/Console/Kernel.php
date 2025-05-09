@@ -39,6 +39,7 @@ use App\Jobs\Invoice\InvoiceCheckLateWebhook;
 use App\Jobs\Subscription\CleanStaleInvoiceOrder;
 use App\PaymentDrivers\Rotessa\Jobs\TransactionReport;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Console\Commands\CreateElasticIndex;
 
 class Kernel extends ConsoleKernel
 {
@@ -155,4 +156,5 @@ class Kernel extends ConsoleKernel
 
         require base_path('routes/console.php');
     }
+
 }

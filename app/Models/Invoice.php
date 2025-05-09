@@ -13,7 +13,7 @@
 namespace App\Models;
 
 use App\Utils\Ninja;
-use Laravel\Scout\Searchable;
+use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Support\Carbon;
 use App\DataMapper\InvoiceSync;
 use App\Helpers\Invoice\InvoiceSum;
@@ -149,6 +149,7 @@ class Invoice extends BaseModel
     use ActionsInvoice;
     use Searchable;
 
+
     protected $presenter = EntityPresenter::class;
 
     protected $touches = [];
@@ -244,6 +245,11 @@ class Invoice extends BaseModel
 
     public const STATUS_UNPAID = -2; //status < 4 || < 3 && !is_deleted && !trashed()
 
+    // public function searchableAs()
+    // {
+    //     return 'invoices_index';  // for when we need to rename
+    // }
+
     public function toSearchableArray()
     {
         $locale = $this->company->locale();
@@ -265,6 +271,7 @@ class Invoice extends BaseModel
             'custom_value4' => (string)$this->custom_value4,
             'company_key' => $this->company->company_key,
             'po_number' => (string)$this->po_number,
+            'line_items' => $this->line_items,
         ];
     }
 
@@ -456,6 +463,7 @@ class Invoice extends BaseModel
 
     public function getStatusAttribute()
     {
+        
         $due_date = $this->due_date ? Carbon::parse($this->due_date) : false;
         $partial_due_date = $this->partial_due_date ? Carbon::parse($this->partial_due_date) : false;
 
