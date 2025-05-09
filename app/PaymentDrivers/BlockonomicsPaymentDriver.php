@@ -107,16 +107,14 @@ class BlockonomicsPaymentDriver extends BaseDriver
         $addr = $request->addr;
 
         $payment = Payment::query()
-                            ->where('company_id', $company->id)
-                            ->where('transaction_reference', $txid)
-                            ->firstOrFail();
+            ->where('company_id', $company->id)
+            ->where('transaction_reference', $txid)
+            ->firstOrFail();
 
-        if (!$payment) {
+        // Already completed payment, no need to update status
+        if ($payment->status_id == Payment::STATUS_COMPLETED) {
             return response()->json([], 200);
-            // TODO: Implement logic to create new payment in case user sends payment to the address after closing the payment page
         }
-
-        $statusId = Payment::STATUS_PENDING;
 
         switch ($status) {
             case 0:
@@ -128,16 +126,16 @@ class BlockonomicsPaymentDriver extends BaseDriver
             case 2:
                 $statusId = Payment::STATUS_COMPLETED;
                 break;
+            default:
+                $statusId = Payment::STATUS_PENDING;
         }
 
-        if ($payment->status_id == $statusId) {
-            return response()->json([], 200);
-        } else {
+        if ($payment->status_id !== $statusId) {
             $payment->status_id = $statusId;
             $payment->save();
-
-            return response()->json([], 200);
         }
+        return response()->json([], 200);
+
     }
 
 
@@ -203,7 +201,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
             }
             return 'ok';
         }
-        return "Copy your Invoice Ninja Webhook URL and set it as your callback URL in Blockonomics";
+        return "No callback URL from your Blockonomics stores matches your Invoice Ninja webhook";
     }
 
     public function auth(): string
