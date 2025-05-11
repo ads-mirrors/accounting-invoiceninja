@@ -459,7 +459,8 @@ class GoCardlessPaymentDriver extends BaseDriver
         $mandates = $this->gateway->mandates()->list();
 
         foreach ($mandates->records as $mandate) {
-            if ($customer->id != $mandate->links->customer || $mandate->status != 'active' || ClientGatewayToken::where('token', $mandate->id)->where('gateway_customer_reference', $customer->id)->exists()) {
+            if ($customer->id != $mandate->links->customer || !in_array($mandate->status,['active', 'pending_submission']) || ClientGatewayToken::where('token', $mandate->id)->where('gateway_customer_reference', $customer->id)->exists()) {
+            // if ($customer->id != $mandate->links->customer || $mandate->status != 'active' || ClientGatewayToken::where('token', $mandate->id)->where('gateway_customer_reference', $customer->id)->exists()) {
                 continue;
             }
 
