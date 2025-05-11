@@ -48,7 +48,7 @@ class LocationTransformer extends EntityTransformer
             'name' => (string) $location->name ?: '',
             'address1' => $location->address1 ?: '',
             'address2' => $location->address2 ?: '',
-            'phone' => $location->phone ?: '',
+            // 'phone' => $location->phone ?: '',
             'city' => $location->city ?: '',
             'state' => $location->state ?: '',
             'postal_code' => $location->postal_code ?: '',

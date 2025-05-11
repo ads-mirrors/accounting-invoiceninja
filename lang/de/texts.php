@@ -5575,6 +5575,9 @@ Leistungsempfängers',
     'start_and_end_date_required' => 'Start- und Enddatum sind erforderlich',
     'project_value' => 'Projektwert',
     'invalid_csv_data' => 'Ungültige CSV-Daten, Ihr Import wurde abgebrochen.',
+    'selected_products' => 'Ausgewählte Produkte',
+    'create_company_error_unauthorized' => 'Sie sind nicht berechtigt, ein Unternehmen zu erstellen. Nur der Kontoinhaber kann ein Unternehmen erstellen.',
+    'deleted_location' => 'Location Deleted',
 );
 
 return $lang;

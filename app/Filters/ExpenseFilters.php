@@ -108,13 +108,19 @@ class ExpenseFilters extends QueryFilters
 
             if (in_array('paid', $status_parameters)) {
                 $query->orWhere(function ($query) {
-                    $query->whereNotNull('payment_date');
+                    $query->whereNotNull('payment_date')
+                            ->orWhere('transaction_reference', '!=', '')
+                            ->orWhereNotNull('transaction_reference');
                 });
             }
 
             if (in_array('unpaid', $status_parameters)) {
                 $query->orWhere(function ($query) {
-                    $query->whereNull('payment_date');
+                    $query->whereNull('payment_date')
+                          ->where(function ($query) {
+                              $query->where('transaction_reference', '')
+                                   ->orWhereNull('transaction_reference');
+                          });
                 });
             }
 

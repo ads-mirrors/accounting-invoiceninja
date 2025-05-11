@@ -2614,7 +2614,7 @@ Kom terug naar deze betaalmethode pagina zodra u de bedragen heeft ontvangen en 
     'client_information' => 'Klantinformatie',
     'updated_client_details' => 'De klantgegevens zijn gewijzigd',
     'auto' => 'Auto',
-    'tax_amount' => 'BTW',
+    'tax_amount' => 'BTW-bedrag',
     'tax_paid' => 'Betaalde Belasting',
     'none' => 'Geen',
     'proposal_message_button' => 'Om het voorstel voor :amount te bekijken, klik op de knop hieronder.',
@@ -5571,6 +5571,9 @@ E-mail: :email<b><br><b>',
     'start_and_end_date_required' => 'Start and end date are required',
     'project_value' => 'Project Value',
     'invalid_csv_data' => 'Invalid CSV data, your import was cancelled.',
+    'selected_products' => 'Selected Products',
+    'create_company_error_unauthorized' => 'You are not authorized to create a company. Only the account owner can create a company.',
+    'deleted_location' => 'Location Deleted',
 );
 
 return $lang;

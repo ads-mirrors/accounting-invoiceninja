@@ -437,6 +437,26 @@ class RecurringInvoiceController extends BaseController
 
             $this->recurring_invoice_repo->bulkUpdate($recurring_invoices, $request->column, $request->new_value);
 
+            /** Handle changes to the status of the recurring invoice after the remaining_cycles is updated */
+            if($request->column == 'remaining_cycles'){
+
+                if($request->new_value == 0){
+                    $recurring_invoices->each(function ($recurring_invoice) {
+                        $recurring_invoice->status_id = RecurringInvoice::STATUS_COMPLETED;
+                        $recurring_invoice->save();
+                    });
+                }
+                else {
+                    $recurring_invoices->each(function ($recurring_invoice) {
+                        
+                        if($recurring_invoice->status_id == RecurringInvoice::STATUS_COMPLETED){
+                            $recurring_invoice->status_id = RecurringInvoice::STATUS_PAUSED;
+                            $recurring_invoice->save();
+                        }
+                    });
+                }
+            }
+
             return $this->listResponse(RecurringInvoice::query()->withTrashed()->company()->whereIn('id', $request->ids));
 
         }

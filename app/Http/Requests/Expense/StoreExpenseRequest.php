@@ -73,6 +73,10 @@ class StoreExpenseRequest extends Request
 
         $input = $this->decodePrimaryKeys($input);
 
+        if(isset($input['invoice_id'])){
+            unset($input['invoice_id']);
+        }
+        
         if ($this->file('documents') instanceof \Illuminate\Http\UploadedFile) {
             $this->files->set('documents', [$this->file('documents')]);
         }

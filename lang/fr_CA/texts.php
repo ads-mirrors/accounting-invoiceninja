@@ -5569,6 +5569,9 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'start_and_end_date_required' => 'Date de départ et de fin requises',
     'project_value' => 'Valeur du projet',
     'invalid_csv_data' => 'Données CSV non valides, votre importation a été annulée.',
+    'selected_products' => 'Produits sélectionnés',
+    'create_company_error_unauthorized' => 'Vous n\'êtes pas autorisé à créer une entreprise. Seul le propriétaire du compte peut créer une entreprise.',
+    'deleted_location' => 'Emplacement supprimé',
 );
 
 return $lang;

@@ -91,6 +91,11 @@ class UpdateInvoiceRequest extends Request
 
     public function prepareForValidation()
     {
+        
+        if (request()->has('paid')) {
+            usleep(rand(100000, 150000)); 
+        }
+
         $input = $this->all();
 
         $input = $this->decodePrimaryKeys($input);

@@ -23,6 +23,7 @@ use App\Jobs\Util\SystemLogger;
 use Illuminate\Support\Facades\App;
 use App\Jobs\Mail\PaymentFailedMailer;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -48,6 +49,8 @@ class TransactionReport implements ShouldQueue
 
         foreach (MultiDB::$dbs as $db) {
             MultiDB::setDB($db);
+
+            Artisan::call('queue:prune-batches');
 
             CompanyGateway::query()
                             ->where('gateway_key', '91be24c7b792230bced33e930ac61676')
