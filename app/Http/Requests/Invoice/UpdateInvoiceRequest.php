@@ -67,7 +67,16 @@ class UpdateInvoiceRequest extends Request
         $rules['tax_name1'] = 'bail|sometimes|string|nullable';
         $rules['tax_name2'] = 'bail|sometimes|string|nullable';
         $rules['tax_name3'] = 'bail|sometimes|string|nullable';
-        $rules['status_id'] = 'bail|sometimes|not_in:5'; //do not allow cancelled invoices to be modfified.
+        $rules['status_id'] = [
+            'bail',
+            'sometimes',
+            'not_in:5',
+            function ($attribute, $value, $fail) {
+                if ($this->invoice->status_id == 5) {
+                    $fail(ctrans('texts.locked_invoice'));
+                }
+            }
+        ];
         $rules['exchange_rate'] = 'bail|sometimes|numeric';
         $rules['partial'] = 'bail|sometimes|nullable|numeric';
         $rules['amount'] = ['sometimes', 'bail', 'numeric', 'max:99999999999999'];
