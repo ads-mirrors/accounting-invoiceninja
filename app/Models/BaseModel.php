@@ -103,6 +103,12 @@ class BaseModel extends Model
         return $this->encodePrimaryKey($this->id);
     }
 
+
+    public function shouldBeSearchable()
+    {
+       return config('scout.driver') === 'elastic';
+    }
+
     public function dateMutator($value)
     {
         return (new Carbon($value))->format('Y-m-d');
