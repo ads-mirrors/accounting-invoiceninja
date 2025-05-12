@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
 return [
-    'default' => env('ELASTIC_CONNECTION', 'default'),
+    'default' => env('ELASTIC_CONNECTION', null),
     'connections' => [
         'default' => [
             'hosts' => [
