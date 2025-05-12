@@ -5572,6 +5572,7 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'selected_products' => 'Produits sélectionnés',
     'create_company_error_unauthorized' => 'Vous n\'êtes pas autorisé à créer une entreprise. Seul le propriétaire du compte peut créer une entreprise.',
     'deleted_location' => 'Emplacement supprimé',
+    'currency_caribbean_guilder' => 'Florin caribéen',
 );
 
 return $lang;
