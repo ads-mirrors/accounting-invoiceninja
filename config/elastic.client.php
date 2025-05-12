@@ -1,16 +1,16 @@
 <?php declare(strict_types=1);
 
 return [
-    'default' => env('ELASTIC_CONNECTION', null),
+    'default' => env('ELASTIC_CONNECTION', 'default'),
     'connections' => [
         'default' => [
             'hosts' => [
-                env('ELASTIC_HOST'),
+                env('ELASTIC_HOST', null),
             ],
             // configure basic authentication
             'basicAuthentication' => [
-                env('ELASTIC_USERNAME'),
-                env('ELASTIC_PASSWORD'),
+                env('ELASTIC_USERNAME',''),
+                env('ELASTIC_PASSWORD',''),
             ],
             // configure HTTP client (Guzzle by default)
             'httpClientOptions' => [
