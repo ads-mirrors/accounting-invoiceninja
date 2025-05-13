@@ -48,7 +48,6 @@ class MarkSent extends AbstractService
 
         // $this->invoice->client->service()->calculateBalance();
         $this->invoice->client->service()->updateBalance($adjustment);
-        
         /* Perform additional actions on invoice */
         $this->invoice
              ->service()
