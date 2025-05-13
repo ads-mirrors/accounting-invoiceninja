@@ -429,7 +429,7 @@ class InvoiceController extends BaseController
 
         event(new InvoiceWasUpdated($invoice, $invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
 
-        return $this->itemResponse($invoice);
+        return $this->itemResponse($invoice->fresh());
     }
 
     /**
