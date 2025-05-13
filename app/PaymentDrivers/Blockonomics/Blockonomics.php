@@ -178,6 +178,7 @@ class Blockonomics implements LivewireMethodInterface
             $payment = $this->blockonomics->createPayment($data, $statusId);
             $payment->custom_value1 = $request->txid;
             $payment->custom_value2 = $request->btc_address;
+            $payment->custom_value3 = $request->btc_amount;
             $payment->save();
 
             SystemLogger::dispatch(
