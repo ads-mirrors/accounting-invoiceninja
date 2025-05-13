@@ -202,7 +202,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
             }
             return 'ok';
         }
-        return "No callback URL from your Blockonomics stores matches your Invoice Ninja webhook";
+        return "Copy your Invoice Ninja Webhook URL and set it as your callback URL in Blockonomics";
     }
 
     public function auth(): string
