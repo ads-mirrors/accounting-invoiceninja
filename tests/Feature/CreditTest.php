@@ -298,7 +298,7 @@ class CreditTest extends TestCase
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
-            'balance' => 100,
+            'balance' => 0,
         ]);
 
         $ii = new InvoiceItem();
@@ -349,9 +349,10 @@ class CreditTest extends TestCase
 
 
         $cr->calc()->getCredit();
-
         $cr->service()->markSent()->save();
 
+        $c->refresh();
+        
         $this->assertEquals(100, $i->balance);
         $this->assertEquals(100, $i->amount);
         $this->assertEquals(0, $i->paid_to_date);
@@ -402,7 +403,7 @@ class CreditTest extends TestCase
         $this->assertEquals(0, $cr->balance);
         $this->assertEquals(100, $cr->paid_to_date);
         $this->assertEquals(4, $i->status_id);
-
+nlog($c->toArray());
         $this->assertEquals(100, $c->paid_to_date);
         $this->assertEquals(0, $c->balance);
 
