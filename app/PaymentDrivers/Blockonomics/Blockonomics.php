@@ -144,19 +144,21 @@ class Blockonomics implements LivewireMethodInterface
 
         try {
             $data = [];
-            $fiat_amount = round(($request->btc_price * $request->btc_amount), 2) / 100000000;
+            $fiat_amount = round(($request->btc_price * $request->btc_amount / 100000000), 2);
             $data['amount'] = $fiat_amount;
             $data['payment_method_id'] = $request->payment_method_id;
             $data['payment_type'] = PaymentType::CRYPTO;
             $data['gateway_type_id'] = GatewayType::CRYPTO;
-            // Randomize the transaction reference if the txid is a test payment
-            // to avoid duplicate transaction references in the database.
-            // Otherwise the payment hashed_id will not be unique.
-            if ($request->txid == 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction') {
-                $data['transaction_reference'] = $request->txid . bin2hex(random_bytes(16));
-            } else {
-                $data['transaction_reference'] = $request->txid;
-            }
+
+
+            define('TEST_TXID', 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction');
+            // Append a random value to the transaction reference for test payments
+            // to prevent duplicate entries in the database.
+            // This ensures the payment hashed_id remains unique.
+            $data['transaction_reference'] = ($request->txid === TEST_TXID)
+                ? $request->txid . bin2hex(random_bytes(16))
+                : $request->txid;
+
             $statusId;
 
             switch ($request->status) {
@@ -174,7 +176,8 @@ class Blockonomics implements LivewireMethodInterface
             }
 
             $payment = $this->blockonomics->createPayment($data, $statusId);
-            $payment->custom_value1 = $request->btc_address;
+            $payment->custom_value1 = $request->txid;
+            $payment->custom_value2 = $request->btc_address;
             $payment->save();
 
             SystemLogger::dispatch(
