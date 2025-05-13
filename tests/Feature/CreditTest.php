@@ -352,7 +352,7 @@ class CreditTest extends TestCase
         $cr->service()->markSent()->save();
 
         $c->refresh();
-        
+
         $this->assertEquals(100, $i->balance);
         $this->assertEquals(100, $i->amount);
         $this->assertEquals(0, $i->paid_to_date);
@@ -403,7 +403,8 @@ class CreditTest extends TestCase
         $this->assertEquals(0, $cr->balance);
         $this->assertEquals(100, $cr->paid_to_date);
         $this->assertEquals(4, $i->status_id);
-nlog($c->toArray());
+
+        
         $this->assertEquals(100, $c->paid_to_date);
         $this->assertEquals(0, $c->balance);
 

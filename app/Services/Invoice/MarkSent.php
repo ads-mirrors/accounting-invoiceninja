@@ -32,7 +32,7 @@ class MarkSent extends AbstractService
             return $this->invoice;
         }
 
-        $adjustment = $this->invoice->amount;
+        $adjustment = $this->invoice->amount ?? 0;
 
         /*Set status*/
         $this->invoice
