@@ -38,6 +38,11 @@
     "isEntry": true,
     "src": "resources/js/clients/linkify-urls.js"
   },
+  "resources/js/clients/payment_methods/authorize-authorize-ach.js": {
+    "file": "assets/authorize-authorize-ach-4ab153a6.js",
+    "isEntry": true,
+    "src": "resources/js/clients/payment_methods/authorize-authorize-ach.js"
+  },
   "resources/js/clients/payment_methods/authorize-authorize-card.js": {
     "file": "assets/authorize-authorize-card-39be6d93.js",
     "isEntry": true,
@@ -76,6 +81,14 @@
     "file": "assets/wepay-bank-account-783f1669.js",
     "isEntry": true,
     "src": "resources/js/clients/payment_methods/wepay-bank-account.js"
+  },
+  "resources/js/clients/payments/authorize-ach-payment.js": {
+    "file": "assets/authorize-ach-payment-76cf3d3d.js",
+    "imports": [
+      "_wait-8f4ae121.js"
+    ],
+    "isEntry": true,
+    "src": "resources/js/clients/payments/authorize-ach-payment.js"
   },
   "resources/js/clients/payments/authorize-credit-card-payment.js": {
     "file": "assets/authorize-credit-card-payment-4a21c1d6.js",

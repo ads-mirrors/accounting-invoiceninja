@@ -12,16 +12,17 @@
 
 namespace App\PaymentDrivers;
 
-use App\Models\ClientGatewayToken;
-use App\Models\GatewayType;
 use App\Models\Payment;
-use App\Models\PaymentHash;
 use App\Models\SystemLog;
-use App\PaymentDrivers\Authorize\AuthorizeCreditCard;
-use App\PaymentDrivers\Authorize\AuthorizeCustomer;
-use App\PaymentDrivers\Authorize\AuthorizePaymentMethod;
-use App\PaymentDrivers\Authorize\RefundTransaction;
+use App\Models\GatewayType;
+use App\Models\PaymentHash;
+use App\Models\ClientGatewayToken;
+use App\PaymentDrivers\Authorize\AuthorizeACH;
 use net\authorize\api\constants\ANetEnvironment;
+use App\PaymentDrivers\Authorize\AuthorizeCustomer;
+use App\PaymentDrivers\Authorize\RefundTransaction;
+use App\PaymentDrivers\Authorize\AuthorizeCreditCard;
+use App\PaymentDrivers\Authorize\AuthorizePaymentMethod;
 use net\authorize\api\contract\v1\GetMerchantDetailsRequest;
 use net\authorize\api\contract\v1\MerchantAuthenticationType;
 use net\authorize\api\controller\GetMerchantDetailsController;
@@ -39,6 +40,7 @@ class AuthorizePaymentDriver extends BaseDriver
 
     public static $methods = [
         GatewayType::CREDIT_CARD => AuthorizeCreditCard::class,
+        GatewayType::BANK_TRANSFER => AuthorizeACH::class,
     ];
 
     public const SYSTEM_LOG_TYPE = SystemLog::TYPE_AUTHORIZE;
@@ -60,6 +62,7 @@ class AuthorizePaymentDriver extends BaseDriver
         $types = [];
 
         $types[] = GatewayType::CREDIT_CARD;
+        $types[] = GatewayType::BANK_TRANSFER;
 
         return $types;
     }
@@ -171,6 +174,11 @@ class AuthorizePaymentDriver extends BaseDriver
         }
 
         return $env = ANetEnvironment::PRODUCTION;
+    }
+
+    public function validationMode()
+    {
+        return $this->company_gateway->getConfigField('testMode') ? 'testMode' : 'liveMode';
     }
 
     public function findClientGatewayRecord(): ?ClientGatewayToken
