@@ -47,10 +47,13 @@ class AuthorizeACH implements LivewireMethodInterface
   
     public function livewirePaymentView(array $data): string
     {
-        $data['gateway'] = $this->authorize;
-        $data['public_client_id'] = $this->authorize->init()->getPublicClientKey();
-        $data['api_login_id'] = $this->authorize->company_gateway->getConfigField('apiLoginId');
-        return render('gateways.authorize.ach.authorize', $data);
+        // $data['gateway'] = $this->authorize;
+        // $data['public_client_id'] = $this->authorize->init()->getPublicClientKey();
+        // $data['api_login_id'] = $this->authorize->company_gateway->getConfigField('apiLoginId');
+        // return render('gateways.authorize.ach.authorize', $data);
+        
+        return 'gateways.authorize.ach.pay_livewire';
+
     }
 
     public function paymentData(array $data): array
@@ -149,4 +152,5 @@ class AuthorizeACH implements LivewireMethodInterface
 
         return $this->authorize->createPayment($data, Payment::STATUS_COMPLETED);
     }
+
 } 

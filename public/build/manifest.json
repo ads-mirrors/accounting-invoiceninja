@@ -83,7 +83,7 @@
     "src": "resources/js/clients/payment_methods/wepay-bank-account.js"
   },
   "resources/js/clients/payments/authorize-ach-payment.js": {
-    "file": "assets/authorize-ach-payment-76cf3d3d.js",
+    "file": "assets/authorize-ach-payment-2e0c5d83.js",
     "imports": [
       "_wait-8f4ae121.js"
     ],

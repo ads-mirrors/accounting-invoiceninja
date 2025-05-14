@@ -280,4 +280,4 @@ function boot() {
     }
 }
 
-instant() ? boot() : wait('#authorize-ach-payment').then(() => boot());
+instant() ? boot() : wait('#authorize-net-ach-payment').then(() => boot());
