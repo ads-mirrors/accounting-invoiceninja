@@ -5555,6 +5555,7 @@ $lang = array(
     'selected_products' => 'منتجات مختارة',
     'create_company_error_unauthorized' => 'ليس لديك صلاحية إنشاء شركة. مالك حساب فقط هو من يستطيع إنشاء الشركة.',
     'deleted_location' => 'تم حذف الموقع',
+    'currency_caribbean_guilder' => 'الجيلدر الكاريبي',
 );
 
 return $lang;

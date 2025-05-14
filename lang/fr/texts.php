@@ -5574,6 +5574,7 @@ Lorsque les montant apparaîtront sur votre relevé, veuillez revenir sur cette 
     'selected_products' => 'Produits sélectionnés',
     'create_company_error_unauthorized' => 'Vous n&#39;êtes pas autorisé à créer une entreprise. Seul le titulaire du compte peut en créer une.',
     'deleted_location' => 'Emplacement supprimé',
+    'currency_caribbean_guilder' => 'Florin des Caraïbes',
 );
 
 return $lang;

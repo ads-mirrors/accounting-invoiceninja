@@ -142,6 +142,7 @@ class AuthorizeACH implements LivewireMethodInterface
         $response = $data['raw_response'];
 
         if ($response->getMessages()->getResultCode() == 'Ok') {
+
             $payment = $this->createPayment($payment_hash, $response);
 
             SystemLogger::dispatch(
@@ -153,7 +154,7 @@ class AuthorizeACH implements LivewireMethodInterface
                 $this->authorize->client->company,
             );
 
-            return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
+            return redirect()->route('client.payments.show', ['payment' => $this->encodePrimaryKey($payment->id)]);
 
         }
 
