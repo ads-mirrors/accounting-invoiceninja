@@ -44,18 +44,24 @@ class AuthorizeACH implements LivewireMethodInterface
         $this->authorize = $authorize;
     }
 
-  
+      
+    /**
+     * livewirePaymentView
+     *
+     * @param  array $data
+     * @return string
+     */
     public function livewirePaymentView(array $data): string
     {
-        // $data['gateway'] = $this->authorize;
-        // $data['public_client_id'] = $this->authorize->init()->getPublicClientKey();
-        // $data['api_login_id'] = $this->authorize->company_gateway->getConfigField('apiLoginId');
-        // return render('gateways.authorize.ach.authorize', $data);
-        
         return 'gateways.authorize.ach.pay_livewire';
-
     }
-
+    
+    /**
+     * paymentData
+     *
+     * @param  array $data
+     * @return array
+     */
     public function paymentData(array $data): array
     {
   
@@ -73,20 +79,39 @@ class AuthorizeACH implements LivewireMethodInterface
 
         return $data;
     }
-
+    
+    /**
+     * processPaymentView
+     *
+     * @param  array $data
+     * @return void
+     */
     public function processPaymentView(array $data)
     {
         $data = $this->paymentData($data);
 
         return render('gateways.authorize.ach.pay', $data);
     }
-
+    
+    /**
+     * tokenBilling
+     *
+     * @param  mixed $cgt
+     * @param  mixed $payment_hash
+     * @return void
+     */
     public function tokenBilling($cgt, $payment_hash)
     {
         $cc = new AuthorizeCreditCard($this->authorize);
         return $cc->tokenBilling($cgt, $payment_hash);
     }
-
+    
+    /**
+     * processPaymentResponse
+     *
+     * @param  mixed $request
+     * @return void
+     */
     public function processPaymentResponse($request)
     {
 
