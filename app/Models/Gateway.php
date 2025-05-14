@@ -124,8 +124,8 @@ class Gateway extends StaticModel
         switch ($this->id) {
             case 1:
                 return [
-                    GatewayType::CREDIT_CARD => ['refund' => true, 'token_billing' => true,'webhooks' => ['net.authorize.payment.void.created']],
-                    GatewayType::BANK_TRANSFER => ['refund' => true, 'token_billing' => true,'webhooks' => ['net.authorize.payment.void.created']],
+                    GatewayType::CREDIT_CARD => ['refund' => true, 'token_billing' => true, 'webhooks' => ['net.authorize.payment.void.created']],
+                    GatewayType::BANK_TRANSFER => ['refund' => true, 'token_billing' => true, 'webhooks' => ['net.authorize.payment.void.created']],
                 ]; //Authorize.net
             case 3:
                 return [GatewayType::CREDIT_CARD => ['refund' => false, 'token_billing' => true]]; //eWay
@@ -133,11 +133,11 @@ class Gateway extends StaticModel
                 return [GatewayType::CREDIT_CARD => ['refund' => false, 'token_billing' => true]]; //Payfast
             case 7:
                 return [
-                    GatewayType::CREDIT_CARD => ['refund' => false, 'token_billing' => true, 'webhooks' => [' ']], // Mollie
-                    GatewayType::BANK_TRANSFER => ['refund' => false, 'token_billing' => true, 'webhooks' => [' ']],
-                    GatewayType::KBC => ['refund' => false, 'token_billing' => false, 'webhooks' => [' ']],
-                    GatewayType::BANCONTACT => ['refund' => false, 'token_billing' => false, 'webhooks' => [' ']],
-                    GatewayType::IDEAL => ['refund' => false, 'token_billing' => false, 'webhooks' => [' ']],
+                    GatewayType::CREDIT_CARD => ['refund' => false, 'token_billing' => true, 'webhooks' => ['all']], // Mollie
+                    GatewayType::BANK_TRANSFER => ['refund' => false, 'token_billing' => true, 'webhooks' => ['all']],
+                    GatewayType::KBC => ['refund' => false, 'token_billing' => false, 'webhooks' => ['all']],
+                    GatewayType::BANCONTACT => ['refund' => false, 'token_billing' => false, 'webhooks' => ['all']],
+                    GatewayType::IDEAL => ['refund' => false, 'token_billing' => false, 'webhooks' => ['all']],
                 ];
             case 15:
                 return [
