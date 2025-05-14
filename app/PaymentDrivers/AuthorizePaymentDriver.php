@@ -17,10 +17,12 @@ use App\Models\SystemLog;
 use App\Models\GatewayType;
 use App\Models\PaymentHash;
 use App\Models\ClientGatewayToken;
+use App\Jobs\Mail\PaymentFailedMailer;
 use App\PaymentDrivers\Authorize\AuthorizeACH;
 use net\authorize\api\constants\ANetEnvironment;
 use App\PaymentDrivers\Authorize\AuthorizeCustomer;
 use App\PaymentDrivers\Authorize\RefundTransaction;
+use App\Http\Requests\Payments\PaymentWebhookRequest;
 use App\PaymentDrivers\Authorize\AuthorizeCreditCard;
 use App\PaymentDrivers\Authorize\AuthorizePaymentMethod;
 use net\authorize\api\contract\v1\GetMerchantDetailsRequest;
@@ -140,6 +142,7 @@ class AuthorizePaymentDriver extends BaseDriver
     {
         $this->init();
 
+        //Universal token billing.
         $this->setPaymentMethod($cgt->gateway_type_id);
 
         return $this->payment_method->tokenBilling($cgt, $payment_hash);
@@ -216,5 +219,117 @@ class AuthorizePaymentDriver extends BaseDriver
     public function auth(): string
     {
         return $this->init()->getPublicClientKey() ? 'ok' : 'error';
+    }
+
+    public function processWebhookRequest(PaymentWebhookRequest $request)
+    {
+
+        $payload = file_get_contents('php://input');
+        $headers = getallheaders();
+
+        $signatureKey = $this->company_gateway->getConfigField('signatureKey');
+
+        function isValidSignature($payload, $headers, $signatureKey)
+        {
+            // Normalize headers to uppercase for consistent lookup
+            $normalizedHeaders = array_change_key_case($headers, CASE_UPPER);
+            
+            if (!isset($normalizedHeaders['X-ANET-SIGNATURE'])) {
+                return false;
+            }
+
+            $receivedSignature = $normalizedHeaders['X-ANET-SIGNATURE'];
+            
+            // Remove 'sha512=' prefix if it exists
+            $receivedHash = str_replace('sha512=', '', $receivedSignature);
+
+            // Make sure signatureKey is a valid hex string and convert to binary
+            if (!ctype_xdigit($signatureKey)) {
+                return false;
+            }
+
+            // Calculate HMAC exactly as Authorize.net does
+            $expectedHash = strtoupper(hash_hmac('sha512', $payload, $signatureKey));
+                        
+            return hash_equals($receivedHash, $expectedHash);
+        }
+
+        if (!isValidSignature($payload, $headers, $signatureKey)) {
+            return response()->noContent();
+        }
+
+        $data = json_decode($payload, true);
+
+        // Check event type
+        $eventType = $data['eventType'] ?? null;
+        $transactionId = $data['payload']['id'] ?? 'unknown';
+
+        switch ($eventType) {
+            case 'net.authorize.payment.void.created':
+                $this->voidPayment($data);
+                break;
+                
+            default:
+                // Other webhook event types can be handled here
+                nlog("ℹ️ Unhandled event type: $eventType");
+                break;
+        }
+
+        return response()->noContent();
+
+    }
+
+// array (
+//   'notificationId' => '2ebb25fa-a814-4c53-8e1c-013423214f00',
+//   'eventType' => 'net.authorize.payment.void.created',
+//   'eventDate' => '2025-05-14T04:09:10.2193293Z',
+//   'webhookId' => '95c72ffd-635d-43a7-97b6-8096078cb11a',
+//   'payload' => 
+//   array (
+//     'responseCode' => 1,
+//     'avsResponse' => 'P',
+//     'authAmount' => 13.85,
+//     'merchantReferenceId' => 'ref1747192172',
+//     'invoiceNumber' => '0082',
+//     'entityName' => 'transaction',
+//     'id' => '80040995616',
+//   ),
+// )  
+    private function voidPayment($data)
+    {
+
+        $payment = Payment::withTrashed()
+                        ->where('company_id', $this->company_gateway->company_id)        
+                        ->where('transaction_reference', $data['payload']['id'])
+                        ->first();
+
+        if($payment){
+            
+            if($payment->status_id != Payment::STATUS_COMPLETED)
+                return;
+
+            $payment->service()->deletePayment();
+            $payment->status_id = Payment::STATUS_FAILED;
+            $payment->save();
+
+            $payment_hash = PaymentHash::query()->where('payment_id', $payment->id)->first();
+
+            if ($payment_hash) {
+                $error = ctrans('texts.client_payment_failure_body', [
+                    'invoice' => implode(',', $payment->invoices->pluck('number')->toArray()),
+                    'amount' => array_sum(array_column($payment_hash->invoices(), 'amount')) + $payment_hash->fee_total, ]);
+            } else {
+                $error = 'Payment for '.$payment->client->present()->name()." for {$payment->amount} failed";
+            }
+
+            
+            PaymentFailedMailer::dispatch(
+                $payment_hash,
+                $payment->client->company,
+                $payment->client,
+                $error
+            );
+
+        }
     }
 }

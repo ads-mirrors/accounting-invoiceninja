@@ -78,6 +78,12 @@ class AuthorizeACH implements LivewireMethodInterface
         return render('gateways.authorize.ach.pay', $data);
     }
 
+    public function tokenBilling($cgt, $payment_hash)
+    {
+        $cc = new AuthorizeCreditCard($this->authorize);
+        return $cc->tokenBilling($cgt, $payment_hash);
+    }
+
     public function processPaymentResponse($request)
     {
 

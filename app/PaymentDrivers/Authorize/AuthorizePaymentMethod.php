@@ -149,16 +149,16 @@ class AuthorizePaymentMethod
 
         $data['token'] = $payment_profile->getPaymentProfile()->getCustomerPaymentProfileId();
         $data['payment_method_id'] = $this->payment_method_id;
-        $data['payment_meta'] = $this->buildPaymentMethod($payment_profile, true);
+        $data['payment_meta'] = $this->buildPaymentMethod($payment_profile);
 
         $additional['gateway_customer_reference'] = $gateway_customer_reference;
 
         return $this->authorize->storeGatewayToken($data, $additional);
     }
 
-    public function buildPaymentMethod($payment_profile, $is_ach = false)
+    public function buildPaymentMethod($payment_profile)
     {
-        if ($is_ach) {
+        if ($this->payment_method_id == GatewayType::BANK_TRANSFER) {
             $brand = sprintf($payment_profile->getPaymentProfile()->getPayment()->getBankAccount()->getBankName());
             $last4 = (string) $payment_profile->getPaymentProfile()->getPayment()->getBankAccount()->getAccountNumber();
         } else {

@@ -48,12 +48,10 @@ class RefundTransaction
 
         $transaction_details = $this->authorize_transaction->getTransactionDetails($payment->transaction_reference);
 
-        $creditCard = $transaction_details->getTransaction()->getPayment()->getCreditCard();
-        $creditCardNumber = $creditCard->getCardNumber();
-        $creditCardExpiry = $creditCard->getExpirationDate();
-        $transaction_status = $transaction_details->getTransaction()->getTransactionStatus();
+        $transaction = $transaction_details->getTransaction();
+        $payment_details = $transaction->getPayment();
 
-        $transaction_type = $transaction_status == 'capturedPendingSettlement' ? 'voidTransaction' : 'refundTransaction';
+        $transaction_status = $transaction->getTransactionStatus();
 
         $transaction_type = match($transaction_status){
             'capturedPendingSettlement' => 'voidTransaction',
@@ -63,10 +61,10 @@ class RefundTransaction
         };
 
         if ($transaction_type == 'voidTransaction') {
-            $amount = $transaction_details->getTransaction()->getAuthAmount();
+            $amount = $transaction->getAuthAmount();
         }
         elseif ($transaction_type == 'voidHeldTransaction') {
-            $amount = $transaction_details->getTransaction()->getAuthAmount();
+            $amount = $transaction->getAuthAmount();
             return $this->declineHeldTransaction($payment, $amount);
         }
 
@@ -75,19 +73,32 @@ class RefundTransaction
         // Set the transaction's refId
         $refId = 'ref'.time();
 
-        $creditCard = new CreditCardType();
-        $creditCard->setCardNumber($creditCardNumber);
-        $creditCard->setExpirationDate($creditCardExpiry);
-        $paymentOne = new PaymentType();
-        $paymentOne->setCreditCard($creditCard);
-
         //create a transaction
         $transactionRequest = new TransactionRequestType();
         $transactionRequest->setTransactionType($transaction_type);
         $transactionRequest->setAmount($amount);
-        // $transactionRequest->setProfile($customerProfile);
-        $transactionRequest->setPayment($paymentOne);
         $transactionRequest->setRefTransId($payment->transaction_reference);
+
+        // Set payment info based on type
+        if ($payment_details->getCreditCard()) {
+            $creditCard = new CreditCardType();
+            $creditCard->setCardNumber($payment_details->getCreditCard()->getCardNumber());
+            $creditCard->setExpirationDate($payment_details->getCreditCard()->getExpirationDate());
+            $paymentOne = new PaymentType();
+            $paymentOne->setCreditCard($creditCard);
+            $transactionRequest->setPayment($paymentOne);
+        } elseif ($payment_details->getBankAccount()) {
+            $bankAccount = new \net\authorize\api\contract\v1\BankAccountType();
+            $bankAccount->setRoutingNumber($payment_details->getBankAccount()->getRoutingNumber());
+            $bankAccount->setAccountNumber($payment_details->getBankAccount()->getAccountNumber());
+            $bankAccount->setAccountType($payment_details->getBankAccount()->getAccountType());
+            $bankAccount->setNameOnAccount($payment_details->getBankAccount()->getNameOnAccount());
+            $bankAccount->setBankName($payment_details->getBankAccount()->getBankName());
+            $bankAccount->setEcheckType('WEB');
+            $paymentOne = new PaymentType();
+            $paymentOne->setBankAccount($bankAccount);
+            $transactionRequest->setPayment($paymentOne);
+        }
 
         $solution = new \net\authorize\api\contract\v1\SolutionType();
         $solution->setId($this->authorize->company_gateway->getConfigField('testMode') ? 'AAA100303' : 'AAA172036');
