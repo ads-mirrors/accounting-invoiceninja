@@ -220,7 +220,15 @@ class AuthorizePaymentDriver extends BaseDriver
     {
         return $this->init()->getPublicClientKey() ? 'ok' : 'error';
     }
-
+    
+    /**
+     * processWebhookRequest
+     * 
+     * We only handle voided payments for now.
+     * 
+     * @param  PaymentWebhookRequest $request
+     * @return void
+     */
     public function processWebhookRequest(PaymentWebhookRequest $request)
     {
 
@@ -295,7 +303,7 @@ class AuthorizePaymentDriver extends BaseDriver
 //     'id' => '80040995616',
 //   ),
 // )  
-    private function voidPayment($data)
+    private function voidPayment(array $data)
     {
 
         $payment = Payment::withTrashed()
@@ -303,11 +311,8 @@ class AuthorizePaymentDriver extends BaseDriver
                         ->where('transaction_reference', $data['payload']['id'])
                         ->first();
 
-        if($payment){
+        if($payment && $payment->status_id == Payment::STATUS_COMPLETED){
             
-            if($payment->status_id != Payment::STATUS_COMPLETED)
-                return;
-
             $payment->service()->deletePayment();
             $payment->status_id = Payment::STATUS_FAILED;
             $payment->save();
@@ -321,7 +326,6 @@ class AuthorizePaymentDriver extends BaseDriver
             } else {
                 $error = 'Payment for '.$payment->client->present()->name()." for {$payment->amount} failed";
             }
-
             
             PaymentFailedMailer::dispatch(
                 $payment_hash,

@@ -36,14 +36,9 @@ class AuthorizeACH implements LivewireMethodInterface
 {
     use MakesHash;
 
-    /** @var AuthorizePaymentDriver */
-    public $authorize;
-
-    public function __construct(AuthorizePaymentDriver $authorize)
+    public function __construct(public AuthorizePaymentDriver $authorize)
     {
-        $this->authorize = $authorize;
     }
-
       
     /**
      * livewirePaymentView
