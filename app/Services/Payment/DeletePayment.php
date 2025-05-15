@@ -164,11 +164,13 @@ class DeletePayment
 
             $reduced_paid_to_date = $this->payment->amount < 0 ? $this->payment->amount * -1 : min(0, ($this->payment->amount - $this->payment->refunded - $this->_paid_to_date_deleted) * -1);
 
-            $this->payment
-                ->client
-                ->service()
-                ->updatePaidToDate($reduced_paid_to_date)
-                ->save();
+            if($reduced_paid_to_date != 0) {
+                $this->payment
+                    ->client
+                    ->service()
+                    ->updatePaidToDate($reduced_paid_to_date)
+                    ->save();
+            }
         }
 
         return $this;

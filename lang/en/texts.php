@@ -5579,6 +5579,8 @@ $lang = array(
     'added_location' => 'Successfully added location',
     'send_emails' => 'Send Emails',
     'send_emails_permission' => 'Allow user to send emails',
+    'cancel_trial' => 'Cancel Trial',
+    'cancel_trial_description' => 'This will cancel your trial and remove all paid features from your account.',
 );
 
 return $lang;
