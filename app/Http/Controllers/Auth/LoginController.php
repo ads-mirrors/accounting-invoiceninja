@@ -453,7 +453,7 @@ class LoginController extends BaseController
             }
 
             // If this is a result user/email combo - lets add their OAuth details details
-            if ($email && $existing_login_user = MultiDB::hasUser(['email' => $email])) {
+            if ($email && $existing_login_user = MultiDB::hasUser(['email' => $email, 'oauth_provider_id' => 'microsoft'])) {
                 if (!$existing_login_user->account) {
                     return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
                 }
@@ -562,7 +562,7 @@ class LoginController extends BaseController
             }
 
             //If this is a result user/email combo - lets add their OAuth details details
-            if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user)])) {
+            if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user), 'oauth_provider_id' => 'google'])) {
                 if (!$existing_login_user->account) {
                     return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
                 }
@@ -575,7 +575,7 @@ class LoginController extends BaseController
 
         if ($user) {
             //check the user doesn't already exist in some form
-            if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user)])) {
+            if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user), 'oauth_provider_id' => 'google'])) {
                 if (!$existing_login_user->account) {
                     return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
                 }

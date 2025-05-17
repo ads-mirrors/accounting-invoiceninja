@@ -5581,6 +5581,7 @@ $lang = array(
     'send_emails_permission' => 'Allow user to send emails',
     'cancel_trial' => 'Cancel Trial',
     'cancel_trial_description' => 'This will cancel your trial and remove all paid features from your account.',
+    'existing_gateway' => 'Gateway already exists',
 );
 
 return $lang;
