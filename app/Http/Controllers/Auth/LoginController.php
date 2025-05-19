@@ -452,16 +452,20 @@ class LoginController extends BaseController
                 return $this->existingOauthUser($existing_user);
             }
 
-            // If this is a result user/email combo - lets add their OAuth details details
-            if ($email && $existing_login_user = MultiDB::hasUser(['email' => $email, 'oauth_provider_id' => 'microsoft'])) {
-                if (!$existing_login_user->account) {
-                    return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
-                }
-
-                Auth::login($existing_login_user, true);
-
-                return $this->existingLoginUser($user->getId(), 'microsoft');
+            if (MultiDB::hasUser(['email' => $email, 'oauth_provider_id' => null])) {
+                return response()->json(['message' => 'User exists, but never authenticated with OAuth, please use your email and password to login.'], 400);
             }
+
+            // If this is a result user/email combo - lets add their OAuth details details
+            // if ($email && $existing_login_user = MultiDB::hasUser(['email' => $email, 'oauth_provider_id' => 'microsoft'])) {
+            //     if (!$existing_login_user->account) {
+            //         return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
+            //     }
+
+            //     Auth::login($existing_login_user, true);
+
+            //     return $this->existingLoginUser($user->getId(), 'microsoft');
+            // }
 
             // Signup!
             if (request()->has('create') && request()->input('create') == 'true') {
@@ -561,16 +565,21 @@ class LoginController extends BaseController
                 return $this->existingOauthUser($existing_user);
             }
 
-            //If this is a result user/email combo - lets add their OAuth details details
-            if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user), 'oauth_provider_id' => 'google'])) {
-                if (!$existing_login_user->account) {
-                    return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
-                }
-
-                Auth::login($existing_login_user, true);
-
-                return $this->existingLoginUser($google->harvestSubField($user), 'google');
+            if (MultiDB::hasUser(['email' => $google->harvestEmail($user), 'oauth_provider_id' => null])) {
+                return response()->json(['message' => 'Please use your email and password to login.'], 400);
             }
+
+            // 2025-05-19 - this caused an issue when a user/email password combo user used their google account to login, it raced through and attempted to create a new account.
+            //If this is a result user/email combo - lets add their OAuth details details
+            // if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user), 'oauth_provider_id' => 'google'])) {
+            //     if (!$existing_login_user->account) {
+            //         return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
+            //     }
+
+            //     Auth::login($existing_login_user, true);
+
+            //     return $this->existingLoginUser($google->harvestSubField($user), 'google');
+            // }
         }
 
         if ($user) {
