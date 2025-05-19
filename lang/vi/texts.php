@@ -5574,6 +5574,7 @@ $lang = array(
     'selected_products' => 'Sản phẩm được chọn',
     'create_company_error_unauthorized' => 'Bạn không được phép đến một công Tạo . Chỉ chủ tài khoản mới có thể Tạo công ty.',
     'deleted_location' => 'Vị trí đã xóa',
+    'currency_caribbean_guilder' => 'Đồng Guilder Caribê',
 );
 
 return $lang;

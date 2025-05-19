@@ -159,7 +159,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
 
         // if ($response != null && $response->getMessages()->getResultCode() == 'Ok') {
         if ($response != null && $response->getMessages() != null) {
-            $this->storePayment($payment_hash, $data);
+            $this->storePayment($payment_hash, $data, $gateway_type = $cgt->gateway_type_id);
 
             $vars = [
                 'invoices' => $payment_hash->invoices(),
@@ -213,7 +213,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
         return $this->processFailedResponse($data, $request);
     }
 
-    private function storePayment($payment_hash, $data)
+    private function storePayment($payment_hash, $data, $gateway_type)
     {
         $amount = array_sum(array_column($payment_hash->invoices(), 'amount')) + $payment_hash->fee_total;
 
@@ -221,8 +221,8 @@ class AuthorizeCreditCard implements LivewireMethodInterface
 
         $payment_record = [];
         $payment_record['amount'] = $amount;
-        $payment_record['payment_type'] = PaymentType::CREDIT_CARD_OTHER;
-        $payment_record['gateway_type_id'] = GatewayType::CREDIT_CARD;
+        $payment_record['payment_type'] = $gateway_type == GatewayType::CREDIT_CARD ? PaymentType::CREDIT_CARD_OTHER : PaymentType::ACH;
+        $payment_record['gateway_type_id'] = $gateway_type;
         $payment_record['transaction_reference'] = $response->getTransId();
 
         $payment = $this->authorize->createPayment($payment_record);

@@ -41,12 +41,16 @@ class GmailTransport extends AbstractTransport
 
         if (!mb_check_encoding($subject, 'UTF-8') || preg_match('/Ã.|â.|Â./', $subject)) {
 
-            $converted = mb_convert_encoding($subject, 'UTF-8', 'Windows-1252');
-
-            if (mb_check_encoding($converted, 'UTF-8')) {
-                $subject = $converted;
+            $possible_encodings = ['Windows-1252', 'ISO-8859-1', 'ISO-8859-15'];
+            
+            foreach ($possible_encodings as $encoding) {
+                $converted = mb_convert_encoding($subject, 'UTF-8', $encoding);
+                
+                if (mb_check_encoding($converted, 'UTF-8') && !preg_match('/Ã.|â.|Â./', $converted)) {
+                    $subject = $converted;
+                    break;
+                }
             }
-
         }
 
         $message->subject($subject);

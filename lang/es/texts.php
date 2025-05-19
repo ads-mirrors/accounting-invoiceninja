@@ -5573,6 +5573,7 @@ $lang = array(
     'selected_products' => 'Productos Seleccionados',
     'create_company_error_unauthorized' => 'No está autorizado a crear una empresa. Solo el titular de la cuenta puede hacerlo.',
     'deleted_location' => 'Ubicación eliminada',
+    'currency_caribbean_guilder' => 'Florín del Caribe',
 );
 
 return $lang;

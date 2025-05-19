@@ -134,26 +134,26 @@ class InvoiceExport extends BaseExport
 
                     /** @var \App\Models\Invoice $invoice */
                     // Invoice level taxes
-                    if (!empty($invoice->tax_name1) && !empty($invoice->tax_rate1)) {
+                    if (strlen($invoice->tax_name1 ?? '') > 1 && $invoice->tax_rate1 > 0) {
                         $taxes[] = trim($invoice->tax_name1) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate1), $invoice->client) . '%';
                     }
-                    if (!empty($invoice->tax_name2) && !empty($invoice->tax_rate2)) {
+                    if (strlen($invoice->tax_name2 ?? '') > 1 && $invoice->tax_rate2 > 0) {
                         $taxes[] = trim($invoice->tax_name2) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate2), $invoice->client) . '%';
                     }
-                    if (!empty($invoice->tax_name3) && !empty($invoice->tax_rate3)) {
+                    if (strlen($invoice->tax_name3 ?? '') > 1 && $invoice->tax_rate3 > 0) {
                         $taxes[] = trim($invoice->tax_name3) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($invoice->tax_rate3), $invoice->client) . '%';
                     }
 
                     // Line item taxes
                     $line_taxes = collect($invoice->line_items)->flatMap(function ($item) use ($invoice) {
                         $taxes = [];
-                        if (!empty($item->tax_name1) && !empty($item->tax_rate1)) {
+                        if (strlen($item->tax_name1 ?? '') > 1 && $item->tax_rate1 > 0) {
                             $taxes[] = trim($item->tax_name1) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($item->tax_rate1), $invoice->client) . '%';
                         }
-                        if (!empty($item->tax_name2) && !empty($item->tax_rate2)) {
+                        if (strlen($item->tax_name2 ?? '') > 1 && $item->tax_rate2 > 0) {
                             $taxes[] = trim($item->tax_name2) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($item->tax_rate2), $invoice->client) . '%';
                         }
-                        if (!empty($item->tax_name3) && !empty($item->tax_rate3)) {
+                        if (strlen($item->tax_name3 ?? '') > 1 && $item->tax_rate3 > 0) {
                             $taxes[] = trim($item->tax_name3) . ' ' . \App\Utils\Number::formatValueNoTrailingZeroes(floatval($item->tax_rate3), $invoice->client) . '%';
                         }
                         return $taxes;
@@ -216,7 +216,7 @@ class InvoiceExport extends BaseExport
             }
 
             foreach ($taxes as $tax) {
-                $entity[$tax['name']] += $tax['total'];
+                $entity[$tax['name']] = ($entity[$tax['name']] ?? 0) + $tax['total'];
             }
         }
 
