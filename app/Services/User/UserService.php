@@ -29,9 +29,9 @@ class UserService
     public function invite(Company $company, bool $is_react = true)
     {
 
-        // if(Ninja::isHosted() && $company->account->users()->count() == 1) {
-        //     $company = Company::on('db-ninja-01')->find(config('ninja.ninja_default_company_id'));
-        // }
+        if(Ninja::isHosted() && $company->account->users()->count() == 1) {
+            $company = Company::on('db-ninja-01')->find(config('ninja.ninja_default_company_id'));
+        }
 
         try {
             $nmo = new NinjaMailerObject();
