@@ -205,8 +205,11 @@ class RotessaPaymentDriver extends BaseDriver
 
     public function findOrCreateCustomer(array $data)
     {
-
+        nlog($data);
+        
         $result = null;
+        
+        
         try {
 
             $existing = ClientGatewayToken::query()
