@@ -528,7 +528,7 @@ class Activity extends StaticModel
         return $translation;
     }
 
-    private function getPaymentAdjustment(?\App\Models\Payment $payment): string
+    public function getPaymentAdjustment(?\App\Models\Payment $payment): string
     {
         if(!$payment)
             return '';
