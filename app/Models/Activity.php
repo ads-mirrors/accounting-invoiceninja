@@ -280,6 +280,8 @@ class Activity extends StaticModel
 
     public const EMAIL_CREDIT = 149;
 
+    public const ACCOUNT_DELETED = 150;
+    
     protected $casts = [
         'is_system' => 'boolean',
         'updated_at' => 'timestamp',

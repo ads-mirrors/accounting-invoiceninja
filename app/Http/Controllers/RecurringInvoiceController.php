@@ -422,7 +422,9 @@ class RecurringInvoiceController extends BaseController
         $percentage_increase = request()->has('percentage_increase') ? request()->input('percentage_increase') : 0;
 
         if (in_array($request->action, ['increase_prices', 'update_prices'])) {
-            UpdateRecurring::dispatch($request->ids, $user->company(), $user, $request->action, $percentage_increase);
+
+            if($user->isAdmin())
+                UpdateRecurring::dispatch($request->ids, $user->company(), $user, $request->action, $percentage_increase);
 
             return response()->json(['message' => 'Update in progress.'], 200);
         }

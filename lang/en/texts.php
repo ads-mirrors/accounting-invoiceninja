@@ -5582,6 +5582,7 @@ $lang = array(
     'cancel_trial' => 'Cancel Trial',
     'cancel_trial_description' => 'This will cancel your trial and remove all paid features from your account.',
     'existing_gateway' => 'Gateway already exists',
+    'activity_150' => 'Account deleted :notes',
 );
 
 return $lang;
