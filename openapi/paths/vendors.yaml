@@ -326,15 +326,7 @@
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data: 
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Vendor"
-                  meta:
-                    type: object
-                    $ref: '#/components/schemas/Meta'
+                $ref: "#/components/schemas/Vendor"
         401:
           $ref: "#/components/responses/401"
         403:

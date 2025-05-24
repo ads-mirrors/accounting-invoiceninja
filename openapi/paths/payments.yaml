@@ -439,15 +439,7 @@
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data: 
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Payment"
-                  meta:
-                    type: object
-                    $ref: '#/components/schemas/Meta'
+                $ref: "#/components/schemas/Payment"
         401:
           $ref: "#/components/responses/401"
         403:
