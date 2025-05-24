@@ -51,13 +51,13 @@ class UpdateRecurring implements ShouldQueue
             ->whereIn('id', $this->ids)
             ->chunk(100, function ($recurring_invoices) {
                 foreach ($recurring_invoices as $recurring_invoice) {
-                    if ($this->user->can('edit', $recurring_invoice)) {
+                    
                         if ($this->action == 'update_prices') {
                             $recurring_invoice->service()->updatePrice();
                         } elseif ($this->action == 'increase_prices') {
                             $recurring_invoice->service()->increasePrice($this->percentage);
                         }
-                    }
+                    
                 }
             });
 

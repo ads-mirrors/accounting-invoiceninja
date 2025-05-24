@@ -39,7 +39,7 @@ class RotessaPaymentDriver extends BaseDriver
     public $payment_method;
 
     public static $methods = [
-        GatewayType::BANK_TRANSFER => BankTransfer::class,
+        // GatewayType::BANK_TRANSFER => BankTransfer::class,
         GatewayType::ACSS => Acss::class,
     ];
 
@@ -205,8 +205,11 @@ class RotessaPaymentDriver extends BaseDriver
 
     public function findOrCreateCustomer(array $data)
     {
-
+        nlog($data);
+        
         $result = null;
+        
+        
         try {
 
             $existing = ClientGatewayToken::query()

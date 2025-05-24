@@ -712,14 +712,14 @@ class Client extends BaseModel implements HasLocalePreference
             }
         }
 
-        if (in_array($this->currency()->code, ['USD']) && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
-            // if (in_array($this->currency()->code, ['CAD','USD']) && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
+        // if (in_array($this->currency()->code, ['USD']) && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
+            if (in_array($this->currency()->code, ['CAD','USD']) && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
             // if ($this->currency()->code == 'CAD' && in_array(GatewayType::ACSS, array_column($pms, 'gateway_type_id'))) {
             foreach ($pms as $pm) {
                 if ($pm['gateway_type_id'] == GatewayType::ACSS) {
                     $cg = CompanyGateway::query()->find($pm['company_gateway_id']);
 
-                    if ($cg && $cg->fees_and_limits->{GatewayType::ACSS}->is_enabled) {
+                    if ($cg && $cg->gateway_key != '91be24c7b792230bced33e930ac61676' && $cg->fees_and_limits->{GatewayType::ACSS}->is_enabled) {
                         return $cg;
                     }
                 }
@@ -801,6 +801,7 @@ class Client extends BaseModel implements HasLocalePreference
             foreach ($pms as $pm) {
                 if ($pm['gateway_type_id'] == GatewayType::ACSS) {
                     $cg = CompanyGateway::query()->find($pm['company_gateway_id']);
+                    // $cg = CompanyGateway::query()->where('id', $pm['company_gateway_id'])->where('gateway_key', '!=', '91be24c7b792230bced33e930ac61676')->first();
 
                     if ($cg && $cg->fees_and_limits->{GatewayType::ACSS}->is_enabled) {
                         return GatewayType::ACSS;
