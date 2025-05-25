@@ -233,7 +233,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
     private function processSuccessfulResponse($data, $request)
     {
         $payment_hash = PaymentHash::where('hash', $request->input('payment_hash'))->firstOrFail();
-        $payment = $this->storePayment($payment_hash, $data);
+        $payment = $this->storePayment($payment_hash, $data, \App\Models\GatewayType::CREDIT_CARD);
 
         $vars = [
             'invoices' => $payment_hash->invoices(),

@@ -310,7 +310,7 @@ class Account extends BaseModel
         }
 
         // 09-03-2023 - winds forward expiry checks to ensure we don't cut off users prior to billing cycle being commenced
-        if ($this->plan_expires && Carbon::parse($this->plan_expires)->lt(now()->subHours(12))) {
+        if ($this->plan_expires && Carbon::parse($this->plan_expires)->lt(now()->subHours(23))) {
             return false;
         }
 
