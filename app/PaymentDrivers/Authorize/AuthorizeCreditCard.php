@@ -80,6 +80,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
         if ($request->has('store_card') && $request->input('store_card') === true) {
 
             $authorise_payment_method = new AuthorizePaymentMethod($this->authorize);
+            $authorise_payment_method->setPaymentMethodId(\App\Models\GatewayType::CREDIT_CARD);
 
             $payment_profile = $authorise_payment_method->addPaymentMethodToClient($gateway_customer_reference, $data);
             $payment_profile_id = $payment_profile->getPaymentProfile()->getCustomerPaymentProfileId();
