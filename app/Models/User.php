@@ -228,27 +228,18 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function token()
     {
-        // Try to get from TruthSource if container is ready
-        try {
-            $truth = app()->make(TruthSource::class);
-            if ($truth->getCompanyToken()) {
-                return $truth->getCompanyToken();
-            }
-        } catch (\Exception $e) {
-            // TruthSource not available yet, continue with fallback
+        $truth = app()->make(TruthSource::class);
+
+        if ($truth->getCompanyToken()) {
+            return $truth->getCompanyToken();
         }
 
-        // Fallback to API token lookup
+        // if (request()->header('X-API-TOKEN')) {
         if (request()->header('X-API-TOKEN')) {
-            $token = CompanyToken::with(['cu'])->where('token', request()->header('X-API-TOKEN'))->first();
-            if ($token) {
-                return $token;
-            }
+            return CompanyToken::with(['cu'])->where('token', request()->header('X-API-TOKEN'))->first();
         }
 
-        // Final fallback to user's first token
-        $token = $this->tokens()->with(['cu'])->first();
-        return $token;
+        return $this->tokens()->first();
     }
 
     /**
@@ -279,27 +270,16 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getCompany(): ?Company
     {
+        $truth = app()->make(TruthSource::class);
+
         // @phpstan-ignore-next-line
         if ($this->company) {
             return $this->company;
-        }
-
-        // Try to get from TruthSource if container is ready
-        try {
-            $truth = app()->make(TruthSource::class);
-            if ($truth->getCompany()) {
-                return $truth->getCompany();
-            }
-        } catch (\Exception $e) {
-            // TruthSource not available yet, continue with fallback
-        }
-
-        // Fallback to API token lookup
-        if (request()->header('X-API-TOKEN')) {
+        } elseif ($truth->getCompany()) {
+            return $truth->getCompany();
+        } elseif (request()->header('X-API-TOKEN')) {
             $company_token = CompanyToken::with('company')->where('token', request()->header('X-API-TOKEN'))->first();
-            if ($company_token) {
-                return $company_token->company;
-            }
+            return $company_token->company;
         }
 
         throw new \Exception('No Company Found');
@@ -325,39 +305,31 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(CompanyUser::class)->withTrashed();
     }
 
-    // public function co_user()
-    // {
-    //     $truth = app()->make(TruthSource::class);
+    public function co_user()
+    {
+        $truth = app()->make(TruthSource::class);
 
-    //     if ($truth->getCompanyUser()) {
-    //         return $truth->getCompanyUser();
-    //     }
+        if ($truth->getCompanyUser()) {
+            return $truth->getCompanyUser();
+        }
 
-    //     return $this->token()->cu;
-    // }
+        return $this->token()->cu;
+    }
 
     public function company_user()
     {
-        try {
-            if ($this->companyId()) {
-                return $this->belongsTo(CompanyUser::class)->where('company_id', $this->companyId())->withTrashed();
-            }
-        } catch (\Exception $e) {
-            // companyId() failed, continue with fallback
+        if ($this->companyId()) {
+            return $this->belongsTo(CompanyUser::class)->where('company_id', $this->companyId())->withTrashed();
         }
 
-        // Try to get from TruthSource if container is ready
-        try {
-            $truth = app()->make(TruthSource::class);
-            if ($truth->getCompanyUser()) {
-                return $truth->getCompanyUser();
-            }
-        } catch (\Exception $e) {
-            // TruthSource not available yet, continue with fallback
+        $truth = app()->make(TruthSource::class);
+
+        if ($truth->getCompanyUser()) {
+            return $truth->getCompanyUser();
         }
 
-        $token = $this->token();
-        return $token ? $token->cu : null;
+        return $this->token()->cu;
+
     }
 
     /**
@@ -382,12 +354,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function permissions()
     {
-        $token = $this->token();
-        if (!$token || !$token->cu) {
-            return '';
-        }
-        
-        return $token->cu->permissions;
+        return $this->token()->cu->permissions;
+
     }
 
     /**
@@ -397,12 +365,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function settings()
     {
-        $token = $this->token();
-        if (!$token || !$token->cu) {
-            return new \stdClass();
-        }
-        
-        return json_decode($token->cu->settings);
+        return json_decode($this->token()->cu->settings);
+
     }
 
     /**
@@ -412,22 +376,13 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isAdmin(): bool
     {
-        $token = $this->token();
-        if (!$token || !$token->cu) {
-            return false;
-        }
-        
-        return $token->cu->is_admin;
+        return $this->token()->cu->is_admin;
+
     }
 
     public function isOwner(): bool
     {
-        $token = $this->token();
-        if (!$token || !$token->cu) {
-            return false;
-        }
-        
-        return $token->cu->is_owner;
+        return $this->token()->cu->is_owner;
     }
 
     public function hasOwnerFlag(): bool
@@ -441,12 +396,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isSuperUser(): bool
     {
-        $token = $this->token();
-        if (!$token || !$token->cu) {
-            return false;
-        }
-        
-        return $token->cu->is_owner || $token->cu->is_admin;
+        return $this->token()->cu->is_owner || $this->token()->cu->is_admin;
     }
 
     /**
@@ -516,16 +466,11 @@ class User extends Authenticatable implements MustVerifyEmail
             }
         }
 
-        $token = $this->token();
-        if (!$token || !$token->cu) {
-            return false;
-        }
-        
         return  $this->isSuperUser() ||
-                (stripos($token->cu->permissions, $permission) !== false) ||
-                (stripos($token->cu->permissions, $all_permission) !== false) ||
-                (stripos($token->cu->permissions, $edit_all) !== false) ||
-                (stripos($token->cu->permissions, $edit_entity) !== false);
+                (stripos($this->token()->cu->permissions, $permission) !== false) ||
+                (stripos($this->token()->cu->permissions, $all_permission) !== false) ||
+                (stripos($this->token()->cu->permissions, $edit_all) !== false) ||
+                (stripos($this->token()->cu->permissions, $edit_entity) !== false);
     }
 
     /**
@@ -547,13 +492,8 @@ class User extends Authenticatable implements MustVerifyEmail
             $all_permission = $parts[0].'_all';
         }
 
-        $token = $this->token();
-        if (!$token || !$token->cu) {
-            return false;
-        }
-        
-        return  (stripos($token->cu->permissions, $all_permission) !== false) ||
-                (stripos($token->cu->permissions, $permission) !== false);
+        return  (stripos($this->token()->cu->permissions, $all_permission) !== false) ||
+                (stripos($this->token()->cu->permissions, $permission) !== false);
     }
 
     /**
@@ -589,12 +529,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasExactPermission(string $permission = '___'): bool
     {
-        $token = $this->token();
-        if (!$token || !$token->cu) {
-            return false;
-        }
-        
-        return  (stripos($token->cu->permissions ?? '', $permission) !== false);
+        return  (stripos($this->token()->cu->permissions ?? '', $permission) !== false);
     }
 
 
@@ -682,12 +617,9 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function routeNotificationForSlack($notification)
     {
-        $token = $this->token();
-        if ($token && $token->cu && $token->cu->slack_webhook_url) {
-            return $token->cu->slack_webhook_url;
+        if ($this->token()->cu->slack_webhook_url) {
+            return $this->token()->cu->slack_webhook_url;
         }
-        
-        return null;
     }
 
     public function routeNotificationForMail($notification)

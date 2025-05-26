@@ -94,4 +94,22 @@ class CompanyToken extends BaseModel
     {
         return $this->hasOne(CompanyUser::class, ['user_id', 'company_id'], ['user_id', 'company_id']);
     }
+
+
+    // public function company_user(): \Illuminate\Database\Eloquent\Relations\HasOne
+    // {
+    //     return $this->hasOne(CompanyUser::class, 'user_id', 'user_id')
+    //                 ->where('company_id', $this->company_id)
+    //                 ->where('user_id', $this->user_id);
+    // }
+
+    // /**
+    //  * @return \Awobaz\Compoships\Database\Eloquent\Relations\HasOne
+    //  */
+    // public function cu()
+    // {
+    //     return $this->hasOne(CompanyUser::class, 'user_id', 'user_id')
+    //         ->where('company_id', $this->company_id)
+    //         ->where('user_id', $this->user_id);
+    // }
 }
