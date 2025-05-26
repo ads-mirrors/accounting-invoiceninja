@@ -208,7 +208,7 @@ class MultiDB
 
         foreach (self::$dbs as $db) {
             self::setDB($db);
-            if ($user = User::where($data)->withTrashed()->first()) {
+            if ($user = User::on($db)->where($data)->withTrashed()->first()) {
                 return $user;
             }
         }
@@ -653,7 +653,7 @@ class MultiDB
 
         foreach (self::$dbs as $db) {
             self::setDB($db);
-            if ($exists = Account::where('account_sms_verification_number', $phone)->where('account_sms_verified', true)->exists()) {
+            if ($exists = Account::on($db)->where('account_sms_verification_number', $phone)->where('account_sms_verified', true)->exists()) {
                 self::setDb($current_db);
                 return true;
             }
