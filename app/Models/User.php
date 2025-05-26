@@ -191,6 +191,96 @@ class User extends Authenticatable implements MustVerifyEmail
         'referral_earnings' => AsReferralEarningCollection::class,
     ];
 
+////////////////////////////////////////////////////////////////////////////////////
+    private ?Company $contextCompany = null;
+    private ?CompanyUser $contextCompanyUser = null;
+    private ?CompanyToken $contextToken = null;
+
+    // Set context explicitly
+    public function setContext(Company $company, ?CompanyToken $token = null): self
+    {
+        $this->contextCompany = $company;
+        $this->contextToken = $token;
+        $this->contextCompanyUser = $token?->company_user;
+        
+        return $this;
+    }
+
+    // Transfer context from authenticated user to this instance
+    public function inheritContextFromAuth(): self
+    {
+        if (auth()->check() && auth()->user()->id === $this->id) {
+            $authUser = auth()->user();
+            $this->contextCompany = $authUser->contextCompany;
+            $this->contextToken = $authUser->contextToken;
+            $this->contextCompanyUser = $authUser->contextCompanyUser;
+        }
+        
+        return $this;
+    }
+
+    // Get current company with fallback chain
+    public function getCurrentCompany(): Company
+    {
+        // 1. Use explicit context if set
+        if ($this->contextCompany) {
+            return $this->contextCompany;
+        }
+
+        // 2. Try service container binding (if available)
+        if (app()->bound('current.company')) {
+            return app('current.company');
+        }
+
+        // 3. Use token-based lookup
+        if ($token = $this->getCurrentToken()) {
+            return $token->company;
+        }
+
+        // 4. Use default company
+        $defaultCompany = $this->companies()->first();
+        if ($defaultCompany instanceof Company) {
+            return $defaultCompany;
+        }
+
+        throw new \Exception('No Company Found for user ID: ' . $this->id);
+    }
+
+    public function getCurrentCompanyUser(): ?CompanyUser
+    {
+        if ($this->contextCompanyUser) {
+            return $this->contextCompanyUser;
+        }
+
+
+
+        // Try service container binding (if available)
+        if (app()->bound('current.company_user')) {
+            return app('current.company_user');
+        }
+
+        $company = $this->getCurrentCompany();
+        return $this->company_users()
+            ->where('company_id', $company->id)
+            ->where('user_id', $this->id)
+            ->first();
+    }
+
+    public function getCurrentToken(): ?CompanyToken
+    {
+        if ($this->contextToken) {
+            return $this->contextToken;
+        }
+
+        if ($apiToken = request()->header('X-API-TOKEN')) {
+            return CompanyToken::where('token', $apiToken)->first();
+        }
+
+        return $this->tokens()->first();
+    }
+/////////////////////////////////////////////////////
+
+
     public function name()
     {
         return $this->first_name.' '.$this->last_name;
@@ -228,18 +318,19 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function token()
     {
-        $truth = app()->make(TruthSource::class);
+        return $this->getCurrentToken();
+        // $truth = app()->make(TruthSource::class);
 
-        if ($truth->getCompanyToken()) {
-            return $truth->getCompanyToken();
-        }
+        // if ($truth->getCompanyToken()) {
+        //     return $truth->getCompanyToken();
+        // }
 
+        // // if (request()->header('X-API-TOKEN')) {
         // if (request()->header('X-API-TOKEN')) {
-        if (request()->header('X-API-TOKEN')) {
-            return CompanyToken::with(['cu'])->where('token', request()->header('X-API-TOKEN'))->first();
-        }
+        //     return CompanyToken::with(['cu'])->where('token', request()->header('X-API-TOKEN'))->first();
+        // }
 
-        return $this->tokens()->first();
+        // return $this->tokens()->first();
     }
 
     /**
@@ -270,19 +361,20 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getCompany(): ?Company
     {
-        $truth = app()->make(TruthSource::class);
+        return $this->getCurrentCompany();
+        // $truth = app()->make(TruthSource::class);
 
-        // @phpstan-ignore-next-line
-        if ($this->company) {
-            return $this->company;
-        } elseif ($truth->getCompany()) {
-            return $truth->getCompany();
-        } elseif (request()->header('X-API-TOKEN')) {
-            $company_token = CompanyToken::with('company')->where('token', request()->header('X-API-TOKEN'))->first();
-            return $company_token->company;
-        }
+        // // @phpstan-ignore-next-line
+        // if ($this->company) {
+        //     return $this->company;
+        // } elseif ($truth->getCompany()) {
+        //     return $truth->getCompany();
+        // } elseif (request()->header('X-API-TOKEN')) {
+        //     $company_token = CompanyToken::with('company')->where('token', request()->header('X-API-TOKEN'))->first();
+        //     return $company_token->company;
+        // }
 
-        throw new \Exception('No Company Found');
+        // throw new \Exception('No Company Found');
     }
 
     public function companyIsSet(): bool
@@ -307,28 +399,30 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function co_user()
     {
-        $truth = app()->make(TruthSource::class);
+        return $this->getCurrentCompanyUser();
+        // $truth = app()->make(TruthSource::class);
 
-        if ($truth->getCompanyUser()) {
-            return $truth->getCompanyUser();
-        }
+        // if ($truth->getCompanyUser()) {
+        //     return $truth->getCompanyUser();
+        // }
 
-        return $this->token()->cu;
+        // return $this->token()->cu;
     }
 
     public function company_user()
     {
-        if ($this->companyId()) {
-            return $this->belongsTo(CompanyUser::class)->where('company_id', $this->companyId())->withTrashed();
-        }
+        return $this->getCurrentCompanyUser();
+        // if ($this->companyId()) {
+        //     return $this->belongsTo(CompanyUser::class)->where('company_id', $this->companyId())->withTrashed();
+        // }
 
-        $truth = app()->make(TruthSource::class);
+        // $truth = app()->make(TruthSource::class);
 
-        if ($truth->getCompanyUser()) {
-            return $truth->getCompanyUser();
-        }
+        // if ($truth->getCompanyUser()) {
+        //     return $truth->getCompanyUser();
+        // }
 
-        return $this->token()->cu;
+        // return $this->token()->cu;
 
     }
 

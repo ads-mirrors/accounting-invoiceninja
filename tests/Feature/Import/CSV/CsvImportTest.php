@@ -119,10 +119,12 @@ class CsvImportTest extends TestCase
 
         Cache::put($hash.'-recurring_invoice', base64_encode($csv), 360);
 
-        $truth = app()->make(TruthSource::class);
-        $truth->setCompanyUser($this->cu);
-        $truth->setUser($this->user);
-        $truth->setCompany($this->company);
+        $this->user->setContext($this->company, $this->token);
+        
+        // $truth = app()->make(TruthSource::class);
+        // $truth->setCompanyUser($this->cu);
+        // $truth->setUser($this->user);
+        // $truth->setCompany($this->company);
 
         $csv_importer = new Csv($data, $this->company);
 
@@ -355,10 +357,12 @@ class CsvImportTest extends TestCase
 
         Cache::put($hash.'-invoice', base64_encode($csv), 360);
 
-        $truth = app()->make(TruthSource::class);
-        $truth->setCompanyUser($this->cu);
-        $truth->setUser($this->user);
-        $truth->setCompany($this->company);
+        $this->user->setContext($this->company, $this->token);
+        
+        // $truth = app()->make(TruthSource::class);
+        // $truth->setCompanyUser($this->cu);
+        // $truth->setUser($this->user);
+        // $truth->setCompany($this->company);
 
         $csv_importer = new Csv($data, $this->company);
 

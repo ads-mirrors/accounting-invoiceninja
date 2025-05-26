@@ -295,10 +295,12 @@ trait MockAccountData
 
         $company_token->save();
 
-        $truth = app()->make(TruthSource::class);
-        $truth->setCompanyUser($company_token->first());
-        $truth->setUser($this->user);
-        $truth->setCompany($this->company);
+        $user->setContext($this->company, $company_token);
+        
+        // $truth = app()->make(TruthSource::class);
+        // $truth->setCompanyUser($company_token->first());
+        // $truth->setUser($this->user);
+        // $truth->setCompany($this->company);
 
         //todo create one token with token name TOKEN - use firstOrCreate
 
