@@ -74,20 +74,6 @@ class LoginController extends BaseController
     }
 
     /**
-     * Once the user is authenticated, we need to set
-     * the default company into a session variable.
-     *
-     * @param Request $request
-     * @param User $user
-     * @return void
-     * @deprecated .1 API ONLY we don't need to set any session variables
-     */
-    public function authenticated(Request $request, User $user): void
-    {
-        //$this->setCurrentCompanyId($user->companies()->first()->account->default_company_id);
-    }
-
-    /**
      * Login via API.
      *
      * @param LoginRequest $request The request
@@ -97,8 +83,10 @@ class LoginController extends BaseController
     {
         $this->forced_includes = ['company_users'];
 
+        /** Checks the required fields for auth are present */
         $this->validateLogin($request);
 
+        /** Native laravel login throttling */
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
 
@@ -112,17 +100,17 @@ class LoginController extends BaseController
         $user = MultiDB::hasUser(['email' => $request->email]);
         
         if ($user && \Illuminate\Support\Facades\Hash::check(trim($request->password), $user->password)) {
-            // Manually log the user in
+            //Authenticate for this request only.
             Auth::login($user, false);
             
             LightLogs::create(new LoginSuccess())
                 ->increment()
                 ->batch();
 
-            LightLogs::create(new LoginMeta($request->email, $request->ip, 'success'))
+            LightLogs::create(new LoginMeta($request->email, $request->ip(), 'success'))
                 ->batch();
 
-            //2FA
+            // Process2FA on this request if the parameters are present.
             if ($user->google_2fa_secret && $request->has('one_time_password')) {
                 $google2fa = new Google2FA();
 
@@ -150,6 +138,8 @@ class LoginController extends BaseController
             /** @var \App\Models\CompanyUser $cu */
             $cu = $this->hydrateCompanyUser($user);
 
+            nlog("LOGIN:: ".$request->email." {$user->account_id}");
+
             if ($cu->count() == 0) {
                 return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
             }
@@ -167,7 +157,7 @@ class LoginController extends BaseController
                 ->increment()
                 ->batch();
 
-            LightLogs::create(new LoginMeta($request->email, $request->ip, 'failure'))
+            LightLogs::create(new LoginMeta($request->email, $request->ip(), 'failure'))
                 ->batch();
 
             $this->incrementLoginAttempts($request);
@@ -189,11 +179,11 @@ class LoginController extends BaseController
     {
         $truth = app()->make(TruthSource::class);
 
-        if ($truth->getCompanyToken()) {
-            $company_token = $truth->getCompanyToken();
-        } else {
+        // if ($truth->getCompanyToken()) {
+            // $company_token = $truth->getCompanyToken();
+        // } else {
             $company_token = CompanyToken::where('token', $request->header('X-API-TOKEN'))->first();
-        }
+        // }
 
         $cu = CompanyUser::query()
             ->where('user_id', $company_token->user_id);
@@ -252,12 +242,27 @@ class LoginController extends BaseController
             ->header('X-App-Version', config('ninja.app_version'))
             ->header('X-Api-Version', config('ninja.minimum_client_version'));
     }
-
+    
+    /**
+     * getSocialiteUser
+     * 
+     * Returns the socialite user if successful
+     * @param  string $provider
+     * @param  string $token
+     */
     private function getSocialiteUser(string $provider, string $token)
     {
         return Socialite::driver($provider)->userFromToken($token);
     }
-
+    
+    /**
+     * handleSocialiteLogin
+     *
+     * Handles authentication for Apple OAuth only!
+     * 
+     * @param  string $provider
+     * @param  string $token
+     */
     private function handleSocialiteLogin($provider, $token)
     {
         $user = $this->getSocialiteUser($provider, $token);
@@ -271,7 +276,13 @@ class LoginController extends BaseController
             ->header('X-App-Version', config('ninja.app_version'))
             ->header('X-Api-Version', config('ninja.minimum_client_version'));
     }
-
+    
+    /**
+     * loginOrCreateFromSocialite
+     *
+     * @param  mixed $user
+     * @param  string $provider
+     */
     private function loginOrCreateFromSocialite($user, $provider)
     {
         $query = [
@@ -356,15 +367,10 @@ class LoginController extends BaseController
 
         $account = (new CreateAccount($new_account, request()->getClientIp()))->handle();
 
-        $user = $account->default_company->owner();
-        // Auth::login($user, false);
+        $user = $account->users()->first();
 
         auth()->login($user, false);
         auth()->user()->setCompany($account->default_company);
-
-
-        // /** @var \App\Models\User $user */
-        // $user = auth()->user();
 
         $user->email_verified_at = now();
         $user->save();
@@ -382,7 +388,15 @@ class LoginController extends BaseController
 
         return $this->timeConstrainedResponse($cu);
     }
-
+    
+    /**
+     * hydrateCompanyUser
+     *
+     * Hydrates the company user for the response
+     * 
+     * @param  User $user
+     * @return Builder
+     */
     private function hydrateCompanyUser($user): Builder
     {
 
@@ -414,8 +428,6 @@ class LoginController extends BaseController
         $truth->setCompany($set_company);
 
         //21-03-2024
-
-
         $cu->each(function ($cu) {
             /** @var \App\Models\CompanyUser $cu */
             if (CompanyToken::query()->where('company_id', $cu->company_id)->where('user_id', $cu->user_id)->where('is_system', true)->doesntExist()) {
@@ -507,7 +519,7 @@ class LoginController extends BaseController
      */
     private function existingOauthUser($existing_user)
     {
-        Auth::login($existing_user, true);
+        Auth::login($existing_user, false);
 
         /** @var \App\Models\CompanyUser $cu */
         $cu = $this->hydrateCompanyUser($existing_user);

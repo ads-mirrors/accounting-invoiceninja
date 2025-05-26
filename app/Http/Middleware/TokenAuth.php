@@ -39,6 +39,7 @@ class TokenAuth
             'user.account',
             'company',
             'account',
+            'cu',
             ])->where('token', $request->header('X-API-TOKEN'))->first())) {
         } else {
             return response()->json(['message' => 'Invalid token'], 403);
@@ -70,6 +71,7 @@ class TokenAuth
         | us to decouple a $user and their attached companies completely.
         |
         */
+
         $truth = app()->make(TruthSource::class);
 
         $truth->setCompanyUser($company_token->cu);

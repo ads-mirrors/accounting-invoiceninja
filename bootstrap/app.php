@@ -43,6 +43,16 @@ $app->singleton(
 
 /*
 |--------------------------------------------------------------------------
+| Early TruthSource Binding
+|--------------------------------------------------------------------------
+| Bind TruthSource early to prevent issues with early access
+*/
+$app->bind(\App\Utils\TruthSource::class, function () {
+    return new \App\Utils\TruthSource();
+});
+
+/*
+|--------------------------------------------------------------------------
 | Return The Application
 |--------------------------------------------------------------------------
 |
