@@ -272,8 +272,8 @@ trait MockAccountData
         $user_id = $user->id;
         $this->user = $user;
 
-        // auth()->login($user);
-        // auth()->user()->setCompany($this->company);
+        auth()->login($user, false);
+        auth()->user()->setCompany($this->company);
 
         CreateCompanyTaskStatuses::dispatchSync($this->company, $this->user);
 
