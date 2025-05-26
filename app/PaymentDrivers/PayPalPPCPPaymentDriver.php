@@ -167,7 +167,7 @@ class PayPalPPCPPaymentDriver extends PayPalBasePaymentDriver
             nlog($response);
         }
 
-        if (is_array($response) && isset($response['status']) && $response['status'] == 'COMPLETED' && isset($response['purchase_units'])) {
+        if (isset($response['status']) && $response['status'] == 'COMPLETED' && isset($response['purchase_units'])) {
 
 
             return $this->createNinjaPayment($request, $response);
