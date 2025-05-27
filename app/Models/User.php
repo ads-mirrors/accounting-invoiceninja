@@ -248,18 +248,30 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getCurrentCompanyUser(): ?CompanyUser
     {
+        nlog("getcu");
+
         if ($this->contextCompanyUser) {
+        nlog("level1");
             return $this->contextCompanyUser;
         }
 
-
-
         // Try service container binding (if available)
         if (app()->bound('current.company_user')) {
+        
+            nlog("level2");
+
             return app('current.company_user');
         }
 
         $company = $this->getCurrentCompany();
+        
+        nlog($company?->id);
+
+            nlog("level3");
+
+            nlog("xxxx ".$this->company_users()->count());
+            nlog("id = ". $this->id);
+
         return $this->company_users()
             ->where('company_id', $company->id)
             ->where('user_id', $this->id)
