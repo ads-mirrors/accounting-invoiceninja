@@ -32,18 +32,18 @@ class TokenAuth
      */
     public function handle($request, Closure $next)
     {
-        if (config('ninja.db.multi_db_enabled') &&
-        $request->header('X-API-TOKEN') &&
-        ($company_token = MultiDB::getCompanyToken($request->header('X-API-TOKEN')))) {
-        } elseif ($request->header('X-API-TOKEN') && ($company_token = CompanyToken::with([
+
+         if ($request->header('X-API-TOKEN') && ($company_token = CompanyToken::with([
             'user.account',
             'company',
             'account',
             'cu',
             ])->where('token', $request->header('X-API-TOKEN'))->first())) {
+
         } else {
             return response()->json(['message' => 'Invalid token'], 403);
         }
+
         $user = $company_token->user;
 
         $error = [
@@ -64,6 +64,24 @@ class TokenAuth
             return response()->json($error, 403);
         }
 
+        /*
+        |
+        | Necessary evil here: As we are authenticating on CompanyToken,
+        | we need to link the company to the user manually. This allows
+        | us to decouple a $user and their attached companies completely.
+        |
+        */
+        $truth = app()->make(TruthSource::class);
+
+        $truth->setCompanyUser($company_token->cu);
+        $truth->setUser($company_token->user);
+        $truth->setCompany($company_token->company);
+        $truth->setCompanyToken($company_token);
+        $truth->setPremiumHosted($company_token->account->isPremium());
+        /*
+        | This method binds the db to the jobs created using this
+        | session
+         */
         app('queue')->createPayloadUsing(function () use ($company_token) {
             return ['db' => $company_token->company->db];
         });
@@ -81,13 +99,7 @@ class TokenAuth
         //stateless, don't remember the user.
         auth()->login($user, false);
         auth()->user()->setCompany($company_token->company);
-        auth()->user()->setContext($company_token->company, $company_token);
-        
-        // Alternative: Bind context to service container for request duration
-        app()->instance('current.company', $company_token->company);
-        app()->instance('current.company_user', $company_token->cu);
-        app()->instance('current.company_token', $company_token);
-        
+
         return $next($request);
     }
 }

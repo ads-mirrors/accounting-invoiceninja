@@ -115,8 +115,6 @@ class CreateAccount
             event(new AccountCreated($spaa9f78, $sp035a66, Ninja::eventVars()));
         }
 
-        //@replaces truthsource
-        auth()->user()->setContext($sp035a66, $sp2d97e8);
 
         $spaa9f78->fresh();
 

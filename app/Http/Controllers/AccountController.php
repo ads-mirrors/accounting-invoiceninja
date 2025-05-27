@@ -105,11 +105,11 @@ class AccountController extends BaseController
 
         $company_user = $cu->first();
         
-        // $truth = app()->make(TruthSource::class);
-        // $truth->setCompanyUser($company_user);
-        // $truth->setUser($company_user->user);
-        // $truth->setCompany($company_user->company);
-        // $truth->setCompanyToken($company_user->tokens()->where('user_id', $company_user->user_id)->where('company_id', $company_user->company_id)->first());
+        $truth = app()->make(TruthSource::class);
+        $truth->setCompanyUser($company_user);
+        $truth->setUser($company_user->user);
+        $truth->setCompany($company_user->company);
+        $truth->setCompanyToken($company_user->tokens()->where('user_id', $company_user->user_id)->where('company_id', $company_user->company_id)->first());
 
         return $this->listResponse($cu);
     }

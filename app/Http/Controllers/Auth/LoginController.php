@@ -39,7 +39,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Response;
 use Laravel\Socialite\Facades\Socialite;
 use Microsoft\Graph\Model;
@@ -74,6 +73,20 @@ class LoginController extends BaseController
     }
 
     /**
+     * Once the user is authenticated, we need to set
+     * the default company into a session variable.
+     *
+     * @param Request $request
+     * @param User $user
+     * @return void
+     * @deprecated .1 API ONLY we don't need to set any session variables
+     */
+    public function authenticated(Request $request, User $user): void
+    {
+        //$this->setCurrentCompanyId($user->companies()->first()->account->default_company_id);
+    }
+
+    /**
      * Login via API.
      *
      * @param LoginRequest $request The request
@@ -83,10 +96,8 @@ class LoginController extends BaseController
     {
         $this->forced_includes = ['company_users'];
 
-        /** Checks the required fields for auth are present */
         $this->validateLogin($request);
 
-        /** Native laravel login throttling */
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
 
@@ -96,23 +107,18 @@ class LoginController extends BaseController
                 ->header('X-Api-Version', config('ninja.minimum_client_version'));
         }
 
-        // Direct user query based on email and password verification
-        $user = MultiDB::hasUser(['email' => $request->email]);
-        
-        if ($user && \Illuminate\Support\Facades\Hash::check(trim($request->password), $user->password)) {
-            //Authenticate for this request only.
-            
-            auth()->login($user, false);
-            auth()->user()->setContext($user->account->default_company, $user->tokens()->where('company_id', $user->account->default_company_id)->where('is_system', true)->first());
-            
+        if ($this->attemptLogin($request)) {
             LightLogs::create(new LoginSuccess())
                 ->increment()
                 ->batch();
 
-            LightLogs::create(new LoginMeta($request->email, $request->ip(), 'success'))
+            LightLogs::create(new LoginMeta($request->email, $request->ip, 'success'))
                 ->batch();
 
-            // Process2FA on this request if the parameters are present.
+            /** @var \App\Models\User $user */
+            $user = $this->guard()->user();
+
+            //2FA
             if ($user->google_2fa_secret && $request->has('one_time_password')) {
                 $google2fa = new Google2FA();
 
@@ -140,8 +146,6 @@ class LoginController extends BaseController
             /** @var \App\Models\CompanyUser $cu */
             $cu = $this->hydrateCompanyUser();
 
-            nlog("LOGIN:: ".$request->email." {$user->account_id}");
-
             if ($cu->count() == 0) {
                 return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
             }
@@ -159,7 +163,7 @@ class LoginController extends BaseController
                 ->increment()
                 ->batch();
 
-            LightLogs::create(new LoginMeta($request->email, $request->ip(), 'failure'))
+            LightLogs::create(new LoginMeta($request->email, $request->ip, 'failure'))
                 ->batch();
 
             $this->incrementLoginAttempts($request);
@@ -179,7 +183,13 @@ class LoginController extends BaseController
      */
     public function refresh(Request $request)
     {
-        $company_token = auth()->user()->getCurrentToken();
+        $truth = app()->make(TruthSource::class);
+
+        if ($truth->getCompanyToken()) {
+            $company_token = $truth->getCompanyToken();
+        } else {
+            $company_token = CompanyToken::where('token', $request->header('X-API-TOKEN'))->first();
+        }
 
         $cu = CompanyUser::query()
             ->where('user_id', $company_token->user_id);
@@ -238,27 +248,12 @@ class LoginController extends BaseController
             ->header('X-App-Version', config('ninja.app_version'))
             ->header('X-Api-Version', config('ninja.minimum_client_version'));
     }
-    
-    /**
-     * getSocialiteUser
-     * 
-     * Returns the socialite user if successful
-     * @param  string $provider
-     * @param  string $token
-     */
+
     private function getSocialiteUser(string $provider, string $token)
     {
         return Socialite::driver($provider)->userFromToken($token);
     }
-    
-    /**
-     * handleSocialiteLogin
-     *
-     * Handles authentication for Apple OAuth only!
-     * 
-     * @param  string $provider
-     * @param  string $token
-     */
+
     private function handleSocialiteLogin($provider, $token)
     {
         $user = $this->getSocialiteUser($provider, $token);
@@ -272,13 +267,7 @@ class LoginController extends BaseController
             ->header('X-App-Version', config('ninja.app_version'))
             ->header('X-Api-Version', config('ninja.minimum_client_version'));
     }
-    
-    /**
-     * loginOrCreateFromSocialite
-     *
-     * @param  mixed $user
-     * @param  string $provider
-     */
+
     private function loginOrCreateFromSocialite($user, $provider)
     {
         $query = [
@@ -291,8 +280,7 @@ class LoginController extends BaseController
                 return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
             }
 
-            auth()->login($existing_user, false);
-            auth()->user()->setContext($existing_user->account->default_company, $existing_user->tokens()->where('company_id', $existing_user->account->default_company_id)->where('is_system', true)->first());
+            Auth::login($existing_user, false);
 
             /** @var \App\Models\CompanyUser $cu */
             $cu = $this->hydrateCompanyUser();
@@ -307,7 +295,39 @@ class LoginController extends BaseController
 
             return $this->timeConstrainedResponse($cu);
         }
-   
+        //If this is a result user/email combo - lets add their OAuth details details
+        if ($existing_login_user = MultiDB::hasUser(['email' => $user->email])) {
+            if (!$existing_login_user->account) {
+                return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
+            }
+
+            Auth::login($existing_login_user, false);
+            /** @var \App\Models\User $user */
+
+            $user = auth()->user();
+
+            $user->update([
+                'oauth_user_id' => $user->id,
+                'oauth_provider_id' => $provider,
+            ]);
+
+            /** @var \App\Models\CompanyUser $cu */
+            $cu = $this->hydrateCompanyUser();
+
+            if ($cu->count() == 0) {
+                return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
+            }
+
+            if (Ninja::isHosted() && !$cu->first()->is_owner && !$existing_login_user->account->isEnterprisePaidClient()) {
+                return response()->json(['message' => 'Pro / Free accounts only the owner can log in. Please upgrade'], 403);
+            }
+
+            return $this->timeConstrainedResponse($cu);
+        }
+
+        // nlog("socialite");
+        // nlog($user);
+
         $name = OAuth::splitName($user->name);
 
         if ($provider == 'apple') {
@@ -332,11 +352,10 @@ class LoginController extends BaseController
 
         $account = (new CreateAccount($new_account, request()->getClientIp()))->handle();
 
-        $user = $account->users()->first();
+        Auth::login($account->default_company->owner(), false);
 
-        auth()->login($user, false);
-        auth()->user()->setCompany($account->default_company);
-        auth()->user()->setContext($account->default_company, $user->tokens()->where('company_id', $account->default_company_id)->where('is_system', true)->first());
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
 
         $user->email_verified_at = now();
         $user->save();
@@ -354,14 +373,7 @@ class LoginController extends BaseController
 
         return $this->timeConstrainedResponse($cu);
     }
-    
-    /**
-     * hydrateCompanyUser
-     *
-     * Hydrates the company user for the response
-     * 
-     * @return Builder
-     */
+
     private function hydrateCompanyUser(): Builder
     {
 
@@ -385,12 +397,14 @@ class LoginController extends BaseController
 
         $this->setLoginCache($user);
 
-        // $truth = app()->make(TruthSource::class);
-        // $truth->setCompanyUser($cu->first());
-        // $truth->setUser($user);
-        // $truth->setCompany($set_company);
+        $truth = app()->make(TruthSource::class);
+        $truth->setCompanyUser($cu->first());
+        $truth->setUser($user);
+        $truth->setCompany($set_company);
 
         //21-03-2024
+
+
         $cu->each(function ($cu) {
             /** @var \App\Models\CompanyUser $cu */
             if (CompanyToken::query()->where('company_id', $cu->company_id)->where('user_id', $cu->user_id)->where('is_system', true)->doesntExist()) {
@@ -398,9 +412,7 @@ class LoginController extends BaseController
             }
         });
 
-        // $truth->setCompanyToken(CompanyToken::where('user_id', $user->id)->where('company_id', $set_company->id)->where('is_system', true)->first());
-
-        $user->setContext($set_company, CompanyToken::where('user_id', $user->id)->where('company_id', $set_company->id)->where('is_system', true)->first());
+        $truth->setCompanyToken(CompanyToken::where('user_id', $user->id)->where('company_id', $set_company->id)->where('is_system', true)->first());
 
         return CompanyUser::query()->where('user_id', $user->id);
     }
@@ -444,17 +456,6 @@ class LoginController extends BaseController
                 return response()->json(['message' => 'User exists, but never authenticated with OAuth, please use your email and password to login.'], 400);
             }
 
-            // If this is a result user/email combo - lets add their OAuth details details
-            // if ($email && $existing_login_user = MultiDB::hasUser(['email' => $email, 'oauth_provider_id' => 'microsoft'])) {
-            //     if (!$existing_login_user->account) {
-            //         return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
-            //     }
-
-            //     Auth::login($existing_login_user, true);
-
-            //     return $this->existingLoginUser($user->getId(), 'microsoft');
-            // }
-
             // Signup!
             if (request()->has('create') && request()->input('create') == 'true') {
                 $new_account = [
@@ -484,9 +485,7 @@ class LoginController extends BaseController
      */
     private function existingOauthUser($existing_user)
     {
-        
-        auth()->login($existing_user, false);
-        auth()->user()->setContext($existing_user->account->default_company, $existing_user->tokens()->where('company_id', $existing_user->account->default_company->id)->where('is_system', true)->first());
+        Auth::login($existing_user, false);
 
         /** @var \App\Models\CompanyUser $cu */
         $cu = $this->hydrateCompanyUser();
@@ -496,6 +495,31 @@ class LoginController extends BaseController
         }
 
         if (Ninja::isHosted() && !$cu->first()->is_owner && !$existing_user->account->isEnterprisePaidClient()) {
+            return response()->json(['message' => 'Pro / Free accounts only the owner can log in. Please upgrade'], 403);
+        }
+
+        return $this->timeConstrainedResponse($cu);
+    }
+
+    private function existingLoginUser($oauth_user_id, $provider)
+    {
+
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        $user->update([
+            'oauth_user_id' => $oauth_user_id,
+            'oauth_provider_id' => $provider,
+        ]);
+
+        /** @var \App\Models\CompanyUser $cu */
+        $cu = $this->hydrateCompanyUser();
+
+        if ($cu->count() == 0) {
+            return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
+        }
+
+        if (Ninja::isHosted() && !$cu->first()->is_owner && !auth()->user()->account->isEnterprisePaidClient()) {
             return response()->json(['message' => 'Pro / Free accounts only the owner can log in. Please upgrade'], 403);
         }
 
@@ -534,30 +558,20 @@ class LoginController extends BaseController
                 return response()->json(['message' => 'Please use your email and password to login.'], 400);
             }
 
-            // 2025-05-19 - this caused an issue when a user/email password combo user used their google account to login, it raced through and attempted to create a new account.
-            //If this is a result user/email combo - lets add their OAuth details details
-            // if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user), 'oauth_provider_id' => 'google'])) {
-            //     if (!$existing_login_user->account) {
-            //         return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
-            //     }
 
-            //     Auth::login($existing_login_user, true);
-
-            //     return $this->existingLoginUser($google->harvestSubField($user), 'google');
-            // }
         }
 
         if ($user) {
             //check the user doesn't already exist in some form
-            // if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user), 'oauth_provider_id' => 'google'])) {
-            //     if (!$existing_login_user->account) {
-            //         return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
-            //     }
+            if ($existing_login_user = MultiDB::hasUser(['email' => $google->harvestEmail($user), 'oauth_provider_id' => 'google'])) {
+                if (!$existing_login_user->account) {
+                    return response()->json(['message' => 'User exists, but not attached to any companies! Orphaned user!'], 400);
+                }
 
-            //     Auth::login($existing_login_user, true);
+                Auth::login($existing_login_user, false);
 
-            //     return $this->existingLoginUser($google->harvestSubField($user), 'google');
-            // }
+                return $this->existingLoginUser($google->harvestSubField($user), 'google');
+            }
 
             if (request()->has('create') && request()->input('create') == 'true') {
                 //user not found anywhere - lets sign them up.
@@ -593,11 +607,10 @@ class LoginController extends BaseController
             return $account;
         }
 
-        $user = $account->default_company->owner();
-        // Auth::login($user, true);
-        auth()->login($user, false);
-        auth()->user()->setCompany($account->default_company);
-        auth()->user()->setContext($account->default_company, $user->tokens()->where('company_id', $account->default_company_id)->where('is_system', true)->first());
+        Auth::login($account->default_company->owner(), false);
+
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
 
         $user->email_verified_at = now();
         $user->save();

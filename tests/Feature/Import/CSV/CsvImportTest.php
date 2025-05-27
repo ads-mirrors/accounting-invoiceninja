@@ -121,10 +121,10 @@ class CsvImportTest extends TestCase
 
         // $this->user->setContext($this->company, $this->token);
         
-        // $truth = app()->make(TruthSource::class);
-        // $truth->setCompanyUser($this->cu);
-        // $truth->setUser($this->user);
-        // $truth->setCompany($this->company);
+        $truth = app()->make(TruthSource::class);
+        $truth->setCompanyUser($this->cu);
+        $truth->setUser($this->user);
+        $truth->setCompany($this->company);
 
         $csv_importer = new Csv($data, $this->company);
 

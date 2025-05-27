@@ -82,9 +82,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         /* Ensure we don't have stale state in jobs */
-        // Queue::before(function (JobProcessing $event) {
-        //     App::forgetInstance(TruthSource::class);
-        // });
+        Queue::before(function (JobProcessing $event) {
+            App::forgetInstance(TruthSource::class);
+        });
+
+        app()->instance(TruthSource::class, new TruthSource());
 
         /* Extension for custom mailers */
 

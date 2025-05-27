@@ -84,7 +84,7 @@ class BaseImport
             )
             : null;
 
-        auth()->login($this->company->owner(), true);
+        auth()->login($this->company->owner(), false);
 
         /** @var \App\Models\User $user */
         $user = auth()->user();

@@ -117,7 +117,14 @@ class UserTest extends TestCase
         $company_token->is_system = true;
         $company_token->save();
 
-        auth()->user()->setContext($company, $company_token);
+        // auth()->user()->setContext($company, $company_token);
+
+        $truth = app()->make(TruthSource::class);
+
+        $truth->setCompanyUser($company_token->cu);
+        $truth->setUser($company_token->user);
+        $truth->setCompany($company_token->company);
+        $truth->setCompanyToken($company_token);
 
         return $company_token;
 
