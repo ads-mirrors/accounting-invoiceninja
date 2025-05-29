@@ -208,7 +208,7 @@ class MultiDB
 
         foreach (self::$dbs as $db) {
             self::setDB($db);
-            if ($user = User::on($db)->where($data)->withTrashed()->first()) {
+            if ($user = User::where($data)->withTrashed()->first()) {
                 return $user;
             }
         }
@@ -330,8 +330,9 @@ class MultiDB
         $current_db = config('database.default');
 
         foreach (self::$dbs as $db) {
+            self::setDB($db);
 
-            if ($ct = CompanyToken::on($db)->with([
+            if ($ct = CompanyToken::with([
                 'user.account',
                 'company',
                 'account',
@@ -563,9 +564,8 @@ class MultiDB
         $current_db = config('database.default');
 
         foreach (self::$dbs as $db) {
-            if ($company = Company::on($db)->where($query_array)->first()) {
-                self::setDb($db);
-
+            self::setDb($db);
+            if ($company = Company::where($query_array)->first()) {
                 return $company;
             }
         }
@@ -625,7 +625,6 @@ class MultiDB
         foreach (self::$dbs as $db) {
             if ($invite = $class::on($db)->where('key', $invitation_key)->exists()) {
                 self::setDb($db);
-
                 return true;
             }
         }
