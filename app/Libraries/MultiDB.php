@@ -584,9 +584,8 @@ class MultiDB
         $current_db = config('database.default');
 
         foreach (self::$dbs as $db) {
-            if ($company = Company::on($db)->where("expense_mailbox", $expense_mailbox)->first()) {
-                self::setDb($db);
-
+            self::setDb($db);
+            if ($company = Company::where("expense_mailbox", $expense_mailbox)->first()) {
                 return $company;
             }
         }
