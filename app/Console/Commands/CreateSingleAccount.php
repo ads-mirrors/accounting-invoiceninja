@@ -33,6 +33,7 @@ use App\Models\TaxRate;
 use App\Libraries\MultiDB;
 use App\Models\TaskStatus;
 use App\Models\CompanyToken;
+use App\Models\Subscription;
 use App\Models\ClientContact;
 use App\Models\VendorContact;
 use App\Models\CompanyGateway;
@@ -600,7 +601,44 @@ class CreateSingleAccount extends Command
         $sub->frequency_id = RecurringInvoice::FREQUENCY_ANNUALLY;
         $sub->save();
 
+
+        if($config = config('admin-api.products')){
+
+            foreach($config as $key => $product){
+
+                if(!$p = Product::where('product_key', $key)->first()){
+
+                    $p = Product::factory()->create([
+                        'user_id' => $user->id,
+                        'company_id' => $company->id,
+                        'product_key' => $key,
+                        'notes' => $product['description'],
+                        'price' => $product['price']
+                    ]);
+
+                    if(!Subscription::find($product['subscription_id'])){
+
+                        $sub = SubscriptionFactory::create($company->id, $user->id);
+                        $sub->id = $product['subscription_id'];
+                        $sub->name = $product['description'];
+                        $sub->recurring_product_ids = "{$p->hashed_id}";
+                        $sub->webhook_configuration = $webhook_config;
+                        $sub->allow_plan_changes = true;
+                        $sub->frequency_id = $product['term'] == 'month' ? RecurringInvoice::FREQUENCY_MONTHLY : RecurringInvoice::FREQUENCY_ANNUALLY;
+                        $sub->max_seats_limit = $product['users'] ?? 1;
+                        $sub->per_seat_enabled = true;
+                        $sub->save();
+
+                    }
+                }
+
+            }
+
+        }
+
+
     }
+
 
     private function createClient($company, $user)
     {

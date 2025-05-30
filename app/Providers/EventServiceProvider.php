@@ -288,6 +288,8 @@ use App\Listeners\RecurringExpense\RecurringExpenseRestoredActivity;
 use App\Listeners\RecurringInvoice\RecurringInvoiceArchivedActivity;
 use App\Listeners\RecurringInvoice\RecurringInvoiceRestoredActivity;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use App\Listeners\Job\GlobalJobFailureListener;
+use Illuminate\Queue\Events\JobFailed;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -495,6 +497,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         InvitationWasViewed::class => [
             InvitationViewedListener::class,
+        ],
+        JobFailed::class => [
+            GlobalJobFailureListener::class,
         ],
         PaymentWasEmailed::class => [
             PaymentEmailedActivity::class,
