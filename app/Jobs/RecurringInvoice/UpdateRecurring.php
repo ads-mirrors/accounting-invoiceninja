@@ -15,17 +15,25 @@ namespace App\Jobs\RecurringInvoice;
 use App\Models\User;
 use App\Models\Company;
 use App\Libraries\MultiDB;
+use Illuminate\Bus\Queueable;
 use App\Models\RecurringInvoice;
 use App\Events\Socket\RefetchEntity;
-use App\Jobs\BaseJob;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 
-class UpdateRecurring extends BaseJob
+class UpdateRecurring implements ShouldQueue
 {
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
+
     public $tries = 1;
 
     public function __construct(public array $ids, public Company $company, public User $user, protected string $action, protected float $percentage = 0)
     {
-        nlog("UpdateRecurring job constructed with IDs: " . implode(',', $ids) . " Action: {$action}");
     }
 
     /**
@@ -35,11 +43,8 @@ class UpdateRecurring extends BaseJob
      */
     public function handle(): void
     {
-        nlog("UpdateRecurring job STARTING - this proves it's being executed");
-        
         MultiDB::setDb($this->company->db);
 
-        nlog("UpdateRecurring");
         $this->user->setCompany($this->company);
 
         RecurringInvoice::query()->where('company_id', $this->company->id)
@@ -57,32 +62,11 @@ class UpdateRecurring extends BaseJob
             });
 
         event(new RefetchEntity('recurring_invoices', null, $this->user));
-        
-        nlog("UpdateRecurring job COMPLETED successfully");
     }
 
-    protected function getJobProperties(): array
+    public function failed($exception = null)
     {
-        return [
-            'company_id' => $this->company->id,
-            'user_id' => $this->user->id,
-            'action' => $this->action,
-            'ids_count' => count($this->ids),
-            'ids' => $this->ids,
-            'percentage' => $this->percentage,
-        ];
-    }
-
-    protected function handleSpecificFailure(\Throwable $exception = null): void
-    {
-        nlog("UpdateRecurring specific failure handler called");
-        if ($exception) {
-            nlog("UpdateRecurring failed with: " . $exception->getMessage());
-        }
-    }
-
-    protected function shouldDisableFailedJobStorage(): bool
-    {
-        return true; // Matches existing behavior
+        if($exception)
+            nlog($exception->getMessage());
     }
 }
