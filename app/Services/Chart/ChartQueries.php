@@ -324,7 +324,6 @@ trait ChartQueries
             AND clients.is_deleted = 0
             {$user_filter}
             AND invoices.is_deleted = 0
-            
             AND (invoices.date BETWEEN :start_date AND :end_date)
         ", [
          'company_id' => $this->company->id,
@@ -444,6 +443,7 @@ trait ChartQueries
             AND invoices.is_deleted = 0
             {$user_filter}
             AND (invoices.date BETWEEN :start_date AND :end_date)
+            GROUP BY invoices.date
         ", [
             'company_id' => $this->company->id,
             'start_date' => $start_date,
@@ -499,6 +499,7 @@ trait ChartQueries
             {$user_filter}
             AND invoices.status_id IN (2,3,4)
             AND (invoices.date BETWEEN :start_date AND :end_date)
+            GROUP BY invoices.date
         ", [
             'company_id' => $this->company->id,
             'start_date' => $start_date,
