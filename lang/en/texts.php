@@ -5548,8 +5548,8 @@ $lang = array(
     'pro_plan_feature_18' => 'Auto Sales Tax Calculation (US States)',
     'enterprise_plan_feature_1' => 'Additional Account Users & Permissions',
     'enterprise_plan_feature_2' => 'Upload & Attach Files',
-    'enterprise_plan_feature_3' => 'Custom Portal Domain: "Billing.YourCompany.com"',
-    'enterprise_plan_feature_4' => 'Connect your bank accounts for syncing',
+    'enterprise_plan_feature_3' => 'Custom Portal Domain',
+    'enterprise_plan_feature_4' => 'Bank account sync',
     'premium_business_plus_feature_1' => 'Developer Concierge',
     'premium_business_plus_feature_2' => 'Direct Priority Support',
     'premium_business_plus_feature_3' => 'Invoice Design Service',
@@ -5584,6 +5584,7 @@ $lang = array(
     'existing_gateway' => 'Gateway already exists',
     'activity_150' => 'Account deleted :notes',
     'docuninja' => 'DocuNinja',
+    'pro_rata' => 'Pro Rata',
 );
 
 return $lang;
