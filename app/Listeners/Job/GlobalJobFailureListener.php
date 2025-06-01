@@ -14,9 +14,9 @@ namespace App\Listeners\Job;
 
 use App\DataMapper\Analytics\JobFailureAnalytics;
 use Illuminate\Queue\Events\JobFailed;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Turbo124\Beacon\Facades\LightLogs;
 
-class GlobalJobFailureListener implements ShouldQueue
+class GlobalJobFailureListener
 {
     /**
      * Handle the job failure event.
@@ -26,6 +26,6 @@ class GlobalJobFailureListener implements ShouldQueue
         $name = $event->job->resolveName();
         $exception = $event->exception->getMessage();
 
-        Lightlogs::create(new JobFailureAnalytics($name, $exception))->send();
+        LightLogs::create(new JobFailureAnalytics($name, $exception))->send();
     }
 } 
