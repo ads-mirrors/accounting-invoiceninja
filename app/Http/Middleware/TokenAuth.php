@@ -33,13 +33,15 @@ class TokenAuth
     public function handle($request, Closure $next)
     {
 
-         if ($request->header('X-API-TOKEN') && ($company_token = CompanyToken::with([
+        if (config('ninja.db.multi_db_enabled') &&
+            $request->header('X-API-TOKEN') &&
+             ($company_token = MultiDB::getCompanyToken($request->header('X-API-TOKEN')))) {
+        } elseif ($request->header('X-API-TOKEN') && ($company_token = CompanyToken::with([
             'user.account',
             'company',
             'account',
-            'cu',
+            'cu'
             ])->where('token', $request->header('X-API-TOKEN'))->first())) {
-
         } else {
             return response()->json(['message' => 'Invalid token'], 403);
         }
