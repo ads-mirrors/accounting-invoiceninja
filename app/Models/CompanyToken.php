@@ -95,7 +95,6 @@ class CompanyToken extends BaseModel
         return $this->hasOne(CompanyUser::class, ['user_id', 'company_id'], ['user_id', 'company_id']);
     }
 
-
     // public function company_user(): \Illuminate\Database\Eloquent\Relations\HasOne
     // {
     //     return $this->hasOne(CompanyUser::class, 'user_id', 'user_id')
