@@ -354,7 +354,16 @@ class TemplateService
             $f = $this->document->createDocumentFragment();
 
             // $template = htmlspecialchars($template, ENT_XML1, 'UTF-8'); //2025-02-07 double encoding the entities = bad
-            $f->appendXML(str_ireplace("<br>", "<br/>", html_entity_decode($template)));
+            //2025-06-03 - we changed this to use CDATA INSTEAD so that we can support characters such as & when decoding.
+            //$f->appendXML(str_ireplace("<br>", "<br/>", html_entity_decode($template)));
+
+            $decoded_template = str_ireplace("<br>", "<br/>", html_entity_decode($template));
+            $f->appendXML('<![CDATA[' . $decoded_template . ']]>');
+
+            // Alternative solution: Proper XML escaping instead of CDATA
+            // $decoded_template = str_ireplace("<br>", "<br/>", html_entity_decode($template));
+            // $escaped_template = htmlspecialchars($decoded_template, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+            // $f->appendXML($escaped_template);
 
             $replacements[] = $f;
 
