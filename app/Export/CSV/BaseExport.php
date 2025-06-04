@@ -1462,19 +1462,26 @@ class BaseExport
             $key = str_replace('product.', '', $key);
             $key = str_replace('task.', '', $key);
 
+
+            // if (stripos($value, 'client.') !== false && stripos($value, 'custom_value') === false) {
+            //     $value = Str::after($value, 'client.');
+            //     $header[] = $value;
+            // }
+
             if (stripos($value, 'tax.') !== false) {
                 $value = Str::after($value, 'tax.');
                 $header[] = $value;
             } elseif (stripos($value, 'custom_value') !== false) {
+                
                 $parts = explode(".", $value);
 
-                if (count($parts) == 2 && in_array($parts[0], ['credit','quote','invoice','purchase_order','recurring_invoice'])) {
-                    $entity = "invoice".substr($parts[1], -1);
+                if (count($parts) == 2 && in_array($parts[0], ['contact', 'client','credit','quote','invoice','purchase_order','recurring_invoice'])) {
+                    $entity = $parts[0].substr($parts[1], -1);
                     $prefix = ctrans("texts.".$parts[0]);
                     $fallback = "custom_value".substr($parts[1], -1);
-                    $custom_field_label = $helper->makeCustomField($this->company->custom_fields, $entity);
+                    $custom_field_label = (string)$helper->makeCustomField($this->company->custom_fields, $entity);
 
-                    if (strlen($custom_field_label) > 1) {
+                    if (strlen($custom_field_label) >= 1) {
                         $header[] = $custom_field_label;
                     } else {
                         $header[] = $prefix . " ". ctrans("texts.{$fallback}");
