@@ -112,6 +112,12 @@ class ClientController extends BaseController
      */
     public function show(ShowClientRequest $request, Client $client)
     {
+        nlog("show");
+        if(auth()->user()->hasExcludedPermissions($this->client_excludable_permissions, $this->client_excludable_overrides)){
+            nlog('hiding fields');
+            $client->makeHidden($this->client_exclusion_fields);
+        }
+
         return $this->itemResponse($client);
     }
 
@@ -125,6 +131,12 @@ class ClientController extends BaseController
      */
     public function edit(EditClientRequest $request, Client $client)
     {
+        nlog("Edit");
+        if (auth()->user()->hasExcludedPermissions($this->client_excludable_permissions, $this->client_excludable_overrides)) {
+            nlog('hiding fields');
+            $client->makeHidden($this->client_exclusion_fields);
+        }
+
         return $this->itemResponse($client);
     }
 
