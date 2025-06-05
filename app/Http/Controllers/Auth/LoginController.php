@@ -112,7 +112,18 @@ class LoginController extends BaseController
                 ->increment()
                 ->batch();
 
-            LightLogs::create(new LoginMeta($request->email, $request->ip, 'success'))
+
+            $ip = '';
+
+            if (request()->hasHeader('Cf-Connecting-Ip')) {
+                $ip = request()->header('Cf-Connecting-Ip');
+            } elseif (request()->hasHeader('X-Forwarded-For')) {
+                $ip = request()->header('X-Forwarded-For');
+            } else {
+                $ip = request()->ip() ?: ' ';
+            }
+
+            LightLogs::create(new LoginMeta($request->email, $ip, 'success'))
                 ->batch();
 
             /** @var \App\Models\User $user */
@@ -163,8 +174,18 @@ class LoginController extends BaseController
                 ->increment()
                 ->batch();
 
-            LightLogs::create(new LoginMeta($request->email, $request->ip, 'failure'))
-                ->batch();
+                
+            $ip = '';
+
+            if (request()->hasHeader('Cf-Connecting-Ip')) {
+                $ip = request()->header('Cf-Connecting-Ip');
+            } elseif (request()->hasHeader('X-Forwarded-For')) {
+                $ip = request()->header('X-Forwarded-For');
+            } else {
+                $ip = request()->ip() ?: ' ';
+            }
+
+            LightLogs::create(new LoginMeta($request->email, $ip, 'failure'))->batch();
 
             $this->incrementLoginAttempts($request);
 
