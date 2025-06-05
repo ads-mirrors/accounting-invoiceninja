@@ -50,6 +50,7 @@ class BlockonomicsPaymentDriver extends BaseDriver
     public $NEW_ADDRESS_URL = 'https://www.blockonomics.co/api/new_address';
     public $PRICE_URL = 'https://www.blockonomics.co/api/price';
     public $STORES_URL = 'https://www.blockonomics.co/api/v2/stores';
+    private string $test_txid = 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction';
 
     public function init()
     {
@@ -106,13 +107,10 @@ class BlockonomicsPaymentDriver extends BaseDriver
         $status = $request->status;
         $addr = $request->addr;
 
-        $test_txid = Blockonomics::getTestTxid();
-
-        if ($txid === $test_txid) {
+        if ($txid === $this->test_txid) {
             $payment = Payment::query()
                 ->where('company_id', $company->id)
-                ->where('custom_value1', $txid)
-                ->where('custom_value2', $addr)
+                ->where('private_notes', "$addr - $value")
                 ->firstOrFail();
         } else {
             $payment = Payment::query()

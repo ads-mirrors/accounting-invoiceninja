@@ -29,7 +29,7 @@ use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
 class Blockonomics implements LivewireMethodInterface
 {
     use MakesHash;
-    private const TEST_TXID = 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction';
+    private string $test_txid = 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction';
 
     public function __construct(public BlockonomicsPaymentDriver $blockonomics)
     {
@@ -46,12 +46,6 @@ class Blockonomics implements LivewireMethodInterface
     public function authorizeResponse($request)
     {
     }
-
-    public static function getTestTxid()
-    {
-        return self::TEST_TXID;
-    }
-
 
 
     public function getBTCAddress(): array
@@ -160,7 +154,7 @@ class Blockonomics implements LivewireMethodInterface
             // Append a random value to the transaction reference for test payments
             // to prevent duplicate entries in the database.
             // This ensures the payment hashed_id remains unique.
-            $testTxid = $this->getTestTxid();
+            $testTxid = $this->test_txid;
             $data['transaction_reference'] = ($request->txid === $testTxid)
                 ? $request->txid . bin2hex(random_bytes(16))
                 : $request->txid;
@@ -182,9 +176,7 @@ class Blockonomics implements LivewireMethodInterface
             }
 
             $payment = $this->blockonomics->createPayment($data, $statusId);
-            $payment->custom_value1 = $request->txid;
-            $payment->custom_value2 = $request->btc_address;
-            $payment->custom_value3 = $request->btc_amount;
+            $payment->private_notes = "{$request->btc_address} - {$request->btc_amount}";
             $payment->save();
 
             SystemLogger::dispatch(
