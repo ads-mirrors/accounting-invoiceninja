@@ -29,6 +29,7 @@ use App\Http\Requests\ClientPortal\Payments\PaymentResponseRequest;
 class Blockonomics implements LivewireMethodInterface
 {
     use MakesHash;
+    private const TEST_TXID = 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction';
 
     public function __construct(public BlockonomicsPaymentDriver $blockonomics)
     {
@@ -45,6 +46,12 @@ class Blockonomics implements LivewireMethodInterface
     public function authorizeResponse($request)
     {
     }
+
+    public static function getTestTxid()
+    {
+        return self::TEST_TXID;
+    }
+
 
 
     public function getBTCAddress(): array
@@ -150,12 +157,11 @@ class Blockonomics implements LivewireMethodInterface
             $data['payment_type'] = PaymentType::CRYPTO;
             $data['gateway_type_id'] = GatewayType::CRYPTO;
 
-
-            define('TEST_TXID', 'WarningThisIsAGeneratedTestPaymentAndNotARealBitcoinTransaction');
             // Append a random value to the transaction reference for test payments
             // to prevent duplicate entries in the database.
             // This ensures the payment hashed_id remains unique.
-            $data['transaction_reference'] = ($request->txid === TEST_TXID)
+            $testTxid = $this->getTestTxid();
+            $data['transaction_reference'] = ($request->txid === $testTxid)
                 ? $request->txid . bin2hex(random_bytes(16))
                 : $request->txid;
 

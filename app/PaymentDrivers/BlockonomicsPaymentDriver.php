@@ -106,11 +106,20 @@ class BlockonomicsPaymentDriver extends BaseDriver
         $status = $request->status;
         $addr = $request->addr;
 
-        $payment = Payment::query()
-            ->where('company_id', $company->id)
-            ->where('custom_value1', $txid)
-            ->where('custom_value2', $addr)
-            ->firstOrFail();
+        $test_txid = Blockonomics::getTestTxid();
+
+        if ($txid === $test_txid) {
+            $payment = Payment::query()
+                ->where('company_id', $company->id)
+                ->where('custom_value1', $txid)
+                ->where('custom_value2', $addr)
+                ->firstOrFail();
+        } else {
+            $payment = Payment::query()
+                ->where('company_id', $company->id)
+                ->where('transaction_reference', $txid)
+                ->firstOrFail();
+        }
 
         // Already completed payment, no need to update status
         if ($payment->status_id == Payment::STATUS_COMPLETED) {
