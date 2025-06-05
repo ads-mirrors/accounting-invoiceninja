@@ -57,7 +57,7 @@ class UpdateUserLoginFailed implements ShouldQueue
         if(!$user)
             return;
 
-        $user->increment('failed_logins');
+        $user->increment('failed_logins',1);
 
         if($user->failed_logins > 3) {
             $content = [

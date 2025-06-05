@@ -58,6 +58,7 @@ class UpdateUserLastLogin implements ShouldQueue
 
         $user = $event->user;
         $user->last_login = now();
+        $user->failed_logins = 0;
         $user->save();
 
         $event_vars = $event->event_vars;
