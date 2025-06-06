@@ -21,7 +21,7 @@ class EncodeEmailSubjectTest extends TestCase
         
         // Verify emoji is preserved
         $this->assertStringContainsString('🚀', $convertedSubject);
-        
+        $this->assertStringContainsString('é', $convertedSubject);
         // Verify accented characters are preserved
         $this->assertStringContainsString('impayée', $convertedSubject);
         
@@ -51,7 +51,8 @@ class EncodeEmailSubjectTest extends TestCase
             "Team meeting 👨‍💻👩‍💻" => "Team meeting 👨‍💻👩‍💻",
             
             // Mixed flags and symbols
-            "Conference in Paris 🇫🇷 ✈️" => "Conference in Paris 🇫🇷 ✈️"
+            "Conference in Paris 🇫🇷 ✈️" => "Conference in Paris 🇫🇷 ✈️",
+            "Nouvelle facture de Réact" => "Nouvelle facture de Réact"
         ];
 
         foreach ($testCases as $input => $expected) {
@@ -81,7 +82,8 @@ class EncodeEmailSubjectTest extends TestCase
             "Coração São Paulo" => "Coração São Paulo",
             
             // Mixed languages
-            "Café & Niño résumé" => "Café & Niño résumé"
+            "Café & Niño résumé" => "Café & Niño résumé",
+            "Nouvelle facture de Réact" => "Nouvelle facture de Réact"
         ];
 
         foreach ($testCases as $input => $expected) {
@@ -111,7 +113,8 @@ class EncodeEmailSubjectTest extends TestCase
             "Discount ≥ 20% ± 5%" => "Discount ≥ 20% ± 5%",
             
             // Arrows and symbols
-            "Process → Complete ✓" => "Process → Complete ✓"
+            "Process → Complete ✓" => "Process → Complete ✓",
+            "Nouvelle facture de Réact" => "Nouvelle facture de Réact"
         ];
 
         foreach ($testCases as $input => $expected) {
@@ -141,7 +144,8 @@ class EncodeEmailSubjectTest extends TestCase
             "Bienvenue chez Café ☕ 🥐" => "Bienvenue chez Café ☕ 🥐",
             
             // Complex business scenario
-            "Réunion équipe → 15h30 📊 🎯" => "Réunion équipe → 15h30 📊 🎯"
+            "Réunion équipe → 15h30 📊 🎯" => "Réunion équipe → 15h30 📊 🎯",
+            "Nouvelle facture de Réact" => "Nouvelle facture de Réact"
         ];
 
         foreach ($testCases as $input => $expected) {
@@ -188,7 +192,8 @@ class EncodeEmailSubjectTest extends TestCase
             "Re: Fw: [URGENT] Company's \"Project\" Status—Update ✓",
             
             // International content
-            "国际业务 🌍 Négociation €500K 💼"
+            "国际业务 🌍 Négociation €500K 💼",
+            "Nouvelle facture de Réact" => "Nouvelle facture de Réact"
         ];
 
         foreach ($testCases as $input) {
@@ -228,7 +233,8 @@ class EncodeEmailSubjectTest extends TestCase
             " 🚀 📧 🎉 " => " 🚀 📧 🎉 ",
             
             // Newlines and tabs (should be preserved)
-            "Line 1\nLine 2\tTabbed" => "Line 1\nLine 2\tTabbed"
+            "Line 1\nLine 2\tTabbed" => "Line 1\nLine 2\tTabbed",
+            "Nouvelle facture de Réact" => "Nouvelle facture de Réact"
         ];
 
         foreach ($testCases as $input => $expected) {
@@ -239,6 +245,33 @@ class EncodeEmailSubjectTest extends TestCase
         }
     }
 
+
+             /**
+     * Test performance with typical email subject lengths
+     */
+    public function testPerformanceWithTypicalSubjects2()
+    {
+        $baseSubject = "Nouvelle facture de Réact";
+        
+        // Test with different subject lengths
+        $subjects = [
+            $baseSubject, // ~40 chars
+            str_repeat($baseSubject . " ", 2), // ~80 chars
+            str_repeat($baseSubject . " ", 5), // ~200 chars
+        ];
+        
+        foreach ($subjects as $subject) {
+            $startTime = microtime(true);
+            $result = Encode::convert($subject);
+            $endTime = microtime(true);
+            
+            $executionTime = ($endTime - $startTime) * 1000; // Convert to milliseconds
+            
+            // Should complete quickly (under 10ms for email subjects)
+            $this->assertLessThan(10, $executionTime, "Too slow for subject: " . strlen($subject) . " chars");
+            $this->assertTrue(mb_check_encoding($result, 'UTF-8'));
+        }
+    }
     /**
      * Test performance with typical email subject lengths
      */
@@ -272,6 +305,18 @@ class EncodeEmailSubjectTest extends TestCase
     public function testIdempotency()
     {
         $original = "Rappel facture impayée (\$invoice) 🚀";
+        
+        $first = Encode::convert($original);
+        $second = Encode::convert($first);
+        $third = Encode::convert($second);
+        
+        // Should be identical after multiple conversions
+        $this->assertEquals($original, $first);
+        $this->assertEquals($first, $second);
+        $this->assertEquals($second, $third);
+
+
+        $original = "Nouvelle facture de Réact";
         
         $first = Encode::convert($original);
         $second = Encode::convert($first);
