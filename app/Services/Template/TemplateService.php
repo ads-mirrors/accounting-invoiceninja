@@ -280,7 +280,7 @@ class TemplateService
      */
     public function getPdf(): string
     {
-nlog($this->compiled_html);
+        
         if (config('ninja.invoiceninja_hosted_pdf_generation') || config('ninja.pdf_generator') == 'hosted_ninja') {
             $pdf = (new NinjaPdf())->build($this->compiled_html);
         } else {
