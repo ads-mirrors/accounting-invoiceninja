@@ -5585,6 +5585,7 @@ $lang = array(
     'activity_150' => 'Account deleted :notes',
     'docuninja' => 'DocuNinja',
     'pro_rata' => 'Pro Rata',
+    'change_docuninja_plan' => 'Change DocuNinja Plan',
 );
 
 return $lang;
