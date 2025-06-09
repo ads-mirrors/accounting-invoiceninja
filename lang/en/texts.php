@@ -5586,6 +5586,10 @@ $lang = array(
     'docuninja' => 'DocuNinja',
     'pro_rata' => 'Pro Rata',
     'change_docuninja_plan' => 'Change DocuNinja Plan',
+    'downgrade_end_of_cycle' => 'Your plan will automatically downgrade at the end of the current billing cycle.',
+    'docuninja_change_users' => 'New DocuNinja user limit',
+    'docuninja_disable_warning' => 'This will remove all access to your DocuNinja account.',
+    'docuninja_downgrade_info' => 'Your user limit will automatically be reduced at the end of the current billing cycle.',
 );
 
 return $lang;
