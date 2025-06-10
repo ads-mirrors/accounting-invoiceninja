@@ -172,6 +172,11 @@ class InvoiceItemExport extends BaseExport
                     $tmp_key = str_replace("item.", "", $key);
 
                     if ($tmp_key == 'tax_id') {
+
+                        if(!property_exists($item, 'tax_id')) {
+                            $item->tax_id = '1';
+                        }
+
                         $item_array[$key] = $this->getTaxCategoryName((int)$item->tax_id ?? 1); // @phpstan-ignore-line
                     }
                     elseif (property_exists($item, $tmp_key)) {
