@@ -1316,7 +1316,7 @@ class BaseExport
                 return $query->whereBetween($this->date_key, [now()->subDays(365), now()])->orderBy($this->date_key, 'ASC');
             case 'this_year':
 
-                $first_month_of_year = $this->company->getSetting('first_month_of_year') ?? 1;
+                $first_month_of_year = $this->company->first_month_of_year ?? 1;
                 $fin_year_start = now()->createFromDate(now()->year, $first_month_of_year, 1);
 
                 if (now()->lt($fin_year_start)) {
@@ -1328,7 +1328,7 @@ class BaseExport
                 return $query->whereBetween($this->date_key, [$this->start_date, $this->end_date])->orderBy($this->date_key, 'ASC');
             case 'last_year':
 
-                $first_month_of_year = $this->company->getSetting('first_month_of_year') ?? 1;
+                $first_month_of_year = $this->company->first_month_of_year ?? 1;
                 $fin_year_start = now()->createFromDate(now()->year, $first_month_of_year, 1);
                 $fin_year_start->subYearNoOverflow();
 
