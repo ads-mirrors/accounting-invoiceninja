@@ -15,15 +15,15 @@ namespace App\Export\CSV;
 use App\Export\Decorators\Decorator;
 use App\Libraries\MultiDB;
 use App\Models\Company;
-use App\Models\Invoice;
-use App\Transformers\InvoiceTransformer;
+use App\Models\RecurringInvoice;
+use App\Transformers\RecurringInvoiceTransformer;
 use App\Utils\Ninja;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
 use League\Csv\Writer;
 use App\Models\Product;
 
-class InvoiceItemExport extends BaseExport
+class RecurringInvoiceItemExport extends BaseExport
 {
     private $invoice_transformer;
 
@@ -49,7 +49,7 @@ class InvoiceItemExport extends BaseExport
     {
         $this->company = $company;
         $this->input = $input;
-        $this->invoice_transformer = new InvoiceTransformer();
+        $this->invoice_transformer = new RecurringInvoiceTransformer();
         $this->decorator = new Decorator();
     }
 
@@ -70,7 +70,7 @@ class InvoiceItemExport extends BaseExport
 
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
 
-        $query = Invoice::query()
+        $query = RecurringInvoice::query()
                         ->withTrashed()
                         ->with('client')
                         ->whereHas('client', function ($q) {
@@ -91,7 +91,7 @@ class InvoiceItemExport extends BaseExport
         }
 
         if ($this->input['status'] ?? false) {
-            $query = $this->addInvoiceStatusFilter($query, $this->input['status']);
+            $query = $this->addRecurringInvoiceStatusFilter($query, $this->input['status']);
         }
 
         $query = $this->applyProductFilters($query);
@@ -147,7 +147,7 @@ class InvoiceItemExport extends BaseExport
         $query->cursor()
             ->each(function ($invoice) {
 
-                /** @var \App\Models\Invoice $invoice */
+                /** @var \App\Models\RecurringInvoice $invoice */
                 $this->iterateItems($invoice);
             });
 
@@ -170,7 +170,7 @@ class InvoiceItemExport extends BaseExport
         return $items;
     }
 
-    private function iterateItems(Invoice $invoice)
+    private function iterateItems(RecurringInvoice $invoice)
     {
         $transformed_invoice = $this->buildRow($invoice);
 
@@ -179,7 +179,7 @@ class InvoiceItemExport extends BaseExport
         foreach ($this->filterItems($invoice->line_items) as $item) {
             $item_array = [];
 
-            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { //items iterator produces item array
+            foreach (array_values(array_intersect($this->input['report_keys'], $this->item_report_keys)) as $key) { //items iterator produces item arr
 
                 if (str_contains($key, "item.")) {
 
@@ -187,16 +187,14 @@ class InvoiceItemExport extends BaseExport
 
                     if ($tmp_key == 'tax_id') {
 
-                        if(!property_exists($item, 'tax_id')) {
+                        if (!property_exists($item, 'tax_id')) {
                             $item->tax_id = '1';
                         }
 
                         $item_array[$key] = $this->getTaxCategoryName((int)$item->tax_id ?? 1); // @phpstan-ignore-line
-                    }
-                    elseif (property_exists($item, $tmp_key)) {
+                    } elseif (property_exists($item, $tmp_key)) {
                         $item_array[$key] = $item->{$tmp_key};
-                    } 
-                    else {
+                    } else {
                         $item_array[$key] = '';
                     }
                 }
@@ -228,7 +226,7 @@ class InvoiceItemExport extends BaseExport
         };
     }
 
-    private function buildRow(Invoice $invoice): array
+    private function buildRow(RecurringInvoice $invoice): array
     {
         $transformed_invoice = $this->invoice_transformer->transform($invoice);
 
@@ -256,24 +254,26 @@ class InvoiceItemExport extends BaseExport
         return $entity;
     }
 
-    private function decorateAdvancedFields(Invoice $invoice, array $entity): array
+    private function decorateAdvancedFields(RecurringInvoice $invoice, array $entity): array
     {
 
-        if (in_array('invoice.recurring_id', $this->input['report_keys'])) {
-            $entity['invoice.recurring_id'] = $invoice->recurring_invoice->number ?? '';
+
+        if (in_array('recurring_invoice.frequency_id', $this->input['report_keys']) || in_array('frequency_id', $this->input['report_keys'])) {
+            $entity['recurring_invoice.frequency_id'] = $invoice->frequencyForKey($invoice->frequency_id);
         }
 
-        if (in_array('invoice.assigned_user_id', $this->input['report_keys'])) {
-            $entity['invoice.assigned_user_id'] = $invoice->assigned_user ? $invoice->assigned_user->present()->name() : '';
+        if (in_array('recurring_invoice.auto_bill_enabled', $this->input['report_keys'])) {
+            $entity['recurring_invoice.auto_bill_enabled'] = $invoice->auto_bill_enabled ? ctrans('texts.yes') : ctrans('texts.no');
         }
 
-        if (in_array('invoice.user_id', $this->input['report_keys'])) {
-            $entity['invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : '';// @phpstan-ignore-line
+        if (in_array('recurring_invoice.assigned_user_id', $this->input['report_keys'])) {
+            $entity['recurring_invoice.assigned_user_id'] = $invoice->assigned_user ? $invoice->assigned_user->present()->name() : '';
         }
 
-        if (in_array('invoice.project', $this->input['report_keys'])) {
-            $entity['invoice.project'] = $invoice->project ? $invoice->project->name : '';// @phpstan-ignore-line
+        if (in_array('recurring_invoice.user_id', $this->input['report_keys'])) {
+            $entity['recurring_invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : '';
         }
+
 
         return $entity;
     }

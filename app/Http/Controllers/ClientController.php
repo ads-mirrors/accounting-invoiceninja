@@ -491,4 +491,9 @@ class ClientController extends BaseController
         return $this->listResponse($documents);
 
     }
+
+    public function showSettings(ShowClientRequest $request, Client $client)
+    {
+        return response()->json($client->service()->showSettingsMap(), 200); 
+    }
 }
