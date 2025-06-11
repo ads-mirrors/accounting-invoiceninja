@@ -865,7 +865,6 @@ class BaseExport
         if (isset($this->input['product_key'])) {
 
             $products = explode(",", $this->input['product_key']);
-
             $query->where(function ($q) use ($products) {
                 foreach ($products as $product) {
                     $q->orWhereJsonContains('line_items', ['product_key' => $product]);

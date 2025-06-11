@@ -128,6 +128,7 @@ use App\Http\Controllers\Reports\ClientContactReportController;
 use App\Http\Controllers\Reports\PurchaseOrderReportController;
 use App\Http\Controllers\Reports\RecurringInvoiceReportController;
 use App\Http\Controllers\Reports\PurchaseOrderItemReportController;
+use App\Http\Controllers\Reports\RecurringInvoiceItemReportController;
 
 Route::group(['middleware' => ['throttle:api', 'api_secret_check']], function () {
     Route::post('api/v1/signup', [AccountController::class, 'store'])->name('signup.submit')->middleware('throttle:1,1');
@@ -356,6 +357,7 @@ Route::group(['middleware' => ['throttle:api', 'token_auth', 'valid_json','local
     Route::post('reports/quotes', QuoteReportController::class)->middleware('throttle:20,1');
     Route::post('reports/quote_items', QuoteItemReportController::class)->middleware('throttle:20,1');
     Route::post('reports/recurring_invoices', RecurringInvoiceReportController::class)->middleware('throttle:20,1');
+    Route::post('reports/recurring_invoice_items', RecurringInvoiceItemReportController::class)->middleware('throttle:20,1');
     Route::post('reports/payments', PaymentReportController::class)->middleware('throttle:20,1');
     Route::post('reports/products', ProductReportController::class)->middleware('throttle:20,1');
     Route::post('reports/product_sales', ProductSalesReportController::class)->middleware('throttle:20,1');
