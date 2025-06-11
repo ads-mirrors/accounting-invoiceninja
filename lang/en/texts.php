@@ -5590,6 +5590,7 @@ $lang = array(
     'docuninja_change_users' => 'New DocuNinja user limit',
     'docuninja_disable_warning' => 'This will remove all access to your DocuNinja account.',
     'docuninja_downgrade_info' => 'Your user limit will automatically be reduced at the end of the current billing cycle.',
+    'recurring_invoice_item' => 'Recurring Invoice Item',
 );
 
 return $lang;

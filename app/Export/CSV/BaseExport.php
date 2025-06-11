@@ -1043,7 +1043,7 @@ class BaseExport
 
         /** @var array $status_parameters */
         $status_parameters = explode(',', $status);
-
+nlog($status_parameters);
         if (in_array('all', $status_parameters) || count($status_parameters) == 0) {
             return $query;
         }

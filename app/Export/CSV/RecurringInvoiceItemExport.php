@@ -91,7 +91,7 @@ class RecurringInvoiceItemExport extends BaseExport
         }
 
         if ($this->input['status'] ?? false) {
-            $query = $this->addInvoiceStatusFilter($query, $this->input['status']);
+            $query = $this->addRecurringInvoiceStatusFilter($query, $this->input['status']);
         }
 
         $query = $this->applyProductFilters($query);
