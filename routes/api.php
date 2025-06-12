@@ -215,6 +215,7 @@ Route::group(['middleware' => ['throttle:api', 'token_auth', 'valid_json','local
 
     Route::post('company_gateways/bulk', [CompanyGatewayController::class, 'bulk'])->name('company_gateways.bulk');
     Route::post('company_gateways/{company_gateway}/test', [CompanyGatewayController::class, 'test'])->name('company_gateways.test');
+    Route::post('company_gateways/{company_gateway}/clone', [CompanyGatewayController::class, 'clone'])->name('company_gateways.clone');
     Route::post('company_gateways/{company_gateway}/import_customers', [CompanyGatewayController::class, 'importCustomers'])->name('company_gateways.import_customers');
 
     Route::put('company_users/{user}', [CompanyUserController::class, 'update']);
