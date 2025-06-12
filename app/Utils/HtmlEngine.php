@@ -401,8 +401,10 @@ class HtmlEngine
         $data['$credit.valid_until'] = ['value' => $this->translateDate($this->entity->due_date, $this->client->date_format(), $this->client->locale()), 'label' => ctrans('texts.valid_until')];
 
         $data['$balance'] = ['value' => Number::formatMoney($this->getBalance(), $this->client) ?: ' ', 'label' => ctrans('texts.balance')];
+
         $data['$credit.balance'] = ['value' => Number::formatMoney($this->entity_calc->getBalance(), $this->client) ?: ' ', 'label' => ctrans('texts.credit_balance')];
-        $data['$client.credit_balance'] = &$data['$credit.balance'];
+        $data['$client.credit_balance'] = ['value' => Number::formatMoney($this->entity->client->credit_balance, $this->client) ?: ' ', 'label' => ctrans('texts.credit_balance')];
+        // $data['$client.credit_balance'] = &$data['$credit.balance'];
 
         $data['$invoice.balance'] = &$data['$balance'];
         $data['$taxes'] = ['value' => Number::formatMoney($this->entity_calc->getItemTotalTaxes(), $this->client) ?: ' ', 'label' => ctrans('texts.taxes')];
