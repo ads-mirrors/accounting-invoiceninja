@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f6635e28eff8ba2e1ba889d1ef9dd2d6",
+    "content-hash": "4361272676d998d08fb1926198065b39",
     "packages": [
         {
             "name": "adrienrn/php-mimetyper",
@@ -4666,65 +4666,6 @@
                 }
             ],
             "time": "2022-05-21T17:30:32+00:00"
-        },
-        {
-            "name": "invoiceninja/admin-api",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../admin-api",
-                "reference": "f2756b6f5f33ce0002badbb0076b19642c444708"
-            },
-            "require": {
-                "afosto/yaac": "^1.5",
-                "asm/php-ansible": "dev-main",
-                "ext-curl": "*",
-                "ext-dom": "*",
-                "ext-json": "*",
-                "ext-libxml": "*",
-                "ext-simplexml": "*",
-                "illuminate/database": "^11",
-                "illuminate/support": "^11",
-                "imdhemy/laravel-purchases": "^1.7",
-                "php": "^8.2|^8.3|^8.4"
-            },
-            "require-dev": {
-                "larastan/larastan": "^3.0",
-                "orchestra/testbench": "^9.0",
-                "phpstan/phpstan": "^2.0",
-                "phpunit/phpunit": "^11.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "InvoiceNinja\\AdminApi\\Providers\\AdminApiServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "InvoiceNinja\\AdminApi\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "InvoiceNinja\\AdminApi\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Elastic"
-            ],
-            "authors": [
-                {
-                    "name": "David Bomba",
-                    "email": "turbo124@gmail.com"
-                }
-            ],
-            "description": "API endpoints for the admin interface",
-            "transport-options": {
-                "relative": true
-            }
         },
         {
             "name": "invoiceninja/einvoice",
@@ -11419,16 +11360,16 @@
         },
         {
             "name": "sentry/sentry",
-            "version": "4.13.0",
+            "version": "4.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/getsentry/sentry-php.git",
-                "reference": "b54a0eaedfc27fc2da587e64455a66cd29cd3c4d"
+                "reference": "f8c50304bd2f1640704345274bdd5af150b6945d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/getsentry/sentry-php/zipball/b54a0eaedfc27fc2da587e64455a66cd29cd3c4d",
-                "reference": "b54a0eaedfc27fc2da587e64455a66cd29cd3c4d",
+                "url": "https://api.github.com/repos/getsentry/sentry-php/zipball/f8c50304bd2f1640704345274bdd5af150b6945d",
+                "reference": "f8c50304bd2f1640704345274bdd5af150b6945d",
                 "shasum": ""
             },
             "require": {
@@ -11492,7 +11433,7 @@
             ],
             "support": {
                 "issues": "https://github.com/getsentry/sentry-php/issues",
-                "source": "https://github.com/getsentry/sentry-php/tree/4.13.0"
+                "source": "https://github.com/getsentry/sentry-php/tree/4.14.0"
             },
             "funding": [
                 {
@@ -11504,7 +11445,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2025-06-10T15:39:27+00:00"
+            "time": "2025-06-13T17:22:57+00:00"
         },
         {
             "name": "sentry/sentry-laravel",
@@ -19195,16 +19136,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "11.5.22",
+            "version": "11.5.23",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "4cd72faaa8f811e4cc63040cba167757660a5538"
+                "reference": "86ebcd8a3dbcd1857d88505109b2a2b376501cde"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/4cd72faaa8f811e4cc63040cba167757660a5538",
-                "reference": "4cd72faaa8f811e4cc63040cba167757660a5538",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/86ebcd8a3dbcd1857d88505109b2a2b376501cde",
+                "reference": "86ebcd8a3dbcd1857d88505109b2a2b376501cde",
                 "shasum": ""
             },
             "require": {
@@ -19276,7 +19217,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.22"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.23"
             },
             "funding": [
                 {
@@ -19300,7 +19241,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-06-06T02:48:05+00:00"
+            "time": "2025-06-13T05:47:49+00:00"
         },
         {
             "name": "react/cache",
@@ -21456,8 +21397,7 @@
         "beganovich/snappdf": 20,
         "horstoeko/orderx": 20,
         "invoiceninja/einvoice": 20,
-        "socialiteproviders/apple": 20,
-        "invoiceninja/admin-api": 20
+        "socialiteproviders/apple": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
