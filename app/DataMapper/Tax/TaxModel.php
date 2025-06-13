@@ -18,7 +18,7 @@ class TaxModel
     public string $seller_subregion = 'CA';
 
     /** @var string $version */
-    public string $version = 'gamma';
+    public string $version = 'delta';
 
     /** @var object $regions */
     public object $regions;
@@ -130,6 +130,18 @@ class TaxModel
 
             $this->version = 'delta';
 
+        }
+
+        if ($this->version == 'delta') {
+
+            $this->regions->EU->subregions->BG = new \stdClass();
+            $this->regions->EU->subregions->BG->tax_rate = 20;
+            $this->regions->EU->subregions->BG->tax_name = 'ДДС';
+            $this->regions->EU->subregions->BG->reduced_tax_rate = 5;
+            $this->regions->EU->subregions->BG->apply_tax = false;
+            $this->regions->EU->subregions->BG->vat_number = '';
+
+            $this->version = 'epsilon';
         }
 
         return $this;
@@ -592,7 +604,7 @@ class TaxModel
 
         $this->regions->EU->subregions->BG = new \stdClass();
         $this->regions->EU->subregions->BG->tax_rate = 20;
-        $this->regions->EU->subregions->BG->tax_name = 'НДС';
+        $this->regions->EU->subregions->BG->tax_name = 'ДДС';
         $this->regions->EU->subregions->BG->reduced_tax_rate = 9;
         $this->regions->EU->subregions->BG->apply_tax = false;
 
