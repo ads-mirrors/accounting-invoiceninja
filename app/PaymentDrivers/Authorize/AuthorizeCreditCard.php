@@ -138,7 +138,7 @@ class AuthorizeCreditCard implements LivewireMethodInterface
     {
         $client_gateway_token = ClientGatewayToken::query()
             ->where('id', $this->decodePrimaryKey($request->token))
-            ->where('company_id', auth()->guard('contact')->user()->client->company->id)
+            ->where('company_id', auth()->guard('contact')->user()->client->company_id)
             ->first();
 
         if (! $client_gateway_token) {
