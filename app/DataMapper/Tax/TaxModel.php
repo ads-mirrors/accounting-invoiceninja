@@ -160,7 +160,9 @@ class TaxModel
 
         $this->usRegion()
              ->euRegion()
-             ->auRegion();
+             ->auRegion()
+             ->ukRegion()
+             ->stubVatNumbersOnSubregions();
 
 
         return $this->regions;
