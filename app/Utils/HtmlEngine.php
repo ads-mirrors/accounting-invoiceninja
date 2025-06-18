@@ -675,7 +675,7 @@ class HtmlEngine
 
         }
 
-        $signature_invite = $this->invitation->signature_base64 ? $this->invitation : $this->enZtity->invitations()->whereNotNull('signature_base64')->orderBy('updated_at','desc')->first();
+        $signature_invite = $this->invitation->signature_base64 ? $this->invitation : $this->entity->invitations()->whereNotNull('signature_base64')->orderBy('updated_at','desc')->first();
 
         if ($this->settings->signature_on_pdf) {
             $data['$contact.signature'] = ['value' => $signature_invite?->signature_base64 ?? '', 'label' => ctrans('texts.signature')];
