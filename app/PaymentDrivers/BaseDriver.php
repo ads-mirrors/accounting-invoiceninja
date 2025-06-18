@@ -429,10 +429,6 @@ class BaseDriver extends AbstractPaymentDriver
             return;
         }
 
-        // $confirmed_fee_count = collect($invoice->line_items)
-        //                 ->where('type_id', '4')
-        //                 ->count();
-
         $unconfirmed_fee_count = collect($invoice->line_items)
                         ->where('type_id', '3')
                         ->count();
