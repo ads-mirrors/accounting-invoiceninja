@@ -384,14 +384,14 @@ class VendorHtmlEngine
         $signature_invite = $this->invitation->signature_base64 ? $this->invitation : $this->entity->invitations()->whereNotNull('signature_base64')->orderBy('updated_at','desc')->first();
 
         if ($this->settings->signature_on_pdf) {
-            $data['$contact.signature'] = ['value' => $signature_invite->signature_base64, 'label' => ctrans('texts.signature')];
+            $data['$contact.signature'] = ['value' => $signature_invite?->signature_base64 ?? '', 'label' => ctrans('texts.signature')];
         } else {
             $data['$contact.signature'] = ['value' => '', 'label' => ''];
         }
 
-        $data['$contact.signature_raw'] = ['value' => $signature_invite->signature_base64, 'label' => ctrans('texts.signature')];
-        $data['$contact.signature_date'] = ['value' => $signature_invite->signature_date ? $this->translateDate($signature_invite->signature_date, $this->company->date_format(), $this->vendor->locale()) : ' ', 'label' => ctrans('texts.date')];
-        $data['$contact.signature_ip'] = ['value' => $signature_invite->signature_ip ?? '', 'label' => ctrans('texts.address')];
+        $data['$contact.signature_raw'] = ['value' => $signature_invite?->signature_base64 ?? '', 'label' => ctrans('texts.signature')];
+        $data['$contact.signature_date'] = ['value' => $signature_invite?->signature_date ? $this->translateDate($signature_invite->signature_date, $this->company->date_format(), $this->vendor->locale()) : ' ', 'label' => ctrans('texts.date')];
+        $data['$contact.signature_ip'] = ['value' => $signature_invite?->signature_ip ?? '', 'label' => ctrans('texts.address')];
 
 
         $data['$thanks'] = ['value' => '', 'label' => ctrans('texts.thanks')];
