@@ -5585,6 +5585,12 @@ $lang = array(
     'activity_150' => 'tài khoản đã xóa :notes',
     'docuninja' => 'DocuNinja',
     'pro_rata' => 'Tỷ lệ',
+    'change_docuninja_plan' => 'Thay đổi gói DocuNinja',
+    'downgrade_end_of_cycle' => 'Gói cước của bạn sẽ tự động hạ cấp vào cuối chu kỳ thanh toán hiện tại.',
+    'docuninja_change_users' => 'Giới hạn Người dùng DocuNinja mới',
+    'docuninja_disable_warning' => 'Thao tác này sẽ xóa tất cả quyền truy cập đến tài khoản DocuNinja của bạn.',
+    'docuninja_downgrade_info' => 'Hạn mức Người dùng của bạn sẽ tự động giảm vào cuối chu kỳ thanh toán hiện tại.',
+    'recurring_invoice_item' => 'Định kỳ Hóa đơn Item',
 );
 
 return $lang;

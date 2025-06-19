@@ -64,6 +64,9 @@ class SendToAdmin implements ShouldQueue
         $export = new $this->report_class($this->company, $this->request);
         $csv = base64_encode($export->run());
 
+        $size_mb = round(strlen($csv) / (1024 * 1024), 2); // Size in MB
+        nlog("Report Size: MB " . $size_mb);
+
         $files = [];
         $files[] = ['file' => $csv, 'file_name' => "{$this->file_name}", 'mime' => 'text/csv'];
 
