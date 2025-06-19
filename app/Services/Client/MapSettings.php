@@ -42,6 +42,9 @@ class MapSettings extends AbstractService
         "client_manual_payment_notification" => "manual_payment_email",
         "send_email_on_mark_paid" => "mark_paid_payment_email",
         "auto_bill_standard_invoices" => "auto_bill_standard_invoices",
+        "client_portal_enable_uploads" => "client_document_upload",
+        "vendor_portal_enable_uploads" => "vendor_document_upload",
+        "accept_client_input_quote_approval" => "accept_purchase_order_number",
     ];
 
     public function __construct(private Client $client)
@@ -50,19 +53,6 @@ class MapSettings extends AbstractService
 
     public function run()
     {
-            
-        
-        // $merged_settings = $this->client->getMergedSettings();
-
-        // // Extract only the settings we want from merged settings
-        // $default_settings = [];
-
-        // foreach ($this->default_settings as $key) {
-        //     if (isset($merged_settings->{$key})) {
-        //         $default_settings[$key] = $merged_settings->{$key};
-        //     }
-        // }
-
         $settings_map = [];
         $group_only_settings = [];
         $client_settings = (array)$this->client->settings;
@@ -72,36 +62,44 @@ class MapSettings extends AbstractService
             $group_only_settings = array_diff_key($group_settings, $client_settings);
         }
 
-        $group = collect($group_only_settings)->mapWithKeys(function($value, $key) {
-            
-            if($key == "company_gateway_ids") {
-                $key = "company_gateways";
-                $value = $this->handleCompanyGateways($value);
-            }
-
-            return [$this->getTranslationFromKey($key) => $value];
-        })->toArray();
+        $group = $this->mapSettings($group_only_settings);
 
         unset($client_settings['entity']);
         unset($client_settings['industry_id']);
         unset($client_settings['size_id']);
         unset($client_settings['currency_id']);
 
-        $client = collect($client_settings)->mapWithKeys(function($value, $key) {
-        
-            if ($key == "company_gateway_ids") {
-                $key = "company_gateways";
-                $value = $this->handleCompanyGateways($value);
-            }
-
-            return [$this->getTranslationFromKey($key) => $value];
-        })->toArray();
+        $client = $this->mapSettings($client_settings);
 
         return [
             'group_settings' => $group,
             'client_settings' => $client,
         ];
 
+    }
+
+    private function mapSettings(array $settings): array
+    {
+        
+        return collect($settings)->mapWithKeys(function ($value, $key) {
+
+            if ($key == "company_gateway_ids") {
+                $key = "company_gateways";
+                $value = $this->handleCompanyGateways($value);
+            }
+
+            if ($key == "language_id") {
+                $value = $this->handleLanguage($value);
+            }
+
+            return [$this->getTranslationFromKey($key) => $value];
+        })->toArray();
+
+    }
+    private function handleLanguage(string $language_id): string
+    {
+        $language = app('languages')->firstWhere('id', $language_id);
+        return $language->name;
     }
 
     private function getTranslationFromKey(string $key): string

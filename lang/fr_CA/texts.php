@@ -5583,6 +5583,12 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'activity_150' => 'Compte supprimé :notes',
     'docuninja' => 'DocuNinja',
     'pro_rata' => 'Pro Rata',
+    'change_docuninja_plan' => 'Changez de plan DocuNinja',
+    'downgrade_end_of_cycle' => 'Votre plan sera automatiquement ajusté à la fin de votre cycle de paiement.',
+    'docuninja_change_users' => 'Nouvelle limite d\'utilisateur DocuNinja',
+    'docuninja_disable_warning' => 'Retirer les accès à votre compte DocuNinja',
+    'docuninja_downgrade_info' => 'Votre limite d\'utilisateur sera automatiquement ajusté à la fin de votre cycle de paiement.',
+    'recurring_invoice_item' => 'Article de facture récurrente',
 );
 
 return $lang;
