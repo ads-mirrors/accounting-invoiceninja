@@ -161,7 +161,13 @@ class RecurringInvoiceItemExport extends BaseExport
 
         //if we have product filters in place, we will also need to filter the items at this level:
         if (isset($this->input['product_key'])) {
-            $products = explode(",", $this->input['product_key']);
+                        
+            $products = str_getcsv($this->input['product_key'], ',', "'");
+
+            $products = array_map(function ($product) {
+                return trim($product, "'");
+            }, $products);
+
             $items = array_filter($items, function ($item) use ($products) {
                 return in_array($item->product_key, $products);
             });
