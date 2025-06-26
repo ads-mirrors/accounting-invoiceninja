@@ -864,7 +864,12 @@ class BaseExport
 
         if (isset($this->input['product_key'])) {
 
-            $products = explode(",", $this->input['product_key']);
+$products = str_getcsv($this->input['product_key'], ',', "'");
+
+            $products = array_map(function ($product) {
+                return trim($product, "'");
+            }, $products);
+
             $query->where(function ($q) use ($products) {
                 foreach ($products as $product) {
                     $q->orWhereJsonContains('line_items', ['product_key' => $product]);

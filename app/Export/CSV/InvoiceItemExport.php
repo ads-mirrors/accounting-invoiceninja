@@ -65,7 +65,6 @@ class InvoiceItemExport extends BaseExport
         if (count($this->input['report_keys']) == 0) {
             $this->force_keys = true;
             $this->input['report_keys'] = array_values($this->mergeItemsKeys('invoice_report_keys'));
-            nlog($this->input['report_keys']);
         }
 
         $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
@@ -158,10 +157,16 @@ class InvoiceItemExport extends BaseExport
 
     private function filterItems(array $items): array
     {
-
+        
         //if we have product filters in place, we will also need to filter the items at this level:
         if (isset($this->input['product_key'])) {
-            $products = explode(",", $this->input['product_key']);
+            
+            $products = str_getcsv($this->input['product_key'], ',', "'");
+
+            $products = array_map(function($product) {
+                return trim($product, "'");
+            }, $products);
+
             $items = array_filter($items, function ($item) use ($products) {
                 return in_array($item->product_key, $products);
             });
