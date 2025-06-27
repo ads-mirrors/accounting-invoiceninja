@@ -192,6 +192,9 @@ trait ChartQueries
             SELECT sum(payments.amount) as amount,
             IFNULL(payments.currency_id, :company_currency) as currency_id
             FROM payments
+            JOIN clients
+            ON payments.client_id = clients.id
+            AND clients.is_deleted = 0
             WHERE payments.is_deleted = 0
             {$user_filter}
             AND payments.company_id = :company_id
@@ -214,6 +217,9 @@ trait ChartQueries
             SELECT sum((payments.amount - payments.refunded) / COALESCE(NULLIF(payments.exchange_rate, 0), 1)) as amount,
             IFNULL(payments.currency_id, :company_currency) as currency_id
             FROM payments
+            JOIN clients
+            ON payments.client_id = clients.id
+            AND clients.is_deleted = 0
             WHERE payments.company_id = :company_id
             AND payments.is_deleted = 0
             {$user_filter}
@@ -238,6 +244,9 @@ trait ChartQueries
             sum((payments.amount - payments.refunded) * COALESCE(NULLIF(payments.exchange_rate, 0), 1)) as total,
             payments.date
             FROM payments
+            JOIN clients
+            ON payments.client_id = clients.id
+            AND clients.is_deleted = 0
             WHERE payments.company_id = :company_id
             AND payments.is_deleted = 0
             {$user_filter}
@@ -262,8 +271,11 @@ trait ChartQueries
             sum(payments.amount - payments.refunded) as total,
             payments.date
             FROM payments
+            JOIN clients
+            ON payments.client_id = clients.id
             WHERE payments.company_id = :company_id
             AND payments.is_deleted = 0
+            AND clients.is_deleted = 0
             {$user_filter}
             AND payments.status_id IN (4,5,6)
             AND (payments.date BETWEEN :start_date AND :end_date)

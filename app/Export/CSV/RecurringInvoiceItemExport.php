@@ -64,7 +64,7 @@ class RecurringInvoiceItemExport extends BaseExport
 
         if (count($this->input['report_keys']) == 0) {
             $this->force_keys = true;
-            $this->input['report_keys'] = array_values($this->mergeItemsKeys('invoice_report_keys'));
+            $this->input['report_keys'] = array_values($this->mergeItemsKeys('recurring_invoice_report_keys'));
             nlog($this->input['report_keys']);
         }
 
@@ -161,7 +161,13 @@ class RecurringInvoiceItemExport extends BaseExport
 
         //if we have product filters in place, we will also need to filter the items at this level:
         if (isset($this->input['product_key'])) {
-            $products = explode(",", $this->input['product_key']);
+                        
+            $products = str_getcsv($this->input['product_key'], ',', "'");
+
+            $products = array_map(function ($product) {
+                return trim($product, "'");
+            }, $products);
+
             $items = array_filter($items, function ($item) use ($products) {
                 return in_array($item->product_key, $products);
             });
@@ -272,6 +278,11 @@ class RecurringInvoiceItemExport extends BaseExport
 
         if (in_array('recurring_invoice.user_id', $this->input['report_keys'])) {
             $entity['recurring_invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : '';
+        }
+
+        
+        if (in_array('invoice.project', $this->input['report_keys'])) {
+            $entity['invoice.project'] = $invoice->project ? $invoice->project->name : '';// @phpstan-ignore-line
         }
 
 

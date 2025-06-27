@@ -121,6 +121,11 @@ class StoreRecurringInvoiceRequest extends Request
             $input['vendor_id'] = $this->decodePrimaryKey($input['vendor_id']);
         }
 
+
+        if (array_key_exists('location_id', $input) && is_string($input['location_id'])) {
+            $input['location_id'] = $this->decodePrimaryKey($input['location_id']);
+        }
+
         if (array_key_exists('project_id', $input) && is_string($input['project_id'])) {
             $input['project_id'] = $this->decodePrimaryKey($input['project_id']);
         }
@@ -172,7 +177,7 @@ class StoreRecurringInvoiceRequest extends Request
         if (array_key_exists('exchange_rate', $input) && (is_null($input['exchange_rate']) || $input['exchange_rate'] == 0)) {
             $input['exchange_rate'] = 1;
         }
-
+        
         $this->replace($input);
     }
 
