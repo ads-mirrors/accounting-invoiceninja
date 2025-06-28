@@ -35,13 +35,14 @@ class PDF extends FPDI
         
         // Set X position based on alignment
         if ($this->text_alignment == 'L') {
-            $this->SetX(config('ninja.pdf_page_numbering_y_alignment')); // 10mm from left edge
+            $this->SetX(5);
             $this->Cell($this->GetPageWidth() - 10, 5, $trans, 0, 0, 'L');
         } elseif ($this->text_alignment == 'R') {
             $this->SetX(0);
             $this->Cell($this->GetPageWidth(), 5, $trans, 0, 0, 'R');
         } else {
             $this->SetX(0);
+            // $this->SetX(config('ninja.pdf_page_numbering_y_alignment')); // 10mm from left edge
             $this->Cell($this->GetPageWidth(), 5, $trans, 0, 0, 'C');
         }
     }
