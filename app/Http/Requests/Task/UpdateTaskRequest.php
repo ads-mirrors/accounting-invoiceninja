@@ -79,8 +79,8 @@ class UpdateTaskRequest extends Request
                     return $fail('The '.$attribute.' - '.print_r($k, true).' is invalid. Unix timestamps only.');
                 }
 
-                if(!in_array(count($k), [0,2,4])) {
-                    return $fail('The timelog must have 2 or 4 elements only.');
+                if(count($k) > 4)) {
+                    return $fail('The timelog can only have up to 4 elements.');
                 }
 
                 if(isset($k[3]) && !is_bool($k[3])) {
