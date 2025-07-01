@@ -72,6 +72,16 @@ class StoreTaskRequest extends Request
                 if (!is_int($k[0]) || !is_int($k[1])) {
                     return $fail('The '.$attribute.' - '.print_r($k, true).' is invalid. Unix timestamps only.');
                 }
+
+                if(!in_array(count($k), [0,2,4])) {
+                    return $fail('The timelog must have 2 or 4 elements only.');
+                }
+                
+                if (isset($k[3]) && !is_bool($k[3])) {
+                    return $fail('The '.$attribute.' - '.print_r($k, true).' is invalid. The 4th element must be a boolean.');
+                }
+
+
             }
 
             if (!$this->checkTimeLog($values)) {

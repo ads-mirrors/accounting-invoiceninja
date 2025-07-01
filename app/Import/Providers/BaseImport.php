@@ -197,8 +197,14 @@ class BaseImport
 
     public function groupClients($csvData, $key)
     {
-        if (!$key || !isset($csvData[0][$key])) {
-            return $csvData;
+        if (!($key && isset($csvData[0][$key]))) {
+            // Transform the flat array to match the expected grouped structure
+            // Each row becomes its own group to maintain consistency
+            $grouped = [];
+            foreach ($csvData as $index => $item) {
+                $grouped[$index] = [$item];
+            }
+            return $grouped;
         }
 
         $grouped = [];
@@ -218,7 +224,6 @@ class BaseImport
         }
 
         return $grouped;
-
 
     }
 
