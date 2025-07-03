@@ -395,11 +395,10 @@ class MolliePaymentDriver extends BaseDriver
             $line_items = $invoice->line_items;
 
             $line_items = collect($line_items)->filter(function($line_item, $key) use ($line_items) {
-                $last_type_4_key = collect($line_items)->filter(function($item) {
-                    return $item->type_id == '4';
-                })->keys()->last();
-                
-                return $key != $last_type_4_key;
+                if ($key === array_key_last($line_items)) {
+                    return $line_item->type_id != '4';
+                }
+                return true;
             })->toArray();
 
             $invoice->line_items = array_values($line_items);
