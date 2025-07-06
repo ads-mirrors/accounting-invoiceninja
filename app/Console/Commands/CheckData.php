@@ -195,7 +195,14 @@ class CheckData extends Command
                         $log = [(int)$log[0], (int)$log[1], (string)$log[2], (bool)$log[3]];
                     }
                 }
+                elseif(count($log) == 4){
+                 
+                    if($this->option('tasks') == 'true'){
+                        $log = [(int)$log[0], (int)$log[1], (string)$log[2], (bool)$log[3]];
+                    }
+                }
             }
+            unset($log); // Unset the reference variable
 
             if($this->option('tasks') == 'true'){   
                 $task->time_log = json_encode($time_log);
