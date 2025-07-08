@@ -855,6 +855,11 @@ class BaseImport
                     if (! empty($quote_data['status_id'])) {
                         $quote->status_id = $quote_data['status_id'];
                     }
+                    
+                    if (array_key_exists('payments', $quote_data)) {
+                        unset($quote_data['payments']);
+                    }
+
                     $quote_repository->save($quote_data, $quote);
 
                     $count++;
