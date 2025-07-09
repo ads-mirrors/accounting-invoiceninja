@@ -62,11 +62,17 @@ class Token
                 return $this->processSuccessfulPayment($response);
             }
 
-            return $this->processUnsuccessfulPayment($response, $payment_hash);
+            return $this->processUnsuccessfulPayment($response);
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             echo 'There was an exception: '.$e->getMessage();
-            return $this->processUnsuccessfulPayment($e->getMessage());
+            $data = [
+                'data' => [
+                    'message' => $e->getMessage(),
+                ],
+                'code' => 500,
+            ];
+            return $this->processUnsuccessfulPayment($data);
         }
 
     }
