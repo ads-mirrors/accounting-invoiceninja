@@ -107,29 +107,6 @@ class ImportJsonController extends BaseController
         return response()->json(array_merge(['message' => 'Processing','success' => true], $metadata), 200);
     }
 
-
-    /**
-     * Securely delete a directory and its contents
-     */
-    private function secureDeleteDirectory(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($files as $fileinfo) {
-            $todo = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
-            $todo($fileinfo->getRealPath());
-        }
-
-        rmdir($dir);
-    }
-
     private function handleChunkedUpload(ImportJsonRequest $request)
     {
         $metadata = json_decode($request->metadata, true);

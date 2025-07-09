@@ -117,7 +117,7 @@ class RecurringInvoiceItemExport extends BaseExport
         $query->cursor()
             ->each(function ($resource) {
 
-                /** @var \App\Models\Invoice $resource */
+                /** @var \App\Models\RecurringInvoice $resource */
                 $this->iterateItems($resource);
 
                 foreach ($this->storage_array as $row) {

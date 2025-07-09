@@ -52,7 +52,7 @@ class Token
                 'm_payment_id' => $payment_hash->hash,
             ];
 
-            $response = $payfast->subscriptions->adhoc($cgt->token, $data);
+            $response = $payfast->subscriptions->adhoc($cgt->token, $data); //@phpstan-ignore-line
 
             nlog("TokenBilling");
             nlog($response);
