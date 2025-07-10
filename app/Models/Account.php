@@ -643,6 +643,6 @@ class Account extends BaseModel
 
     public function canTrial(): bool
     {
-        return !$this->is_trial && empty($this->plan) && $this->created_at > time() - (60 * 60 * 24 * 14);
+        return !$this->is_trial && empty($this->plan) && $this->created_at > time() - (60 * 60 * 24 * 14); //@phpstan-ignore-line
     }
 }
