@@ -5593,6 +5593,8 @@ $lang = array(
     'recurring_invoice_item' => 'Recurring Invoice Item',
     'disable_recurring_payment_notification' => 'Disable Recurring Payment Notification',
     'disable_recurring_payment_notification_help' => 'Successful recurring invoice payment notifications will not be sent.',
+    'invoice_outstanding_tasks' => 'Invoice Outstanding Tasks',
+    'payment_schedule' => 'Payment Schedule',
 );
 
 return $lang;
