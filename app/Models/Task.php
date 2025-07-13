@@ -248,30 +248,28 @@ class Task extends BaseModel
         }
     }
 
-    public function calcDuration($start_time_cutoff = 0, $end_time_cutoff = 0)
+    public function calcDuration(bool $billable = false)
     {
         $duration = 0;
         $parts = json_decode($this->time_log ?? '{}') ?: [];
 
         foreach ($parts as $part) {
+
+            if($billable && isset($part[3]) && !$part[3]){
+                continue;
+            }
+
             $start_time = $part[0];
+
             if (count($part) == 1 || ! $part[1]) {
                 $end_time = time();
             } else {
                 $end_time = $part[1];
             }
 
-            if ($start_time_cutoff) {
-                $start_time = max($start_time, $start_time_cutoff);
-            }
-            if ($end_time_cutoff) {
-                $end_time = min($end_time, $end_time_cutoff);
-            }
-
             $duration += max($end_time - $start_time, 0);
         }
 
-        // return CarbonInterval::seconds(round($duration))->locale($this->company->locale())->cascade()->forHumans();
         return round($duration);
     }
 
@@ -313,7 +311,7 @@ class Task extends BaseModel
 
     public function getQuantity(): float
     {
-        return round(($this->calcDuration() / 3600), 2);
+        return round(($this->calcDuration(true) / 3600), 2);
     }
 
     public function logDuration(int $start_time, int $end_time)
@@ -323,7 +321,7 @@ class Task extends BaseModel
 
     public function taskValue(): float
     {
-        return round(($this->calcDuration() / 3600) * $this->getRate(), 2);
+        return round(($this->calcDuration(true) / 3600) * $this->getRate(), 2);
     }
 
     public function isRunning(): bool

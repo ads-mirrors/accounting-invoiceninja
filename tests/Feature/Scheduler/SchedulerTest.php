@@ -11,22 +11,24 @@
 
 namespace Tests\Feature\Scheduler;
 
-use App\DataMapper\Schedule\EmailStatement;
-use App\Factory\SchedulerFactory;
-use App\Models\Client;
-use App\Models\RecurringInvoice;
-use App\Models\Scheduler;
-use App\Services\Scheduler\EmailReport;
-use App\Services\Scheduler\EmailStatementService;
-use App\Utils\Traits\MakesHash;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
-use Tests\MockAccountData;
 use Tests\TestCase;
+use App\Models\Task;
+use App\Models\Client;
+use App\Models\Scheduler;
+use Tests\MockAccountData;
+use App\Utils\Traits\MakesHash;
+use App\Models\RecurringInvoice;
+use App\Factory\SchedulerFactory;
+use App\Services\Scheduler\EmailReport;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Session;
+use App\DataMapper\Schedule\EmailStatement;
+use Illuminate\Validation\ValidationException;
+use App\Services\Scheduler\EmailStatementService;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Services\Scheduler\InvoiceOutstandingTasksService;
 
 /**
  * 
@@ -57,6 +59,58 @@ class SchedulerTest extends TestCase
         );
 
         // $this->withoutExceptionHandling();
+    }
+
+    public function testInvoiceOutstandingTasks()
+    {
+
+        $start = now()->subMonth()->addDays(1)->timestamp;
+        $end = now()->subMonth()->addDays(5)->timestamp;
+
+        Task::factory()->count(10)->create([
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'user_id' => $this->user->id,
+            'description' => 'Test task',
+            'time_log' => '[['.$start.','.$end.',null,false]]',
+            'rate' => 100,
+        ]);
+
+        $data = [
+            'name' => 'A test invoice outstanding tasks scheduler',
+            'frequency_id' => RecurringInvoice::FREQUENCY_MONTHLY,
+            'next_run' => now()->format('Y-m-d'),
+            'template' => 'invoice_outstanding_tasks',
+            'parameters' => [
+                'clients' => [],
+                'include_project_tasks' => true,
+                'auto_send' => true,
+                'date_range' => 'last_month',
+            ],
+        ];
+
+        $response = false;
+
+        $response = $this->withHeaders([
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-TOKEN' => $this->token,
+            ])->postJson('/api/v1/task_schedulers', $data);
+
+        $response->assertStatus(200);
+
+        $arr = $response->json();
+
+        $id = $this->decodePrimaryKey($arr['data']['id']);
+        $scheduler = Scheduler::find($id);
+        $user = $scheduler->user;
+        $user->email = "{rand(5,555555}@gmail.com";
+        $user->save();
+
+        $this->assertNotNull($scheduler);
+
+        $export = (new InvoiceOutstandingTasksService($scheduler))->run();
+
+
     }
 
 
