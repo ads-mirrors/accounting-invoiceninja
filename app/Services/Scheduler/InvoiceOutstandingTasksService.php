@@ -104,18 +104,21 @@ class InvoiceOutstandingTasksService
                         })
                         ->toArray();
 
-                        $data = [
-                            'client_id' => $client->id,
-                            'date' => now()->addSeconds($client->company->utc_offset())->format('Y-m-d'),
-                            'line_items' => array_values($line_items),
-                            'uses_inclusive_taxes' => $client->company->settings->inclusive_taxes ?? false,
-                        ];
+                        if(count(array_values($line_items)) > 0){
 
-                        $invoice = $invoice_repo->save($data, InvoiceFactory::create($client->company_id, $client->user_id));
+                            $data = [
+                                'client_id' => $client->id,
+                                'date' => now()->addSeconds($client->company->utc_offset())->format('Y-m-d'),
+                                'line_items' => array_values($line_items),
+                                'uses_inclusive_taxes' => $client->company->settings->inclusive_taxes ?? false,
+                            ];
 
-                        if($this->scheduler->parameters['auto_send']){
-                            nlog('sending email');
-                            $invoice->service()->sendEmail();
+                            $invoice = $invoice_repo->save($data, InvoiceFactory::create($client->company_id, $client->user_id));
+
+                            if($this->scheduler->parameters['auto_send']){
+                                nlog('sending email');
+                                $invoice->service()->sendEmail();
+                            }
                         }
                 });
 

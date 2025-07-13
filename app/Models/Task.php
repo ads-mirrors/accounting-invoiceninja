@@ -417,7 +417,7 @@ class Task extends BaseModel
 
         $body = '';
 
-        if (strlen($this->description) > 1) {
+        if (strlen($this->description ?? '') > 1) {
             $body .= $this->description. " ";
         }
 
