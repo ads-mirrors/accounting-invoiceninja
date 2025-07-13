@@ -98,11 +98,12 @@ class ProjectReport extends BaseExport
         /** @var Project $_project */
         $_project = $query->first();
 
+        $currency_code = $_project ? $_project->company->currency()->code : $this->company->currency()->code;
         $ts_instance = $ts->setCompany($this->company)
                     // ->setData($data)
                     ->processData($data)
                     ->setRawTemplate(file_get_contents(resource_path($this->template)))
-                    ->addGlobal(['currency_code' => $_project->client->company->currency()->code])
+                    ->addGlobal(['currency_code' => $currency_code])
                     ->setGlobals()
                     ->parseNinjaBlocks()
                     ->save();
