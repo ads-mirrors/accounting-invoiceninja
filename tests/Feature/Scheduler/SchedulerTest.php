@@ -61,6 +61,48 @@ class SchedulerTest extends TestCase
         // $this->withoutExceptionHandling();
     }
 
+    public function testPaymentSchedule()
+    {
+        $data = [
+            [
+            'date' => now()->format('Y-m-d'),
+            'amount' => 100,
+            'percentage' => 100,
+            ],
+            [
+            'date' => now()->addDays(1)->format('Y-m-d'),
+            'amount' => 100,
+            'percentage' => 100,
+            ],
+            [
+            'date' => now()->addDays(2)->format('Y-m-d'),
+            'amount' => 100,
+            'percentage' => 100,
+            ],
+        ];
+
+        $offset = -3600;
+
+        $next_schedule = collect($data)->first(function ($item) use ($offset){
+            return now()->startOfDay()->eq(Carbon::parse($item['date'])->subSeconds($offset)->startOfDay());
+        });
+
+        $this->assertNotNull($next_schedule);
+
+        $this->assertEquals($next_schedule['date'], now()->format('Y-m-d'));
+        
+        $this->travelTo(now()->addDays(1));
+
+        $next_schedule = collect($data)->first(function ($item) use ($offset) {
+            return now()->startOfDay()->eq(Carbon::parse($item['date'])->subSeconds($offset)->startOfDay());
+        });
+
+        $this->assertNotNull($next_schedule);
+
+        $this->assertEquals($next_schedule['date'], now()->format('Y-m-d'));
+        
+    }
+
     public function testInvoiceOutstandingTasks()
     {
 

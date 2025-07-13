@@ -72,6 +72,12 @@ class StoreSchedulerRequest extends Request
             'parameters.status' => ['bail','sometimes', 'nullable', 'string'],
             'parameters.include_project_tasks' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
             'parameters.auto_send' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
+            'parameters.invoice_id' => ['bail','sometimes', 'string', 'required_if:template,payment_schedule'],
+            'parameters.auto_bill' => ['bail','sometimes', 'boolean', 'required_if:template,payment_schedule'],
+            'parameters.schedule' => ['bail','sometimes', 'array', 'required_if:template,payment_schedule'],
+            'parameters.schedule.*.date' => ['bail','sometimes', 'date:Y-m-d'],
+            'parameters.schedule.*.amount' => ['bail','sometimes', 'numeric'],
+            'parameters.schedule.*.percentage' => ['bail','sometimes', 'numeric'],
         ];
 
         return $rules;
