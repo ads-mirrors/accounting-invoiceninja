@@ -85,11 +85,14 @@ class QuoteFilters extends QueryFilters
         }
 
         $this->builder->where(function ($query) use ($status_parameters) {
+            
             if (in_array('sent', $status_parameters)) {
                 $query->orWhere(function ($q) {
                     $q->where('status_id', Quote::STATUS_SENT)
-                    ->whereNull('due_date')
-                    ->orWhere('due_date', '>=', now()->toDateString());
+                    ->where(function ($q) {
+                        $q->whereNull('due_date')
+                        ->orWhere('due_date', '>=', now()->toDateString());
+                    });
                 });
             }
 
