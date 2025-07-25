@@ -144,7 +144,12 @@ class InvoiceOutstandingTasksService
             EmailStatement::THIS_YEAR => [now()->startOfDay()->firstOfYear()->format('Y-m-d'), now()->startOfDay()->lastOfYear()->format('Y-m-d')],
             EmailStatement::LAST_YEAR => [now()->startOfDay()->subYearNoOverflow()->firstOfYear()->format('Y-m-d'), now()->startOfDay()->subYearNoOverflow()->lastOfYear()->format('Y-m-d')],
             EmailStatement::ALL_TIME => [
-                $client->tasks()->selectRaw('MIN(tasks.calculated_start_date) as start_date')->pluck('start_date')->first()
+                Task::query()
+                    ->where('company_id', $this->scheduler->company_id)
+                    ->where('is_deleted', 0)
+                    ->selectRaw('MIN(tasks.calculated_start_date) as start_date')
+                    ->pluck('start_date')
+                    ->first()
                     ?: Carbon::now()->format('Y-m-d'),
                 Carbon::now()->format('Y-m-d')
             ],
