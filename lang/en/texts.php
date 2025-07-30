@@ -5595,6 +5595,8 @@ $lang = array(
     'disable_recurring_payment_notification_help' => 'Successful recurring invoice payment notifications will not be sent.',
     'invoice_outstanding_tasks' => 'Invoice Outstanding Tasks',
     'payment_schedule' => 'Payment Schedule',
+    'time_zone' => 'Time Zone',
+    'tax_names' => 'Tax Names',
 );
 
 return $lang;

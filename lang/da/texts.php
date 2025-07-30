@@ -676,7 +676,7 @@ $lang = array(
     'third_reminder' => 'Third Reminder',
     'num_days_reminder' => 'Days after due date',
     'reminder_subject' => 'Reminder: Invoice :invoice from :account',
-    'reset' => 'Reset',
+    'reset' => 'Nulstil',
     'invoice_not_found' => 'The requested invoice is not available',
     'referral_program' => 'Referral Program',
     'referral_code' => 'Referral Code',
@@ -813,7 +813,7 @@ $lang = array(
     'deleted_recurring_quote' => 'Sletning af tilbagevendende tilbud er gennemført',
     'restore_recurring_quote' => 'Genskab tilbagevendende tilbud',
     'restored_recurring_quote' => 'Sletning af tilbagevendende tilbud er gennemført',
-    'archived' => 'Archived',
+    'archived' => 'Arkiveret',
     'untitled_account' => 'Untitled Company',
     'before' => 'Before',
     'after' => 'After',
@@ -5584,6 +5584,14 @@ $lang = array(
     'activity_150' => 'Account deleted :notes',
     'docuninja' => 'DocuNinja',
     'pro_rata' => 'Pro Rata',
+    'change_docuninja_plan' => 'Change DocuNinja Plan',
+    'downgrade_end_of_cycle' => 'Your plan will automatically downgrade at the end of the current billing cycle.',
+    'docuninja_change_users' => 'New DocuNinja user limit',
+    'docuninja_disable_warning' => 'This will remove all access to your DocuNinja account.',
+    'docuninja_downgrade_info' => 'Your user limit will automatically be reduced at the end of the current billing cycle.',
+    'recurring_invoice_item' => 'Recurring Invoice Item',
+    'disable_recurring_payment_notification' => 'Disable Recurring Payment Notification',
+    'disable_recurring_payment_notification_help' => 'Successful recurring invoice payment notifications will not be sent.',
 );
 
 return $lang;

@@ -5589,6 +5589,8 @@ Développe automatiquement la section des notes dans le tableau de produits pour
     'docuninja_disable_warning' => 'Retirer les accès à votre compte DocuNinja',
     'docuninja_downgrade_info' => 'Votre limite d\'utilisateur sera automatiquement ajusté à la fin de votre cycle de paiement.',
     'recurring_invoice_item' => 'Article de facture récurrente',
+    'disable_recurring_payment_notification' => 'Désactiver la notification de paiement récurrent',
+    'disable_recurring_payment_notification_help' => 'Les notifications de paiement de facture récurrentes réussies ne seront pas envoyées.',
 );
 
 return $lang;
