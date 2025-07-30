@@ -276,9 +276,10 @@ class TaskController extends BaseController
 
         $old_task_status_order = $task->status_order;
 
-        $task = $this->task_repo->save($request->all(), $task);
-
-        $task = $this->task_repo->triggeredActions($request, $task);
+        //2025-07-31 - if the start or stop query parameter is not present, then we need to save the task
+        if (!($request->query('start', false) || $request->query('stop', false))) {
+            $task = $this->task_repo->save($request->all(), $task);
+        }
 
         if (is_null($task->status_order) || $task->status_order != $old_task_status_order) {
             $this->task_repo->sortStatuses($task);
