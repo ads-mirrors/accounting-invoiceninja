@@ -14,9 +14,10 @@ class PaymentSchedule
     /**
      * 
      * @var array(
+     *  'id' => int,
      *  'date' => string,
      *  'amount' => float,
-     *  'percentage' => float
+     *  'is_amount' => bool
      * )
      */
     public array $schedule = [];
