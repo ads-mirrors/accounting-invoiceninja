@@ -115,10 +115,21 @@ class UpdateSchedulerRequest extends Request
                                                     })->merge($task_statuses)
                                                     ->implode(",") ?? '';
         }
+        
+        if (isset($input['parameters']['schedule']) && is_array($input['parameters']['schedule']) && count($input['parameters']['schedule']) > 0) {
+            $input['remaining_cycles'] = count($input['parameters']['schedule']);
+        }
 
         $this->replace($input);
 
-
-
     }
+
+    public function messages()
+    {
+        return [
+            'parameters.schedule.min' => 'The schedule must have at least one item.',
+            'parameters.schedule' => 'You must have at least one schedule entry.',
+        ];
+    }
+
 }

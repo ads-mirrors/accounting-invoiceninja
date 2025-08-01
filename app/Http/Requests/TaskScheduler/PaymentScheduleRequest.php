@@ -81,7 +81,7 @@ class PaymentScheduleRequest extends Request
             }
             elseif(!$first_map['is_amount'] && floatval($schedule_map->sum('amount')) != floatval(100)) {
                 $validator = \Validator::make([], []);
-                $validator->errors()->add('schedule', 'The total percentageamount of the schedule does not match 100%.');
+                $validator->errors()->add('schedule', 'The total percentage amount of the schedule does not match 100%.');
                 throw new \Illuminate\Validation\ValidationException($validator);
             }
             else{
