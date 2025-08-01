@@ -55,7 +55,13 @@ class PaymentScheduleRequest extends Request
         $input['name'] = "Payment Schedule for Invoice #{$this->invoice->number}";
         $input['is_paused'] = false;
         $input['parameters']['auto_bill'] = (bool) isset($input['parameters']['auto_bill']) ? $input['parameters']['auto_bill'] : false;
-        
+
+        $input['parameters']['schedule'] = [];
+
+        if(isset($input['parameters']['schedule']) && is_array($input['parameters']['schedule']) && count($input['parameters']['schedule']) > 0) {
+            $input['parameters']['schedule'] = $input['parameters']['schedule'];
+        }
+
         if (isset($input['schedule']) && is_array($input['schedule']) && count($input['schedule']) > 0) {
             $schedule_map = collect($input['schedule'])->map(function ($schedule, $key) {
                 return [
@@ -69,10 +75,14 @@ class PaymentScheduleRequest extends Request
             $first_map = $schedule_map->first();
 
             if ($first_map['is_amount'] && floatval($schedule_map->sum('amount')) != floatval($this->invoice->amount)) {
-                $this->errors()->add('schedule', 'The total amount of the schedule does not match the invoice amount.');
+                $validator = \Validator::make([], []);
+                $validator->errors()->add('schedule', 'The total amount of the schedule does not match the invoice amount.');
+                throw new \Illuminate\Validation\ValidationException($validator);
             }
             elseif(!$first_map['is_amount'] && floatval($schedule_map->sum('amount')) != floatval(100)) {
-                $this->errors()->add('schedule', 'The total amount of the schedule does not match 100%.');
+                $validator = \Validator::make([], []);
+                $validator->errors()->add('schedule', 'The total percentageamount of the schedule does not match 100%.');
+                throw new \Illuminate\Validation\ValidationException($validator);
             }
             else{
                 $input['parameters']['schedule'] = $schedule_map->toArray();
@@ -86,6 +96,8 @@ class PaymentScheduleRequest extends Request
 
         $input['next_run'] = $input['parameters']['schedule'][0]['date'];
 
+        $input['remaining_cycles'] = count($input['parameters']['schedule']);
+
         $this->replace($input);
     }
 
@@ -97,7 +109,6 @@ class PaymentScheduleRequest extends Request
             $due_date = Carbon::parse($this->invoice->due_date);
         }
         
-
         $amount = round($this->invoice->amount / $remaining_cycles, 2);
 
         $delta = round($amount * $remaining_cycles, 2);
