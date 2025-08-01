@@ -30,6 +30,7 @@ use App\Helpers\Invoice\InvoiceSumInclusive;
 use App\Utils\Traits\Invoice\ActionsInvoice;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Events\Invoice\InvoiceReminderWasEmailed;
+use App\Jobs\Ninja\TaskScheduler;
 use App\Utils\Number;
 
 /**
@@ -831,5 +832,25 @@ class Invoice extends BaseModel
 
 
         return $reminder_schedule;
+    }
+
+    public function paymentSchedule(): array 
+    {
+
+        $schedule = \App\Models\Scheduler::where('company_id', $this->company_id)
+                            ->where('template', 'payment_schedule')                           
+                            ->where('parameters->invoice_id', $this->hashed_id)
+                            ->first();
+
+        if (! $schedule) {
+            return [];
+        }
+
+        return collect($schedule->parameters['schedule'])->map(function ($item) {
+            return [
+                'date' => $item['date'],
+                'amount' => $item['is_amount'] ? \App\Utils\Number::formatMoney($item['amount'], $this->client) : $this->amount ." %",
+            ];
+        })->toArray();
     }
 }

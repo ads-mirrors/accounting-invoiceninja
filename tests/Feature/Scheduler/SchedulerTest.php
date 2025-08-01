@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Tests\TestCase;
 use App\Models\Task;
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\Scheduler;
 use Tests\MockAccountData;
 use App\Utils\Traits\MakesHash;
@@ -29,6 +30,7 @@ use App\Services\Scheduler\EmailStatementService;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Services\Scheduler\InvoiceOutstandingTasksService;
+use App\Http\Requests\TaskScheduler\PaymentScheduleRequest;
 
 /**
  * 
@@ -60,6 +62,82 @@ class SchedulerTest extends TestCase
 
         // $this->withoutExceptionHandling();
     }
+
+    
+    public function testPaymentScheduleRequestValidation()
+    {
+        $invoice = Invoice::factory()->create([
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'client_id' => $this->client->id,
+            'date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(30)->format('Y-m-d'),
+            'amount' => 300.00,
+            'balance' => 300.00,
+        ]);
+
+        $invoice->service()->markSent()->save();
+        
+        $data = [
+            'schedule' => [
+                [
+                    'id' => 1,
+                    'date' => now()->format('Y-m-d'),
+                    'amount' => 100.00,
+                    'is_amount' => true,
+                ],
+                [
+                    'id' => 2,
+                    'date' => now()->addDays(30)->format('Y-m-d'),
+                    'amount' => 200.00,
+                    'is_amount' => true,
+                ]
+            ],
+            'auto_bill' => true,
+        ];
+        
+        $response = $this->withHeaders([
+                    'X-API-SECRET' => config('ninja.api_secret'),
+                    'X-API-TOKEN' => $this->token,
+                ])->postJson('/api/v1/invoices/'.$invoice->hashed_id.'/payment_schedule', $data);
+
+        $response->assertStatus(200);
+
+    }
+
+    public function testPaymentScheduleRequestWithFrequency()
+    {
+        $invoice = Invoice::factory()->create([
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'client_id' => $this->client->id,
+            'date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(30)->format('Y-m-d'),
+            'amount' => 300.00,
+            'balance' => 300.00,
+        ]);
+
+        $invoice->service()->markSent()->save();
+        
+        
+        $data = [
+            'frequency_id' => 5, // Monthly
+            'remaining_cycles' => 3,
+            'auto_bill' => false,
+        ];
+
+        
+        $response = $this->withHeaders([
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-TOKEN' => $this->token,
+            ])->postJson('/api/v1/invoices/'.$invoice->hashed_id.'/payment_schedule?show_schedule=true', $data);
+
+        $response->assertStatus(200);
+        nlog($response->json());
+
+    }
+
+  
 
     public function testPaymentSchedule()
     {
