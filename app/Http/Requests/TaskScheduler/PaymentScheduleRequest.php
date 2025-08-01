@@ -96,6 +96,7 @@ class PaymentScheduleRequest extends Request
         } else {
             $due_date = Carbon::parse($this->invoice->due_date);
         }
+        
 
         $amount = round($this->invoice->amount / $remaining_cycles, 2);
 
@@ -111,7 +112,7 @@ class PaymentScheduleRequest extends Request
         for ($i = 0; $i < $remaining_cycles; $i++) {
             $schedule[] = [
                 'id' => $i+1,
-                'date' => $this->generateScheduleByFrequency($frequency_id, $due_date)->format('Y-m-d'),
+                'date' => $i === 0 ? $due_date->format('Y-m-d') : $this->generateScheduleByFrequency($frequency_id, $due_date)->format('Y-m-d'),
                 'amount' => $amount,
                 'is_amount' => true,
             ];

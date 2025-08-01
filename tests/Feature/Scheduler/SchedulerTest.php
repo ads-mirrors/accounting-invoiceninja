@@ -99,10 +99,15 @@ class SchedulerTest extends TestCase
         $response = $this->withHeaders([
                     'X-API-SECRET' => config('ninja.api_secret'),
                     'X-API-TOKEN' => $this->token,
-                ])->postJson('/api/v1/invoices/'.$invoice->hashed_id.'/payment_schedule', $data);
+                ])->postJson('/api/v1/invoices/'.$invoice->hashed_id.'/payment_schedule?show_schedule=true', $data);
 
         $response->assertStatus(200);
 
+        $arr = $response->json();
+        
+        $this->assertEquals(2, count($arr['data']['schedule']));
+        $this->assertEquals(now()->format('Y-m-d'), $arr['data']['schedule'][0]['date']);
+        $this->assertEquals(now()->addDays(30)->format('Y-m-d'), $arr['data']['schedule'][1]['date']);
     }
 
     public function testPaymentScheduleRequestWithFrequency()
@@ -125,7 +130,6 @@ class SchedulerTest extends TestCase
             'remaining_cycles' => 3,
             'auto_bill' => false,
         ];
-
         
         $response = $this->withHeaders([
                 'X-API-SECRET' => config('ninja.api_secret'),
@@ -135,6 +139,14 @@ class SchedulerTest extends TestCase
         $response->assertStatus(200);
         nlog($response->json());
 
+        $arr = $response->json();
+
+        $date = Carbon::parse($invoice->due_date);
+
+        $this->assertEquals(3, count($arr['data']['schedule']));
+        $this->assertEquals($date->startOfDay()->format('Y-m-d'), $arr['data']['schedule'][0]['date']);
+        $this->assertEquals($date->addMonthNoOverflow()->format('Y-m-d'), $arr['data']['schedule'][1]['date']);
+        $this->assertEquals($date->addMonthNoOverflow()->format('Y-m-d'), $arr['data']['schedule'][2]['date']);
     }
 
   
