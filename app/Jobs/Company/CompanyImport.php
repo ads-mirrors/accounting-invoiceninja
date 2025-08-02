@@ -1427,16 +1427,21 @@ class CompanyImport implements ShouldQueue
 
         //foreach ($this->backup_file->users as $user)
         foreach ((object)$this->getObject("users") as $user) {
-            if($user = MultiDB::hasUser(['email' => $user->email]) && $user->account_id != $this->account->id) { //ensures that we do no inject existing users into the new account.
-                throw new ImportCompanyFailed("{$user->email} is already in the system attached to a different account");
+
+            if($userX = MultiDB::hasUser(['email' => $user->email])) { //ensures that we do no inject existing users into the new account.
+            
+                if($userX->account_id != $this->account->id) {
+                    throw new ImportCompanyFailed("{$userX->email} is already in the system attached to a different account");
+                }
+                
             }
 
             MultiDB::setDb($this->company->db);
 
             $user_array = (array)$user;
-            unset($user_array['laravel_through_key']);
-            unset($user_array['hashed_id']);
-            unset($user_array['id']);
+            unset($user_array['laravel_through_key']); //@phpstan-ignore-line
+            unset($user_array['hashed_id']); //@phpstan-ignore-line
+            unset($user_array['id']); //@phpstan-ignore-line
 
             /*Make sure we are searching for archived users also and restore if we find them.*/
 

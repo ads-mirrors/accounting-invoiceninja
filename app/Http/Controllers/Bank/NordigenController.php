@@ -86,7 +86,7 @@ class NordigenController extends BaseController
 
             //this does not work in a multi tenant environment, it simply grabs the first agreement, without differentiating between companies. we may need to store the current requistion...
             // $agreement = $nordigen->firstValidAgreement($institution['id'], $data['access_days'] ?? 0, $txDays)
-            //           ?? $nordigen->createAgreement($institution, $data['access_days'] ?? 9999, $txDays);
+            //           ?? $nordigen->createAgreement($institution, $data['max_access_valid_for_days'] ?? 90, $txDays);
         } catch (\Exception $e) {
             $debug = "{$e->getMessage()} ({$e->getCode()})";
 

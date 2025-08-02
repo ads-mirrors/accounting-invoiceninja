@@ -54,8 +54,8 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string $latest_version
  * @property int $report_errors
  * @property string|null $referral_code
- * @property int|null $created_at
- * @property int|null $updated_at
+ * @property Carbon|int|null $created_at
+ * @property Carbon|int|null $updated_at
  * @property bool $is_scheduler_running
  * @property int|null $trial_duration
  * @property bool $is_onboarding
@@ -643,6 +643,6 @@ class Account extends BaseModel
 
     public function canTrial(): bool
     {
-        return !$this->is_trial && empty($this->plan) && $this->created_at > time() - (60 * 60 * 24 * 14);
+        return !$this->is_trial && empty($this->plan) && $this->created_at > time() - (60 * 60 * 24 * 14); //@phpstan-ignore-line
     }
 }

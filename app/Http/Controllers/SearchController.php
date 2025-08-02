@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Utils\Ninja;
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\Project;
 use Elastic\Elasticsearch\ClientBuilder;
 use App\Http\Requests\Search\GenericSearchRequest;
 
@@ -41,6 +42,7 @@ class SearchController extends Controller
 
     private array $purchase_orders = [];
 
+    private array $projects = [];
 
     public function __invoke(GenericSearchRequest $request)
     {
@@ -59,10 +61,13 @@ class SearchController extends Controller
 
         $this->invoiceMap($user);
 
+        $this->projectMap($user);
+
         return response()->json([
             'clients' => $this->clients,
             'client_contacts' => $this->client_contacts,
             'invoices' => $this->invoices,
+            'projects' => $this->projects,
             'settings' => $this->settingsMap(),
         ], 200);
 
@@ -81,7 +86,7 @@ class SearchController extends Controller
 
         $params = [
             // 'index' => 'clients,invoices,client_contacts',
-            'index' => 'clients,invoices,client_contacts,quotes,expenses,credits,recurring_invoices,vendors,vendor_contacts,purchase_orders',
+            'index' => 'clients,invoices,client_contacts,quotes,expenses,credits,recurring_invoices,vendors,vendor_contacts,purchase_orders,projects',
             'body'  => [
                 'query' => [
                     'bool' => [
@@ -118,6 +123,7 @@ class SearchController extends Controller
             'vendors' => $this->vendors,
             'vendor_contacts' => $this->vendor_contacts,
             'purchase_orders' => $this->purchase_orders,
+            'projects' => $this->projects,
             'settings' => $this->settingsMap(),
         ], 200);
 
@@ -274,6 +280,20 @@ class SearchController extends Controller
 
                     break;
 
+                case 'projects':
+
+                    if ($result['_source']['__soft_deleted']) {
+                        break;
+                    }
+
+                    $this->projects[] = [
+                        'name' => $result['_source']['name'],
+                        'type' => '/project',
+                        'id' => $result['_source']['hashed_id'],
+                        'path' => "/projects/{$result['_source']['hashed_id']}"
+                    ];
+
+                    break;
             }
         }
     }
@@ -310,6 +330,35 @@ class SearchController extends Controller
             });
         }
 
+
+    }
+
+    private function projectMap(User $user)
+    {
+
+        $projects = Project::query()
+                     ->withTrashed()
+                     ->company()
+                     ->with('client')
+                     ->where('is_deleted', 0)
+                     ->whereHas('client', function ($q) {
+                         $q->where('is_deleted', 0);
+                     })
+                     ->when(!$user->hasPermission('view_all') || !$user->hasPermission('view_invoice'), function ($query) use ($user) {
+                         $query->where('projects.user_id', $user->id);
+                     })
+                     ->orderBy('id', 'desc')
+                    ->take(3000)
+                    ->get();
+
+        foreach ($projects as $project) {
+            $this->projects[] = [
+                'name' => $project->name . ' - ' . $project->number,
+                'type' => '/project',
+                'id' => $project->hashed_id,
+                'path' => "/projects/{$project->hashed_id}"
+            ];
+        }
 
     }
 

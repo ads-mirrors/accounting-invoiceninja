@@ -159,7 +159,7 @@ class Blockonomics implements LivewireMethodInterface
                 ? $request->txid . bin2hex(random_bytes(16))
                 : $request->txid;
 
-            $statusId;
+            $statusId = Payment::STATUS_PENDING;
 
             switch ($request->status) {
                 case 0:

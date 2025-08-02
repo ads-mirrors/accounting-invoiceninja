@@ -40,7 +40,7 @@ class ProjectRepository extends BaseRepository
                     ->cursor()
                     ->each(function ($task, $key) use (&$lines) {
 
-                        if (!$task->isRunning()) {
+                        if (!$task->isRunning() && $task->calcDuration(true) > 0) {
                             if ($key == 0 && $task->company->invoice_task_project) {
                                 $body = '<div class="project-header">'.$task->project->name.'</div>' .$task->project?->public_notes ?? ''; //@phpstan-ignore-line
                                 $body .= '<div class="task-time-details">'.$task->description().'</div>';

@@ -78,7 +78,7 @@ class TemplateMock
 
         $mock = (new PdfMock($data, $this->company));
         $mock->settings = $this->settings ?? $this->company->settings;
-        $mock->build();
+        $mock->build(); //2025-07-11 unnecessary to generate the build here as it stubs a PDF preview each time!
 
         return [$type => $mock->getStubVariables()];
     }

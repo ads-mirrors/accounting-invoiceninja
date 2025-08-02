@@ -85,7 +85,7 @@ class ProductSalesExport extends BaseExport
             $query->where(function ($q) use ($keys) {
 
                 foreach ($keys as $key) {
-                    $q->orWhereJsonContains('line_items', ['product_key' => $key]);
+                    $q->orWhereJsonContains('line_items', ['product_key' => trim($key, "'")]);
                 }
 
             });
@@ -136,6 +136,11 @@ class ProductSalesExport extends BaseExport
 
         if ($product_keys) {
             $product_keys = explode(",", $product_keys);
+            
+            $product_keys = array_map(function ($product) {
+                return trim($product, "'");
+            }, $product_keys);
+
         }
 
         $query->cursor()

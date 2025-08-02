@@ -417,6 +417,7 @@ trait ChartQueries
     public function getInvoicesQuery($start_date, $end_date)
     {
         $user_filter = $this->is_admin ? '' : 'AND clients.user_id = '.$this->user->id;
+        // $user_filter = $this->is_admin ? '' : 'AND (clients.user_id = '.$this->user->id.' OR clients.assigned_user_id = '.$this->user->id.')';
 
         //AND invoices.amount > 0 @2024-12-03 - allow negative invoices to be included
 
