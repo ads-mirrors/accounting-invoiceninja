@@ -153,7 +153,7 @@ class ZugferdEDocument extends AbstractService
             $tax_amount = 0;
             $tax_rate = 0;
 
-            if ($this->tax_code == ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE) { //reverse charge
+            if (in_array($this->tax_code,[ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE, ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX])) { //reverse charge
                 $base_amount = $this->document->amount;
             }
 
@@ -268,7 +268,9 @@ class ZugferdEDocument extends AbstractService
             $exemption_reason_code = "VATEX-EU-G";
         } elseif ($this->client->is_tax_exempt || $item->tax_id == '5' || $item->tax_id == '8') {
             $this->tax_code =  ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX;
-            $this->exemption_reason_code = "VATEX-EU-NOT-TAX";
+            // $this->exemption_reason_code = "VATEX-EU-NOT-TAX";
+            $this->exemption_reason_code = "VATEX-EU-O";
+            nlog("exemption_reason_code: {$this->exemption_reason_code}");
         } elseif ($item->tax_id == '9') { //reverse charge
             $this->tax_code = ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE;
             $this->exemption_reason_code = "VATEX-EU-AE";

@@ -72,9 +72,9 @@ class StoreSchedulerRequest extends Request
             'parameters.status' => ['bail','sometimes', 'nullable', 'string'],
             'parameters.include_project_tasks' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
             'parameters.auto_send' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
-            'parameters.invoice_id' => ['bail','sometimes', 'string', 'required_if:template,payment_schedule'],
-            'parameters.auto_bill' => ['bail','sometimes', 'boolean', 'required_if:template,payment_schedule'],
-            'parameters.schedule' => ['bail','sometimes', 'array', 'required_if:template,payment_schedule', 'min:1'],
+            'parameters.invoice_id' => ['bail', 'string', 'required_if:template,payment_schedule'],
+            'parameters.auto_bill' => ['bail', 'boolean', 'required_if:template,payment_schedule'],
+            'parameters.schedule' => ['bail', 'array', 'required_if:template,payment_schedule', 'min:1'],
             'parameters.schedule.*.id' => ['bail','sometimes', 'integer'],
             'parameters.schedule.*.date' => ['bail','sometimes', 'date:Y-m-d'],
             'parameters.schedule.*.amount' => ['bail','sometimes', 'numeric'],
@@ -128,6 +128,7 @@ class StoreSchedulerRequest extends Request
         return [
             'parameters.schedule.min' => 'The schedule must have at least one item.',
             'parameters.schedule' => 'You must have at least one schedule entry.',
+            'parameters.invoice_id' => 'You must select an invoice.'
         ];
     }
 }

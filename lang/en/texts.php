@@ -5597,6 +5597,7 @@ $lang = array(
     'payment_schedule' => 'Payment Schedule',
     'time_zone' => 'Time Zone',
     'tax_names' => 'Tax Names',
+    'auto_bill_help' => 'If enabled, when the schedule runs, auto bill will be attempted for the scheduled amount',
 );
 
 return $lang;
