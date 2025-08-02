@@ -14,6 +14,7 @@ namespace App\Http\Requests\TaskScheduler;
 
 use App\Http\Requests\Request;
 use App\Http\ValidationRules\Scheduler\ValidClientIds;
+use App\Http\ValidationRules\Scheduler\InvoiceWithNoExistingSchedule;
 
 class StoreSchedulerRequest extends Request
 {
@@ -72,7 +73,7 @@ class StoreSchedulerRequest extends Request
             'parameters.status' => ['bail','sometimes', 'nullable', 'string'],
             'parameters.include_project_tasks' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
             'parameters.auto_send' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
-            'parameters.invoice_id' => ['bail', 'string', 'required_if:template,payment_schedule'],
+            'parameters.invoice_id' => ['bail', 'string', 'required_if:template,payment_schedule', new InvoiceWithNoExistingSchedule()],
             'parameters.auto_bill' => ['bail', 'boolean', 'required_if:template,payment_schedule'],
             'parameters.schedule' => ['bail', 'array', 'required_if:template,payment_schedule', 'min:1'],
             'parameters.schedule.*.id' => ['bail','sometimes', 'integer'],

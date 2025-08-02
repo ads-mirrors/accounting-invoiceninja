@@ -64,7 +64,86 @@ class SchedulerTest extends TestCase
     }
 
 
-public function testPaymentScheduleWithPercentageBasedScheduleAndFailingValidation()
+    public function testDuplicateInvoicePaymentSchedule()
+    {
+        $invoice = Invoice::factory()->create([
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'client_id' => $this->client->id,
+            'date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(30)->format('Y-m-d'),
+            'amount' => 300.00,
+            'balance' => 300.00,
+        ]);
+
+        $invoice->service()->markSent()->save();
+        
+        $data = [
+           'name' => 'A test payment schedule scheduler',
+           'frequency_id' => 0,
+           'next_run' => now()->format('Y-m-d'),
+           'template' => 'payment_schedule',
+           'parameters' => [
+               'invoice_id' => $invoice->hashed_id,
+               'auto_bill' => true,
+               'schedule' => [
+                [
+                    'id' => 1,
+                    'date' => now()->format('Y-m-d'),
+                    'amount' => 40,
+                    'is_amount' => false,
+                ],
+                [
+                    'id' => 2,
+                    'date' => now()->addDays(30)->format('Y-m-d'),
+                    'amount' => 60.00,
+                    'is_amount' => false,
+                ]
+               ],
+           ],
+       ];
+
+        // $data = [
+        //     'schedule' => [
+        //         [
+        //             'id' => 1,
+        //             'date' => now()->format('Y-m-d'),
+        //             'amount' => 40,
+        //             'is_amount' => false,
+        //         ],
+        //         [
+        //             'id' => 2,
+        //             'date' => now()->addDays(30)->format('Y-m-d'),
+        //             'amount' => 60.00,
+        //             'is_amount' => false,
+        //         ]
+        //     ],
+        //     'auto_bill' => true,
+        // ];
+        
+
+
+$response = $this->withHeaders([
+    'X-API-SECRET' => config('ninja.api_secret'),
+    'X-API-TOKEN' => $this->token,
+])->postJson('/api/v1/task_schedulers', $data);
+
+        $response->assertStatus(200);
+
+
+
+$response = $this->withHeaders([
+    'X-API-SECRET' => config('ninja.api_secret'),
+    'X-API-TOKEN' => $this->token,
+])->postJson('/api/v1/task_schedulers', $data);
+
+        $response->assertStatus(422);
+
+
+    }
+
+
+    public function testPaymentScheduleWithPercentageBasedScheduleAndFailingValidation()
     {
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
