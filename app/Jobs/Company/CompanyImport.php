@@ -1427,12 +1427,12 @@ class CompanyImport implements ShouldQueue
 
         //foreach ($this->backup_file->users as $user)
         foreach ((object)$this->getObject("users") as $user) {
-            if($user = MultiDB::hasUser(['email' => $user->email])) { //ensures that we do no inject existing users into the new account.
-            
-                if($user->account_id != $this->account->id) {
-                    throw new ImportCompanyFailed("{$user->email} is already in the system attached to a different account");
-                }
 
+            if($userX = MultiDB::hasUser(['email' => $user->email])) { //ensures that we do no inject existing users into the new account.
+            
+                if($userX->account_id != $this->account->id) {
+                    throw new ImportCompanyFailed("{$userX->email} is already in the system attached to a different account");
+                }
                 
             }
 
