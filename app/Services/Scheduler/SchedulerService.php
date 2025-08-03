@@ -13,8 +13,10 @@
 namespace App\Services\Scheduler;
 
 use App\Models\Scheduler;
-use App\Utils\Traits\MakesDates;
 use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\MakesDates;
+use App\Services\Scheduler\PaymentSchedule;
+
 class SchedulerService
 {
     use MakesHash;
@@ -56,6 +58,10 @@ class SchedulerService
         (new InvoiceOutstandingTasksService($this->scheduler))->run();
     }
 
+    private function payment_schedule()
+    {
+        (new PaymentSchedule($this->scheduler))->run();
+    }
 
     /**
      * Sets the next run date of the scheduled task

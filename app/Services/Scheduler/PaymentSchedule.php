@@ -29,8 +29,8 @@ class PaymentSchedule
     {
         $invoice = Invoice::find($this->decodePrimaryKey($this->scheduler->parameters['invoice_id']));
 
-        // Needs to be draft, partial or paid AND not deleted
-        if(!$invoice ||!in_array($invoice->status_id, [Invoice::STATUS_DRAFT, Invoice::STATUS_PARTIAL, Invoice::STATUS_PAID]) || $invoice->is_deleted){
+        // Needs to be draft, partial or sent AND not deleted
+        if(!$invoice || !in_array($invoice->status_id, [Invoice::STATUS_DRAFT, Invoice::STATUS_PARTIAL, Invoice::STATUS_SENT]) || $invoice->is_deleted){
             $this->scheduler->forceDelete();
             return;
         }
@@ -43,12 +43,10 @@ class PaymentSchedule
         $next_schedule = false;
 
         foreach($schedule as $key =>$item){
-           
             if(now()->startOfDay()->eq(Carbon::parse($item['date'])->subSeconds($offset)->startOfDay())){
                 $next_schedule = $item;
                 $schedule_index = $key;
             }
-
         }
 
         if(!$next_schedule){
@@ -56,22 +54,41 @@ class PaymentSchedule
             return;
         }
 
-        $amount = max($next_schedule['amount'], ($next_schedule['percentage'] * $invoice->amount));
-        $amount += $invoice->partial;
+        nlog($next_schedule);
+        
+        if($next_schedule['is_amount']){
+        nlog("is an amount");
+            $amount = $next_schedule['amount'];
+        }
+        else{
+            $amount = round(($next_schedule['amount']/100)*$invoice->amount, 2);
+        }
 
-
+        $amount = min($amount, $invoice->amount);
+        
         if($amount > $invoice->balance){
             $amount = $invoice->balance;
         }
 
-        $invoice->partial = $amount;
-        $invoice->partial_due_date = $item['date'];
-        $invoice->due_date = Carbon::parse($item['date'])->addDay()->format('Y-m-d');
+        nlog("amount to add: {$amount}");
+        nlog("invoice partial before: {$invoice->partial}");
+        $invoice->partial += $amount;
+        $invoice->partial_due_date = $next_schedule['date'];
+        $invoice->due_date = Carbon::parse($next_schedule['date'])->addDay()->format('Y-m-d');
         
         $invoice->save();
 
+        
+        nlog("invoice partial after: {$invoice->partial}");
+
         if($this->scheduler->parameters['auto_bill']){
-            $invoice->service()->autoBill();
+
+            try{
+                $invoice->service()->autoBill();
+            }
+            catch(\Throwable $e){
+                nlog("Error auto-billing invoice {$invoice->id}: {$e->getMessage()}");
+            }
         }
         else{
             $invoice->service()->sendEmail();
@@ -79,7 +96,7 @@ class PaymentSchedule
 
         $total_schedules = count($schedule);
 
-        if($total_schedules >= $schedule_index + 1){
+        if(isset($schedule[$schedule_index + 1])){
             $next_run = $schedule[$schedule_index + 1]['date'];
             $this->scheduler->next_run_client = $next_run;
             $this->scheduler->next_run = Carbon::parse($next_run)->addSeconds($offset);
