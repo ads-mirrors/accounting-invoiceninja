@@ -299,7 +299,7 @@ $response = $this->withHeaders([
             'frequency_id' => 5, // Monthly
             'remaining_cycles' => 3,
             'auto_bill' => false,
-            'next_run' => now()->addDay()->format('Y-m-d'),
+            'next_run' => now()->addDays(30)->format('Y-m-d'),
         ];
         
         $response = $this->withHeaders([
