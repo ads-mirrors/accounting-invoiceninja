@@ -13,12 +13,22 @@
 namespace App\Http\Controllers;
 
 use stdClass;
+use App\Models\Task;
 use App\Utils\Ninja;
+use App\Models\Quote;
 use App\Models\Client;
+use App\Models\Credit;
+use App\Models\Vendor;
+use App\Models\Expense;
 use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Project;
 use App\Models\Activity;
 use Illuminate\Http\Request;
+use App\Models\PurchaseOrder;
 use App\Utils\Traits\MakesHash;
+use App\Models\RecurringExpense;
+use App\Models\RecurringInvoice;
 use App\Utils\PhantomJS\Phantom;
 use App\Utils\HostedPDF\NinjaPdf;
 use App\Utils\Traits\Pdf\PdfMaker;
@@ -28,15 +38,6 @@ use App\Transformers\ActivityTransformer;
 use App\Http\Requests\Activity\StoreNoteRequest;
 use App\Http\Requests\Activity\ShowActivityRequest;
 use App\Http\Requests\Activity\DownloadHistoricalEntityRequest;
-use App\Models\Credit;
-use App\Models\Expense;
-use App\Models\Payment;
-use App\Models\PurchaseOrder;
-use App\Models\Quote;
-use App\Models\RecurringExpense;
-use App\Models\RecurringInvoice;
-use App\Models\Task;
-use App\Models\Vendor;
 
 class ActivityController extends BaseController
 {
@@ -258,8 +259,6 @@ class ActivityController extends BaseController
                 return $this->itemResponse($activity);
             case Vendor::class:
                 $activity->vendor_id = $entity->id;
-
-
                 $activity->save();
 
                 return $this->itemResponse($activity);
@@ -291,6 +290,11 @@ class ActivityController extends BaseController
                 $activity->save();
                 return $this->itemResponse($activity);
 
+            case Project::class:
+                $activity->project_id = $entity->id;
+                $activity->save();
+
+                return $this->itemResponse($activity);
             default:
                 # code...
                 break;
