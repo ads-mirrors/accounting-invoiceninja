@@ -13,11 +13,14 @@
 namespace App\Http\Requests\TaskScheduler;
 
 use App\Http\Requests\Request;
+use App\Utils\Traits\MakesHash;
 use App\Http\ValidationRules\Scheduler\ValidClientIds;
 use App\Http\ValidationRules\Scheduler\InvoiceWithNoExistingSchedule;
+use App\Models\Invoice;
 
 class StoreSchedulerRequest extends Request
 {
+    use MakesHash;
     public array $client_statuses = [
                         'all',
                         'draft',
@@ -119,6 +122,14 @@ class StoreSchedulerRequest extends Request
 
         if(isset($input['parameters']['schedule']) && is_array($input['parameters']['schedule']) && count($input['parameters']['schedule']) > 0) {
             $input['remaining_cycles'] = count($input['parameters']['schedule']);
+        }
+
+        if($input['template'] == 'payment_schedule'){
+            $i = Invoice::withTrashed()->find($this->decodePrimaryKey($input['parameters']['invoice_id']));
+            $input['name'] = ctrans('texts.payment_schedule'). " " . ctrans('texts.invoice_number_short') . " " . $i->number;
+        }
+        elseif($input['template'] == 'invoice_outstanding_tasks'){
+            $input['name'] = ctrans('texts.invoice_outstanding_tasks');
         }
 
         $this->replace($input);
