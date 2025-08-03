@@ -2,13 +2,145 @@
 
 namespace Tests\Feature\EInvoice\Verifactu\Models;
 
-use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
+use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
+use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
+use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
+use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 
 
 class WSTest extends TestCase
 {
 
+    public function test_generated_invoice_xml_can_send_to_web_service()
+    {
+               
+// Generate current timestamp in the correct format
+$currentTimestamp = date('Y-m-d\TH:i:s');
+ nlog($currentTimestamp);
+        $invoice = new Invoice();
+        $invoice
+            ->setIdVersion('1.0')
+            ->setIdFactura('FAC-2023-001')
+            ->setRefExterna('REF-123')
+            ->setNombreRazonEmisor('Empresa Ejemplo SL')
+            ->setTipoFactura('F1')
+            ->setDescripcionOperacion('Venta de productos varios')
+            ->setCuotaTotal(210.00)
+            ->setImporteTotal(1000.00)
+            ->setFechaHoraHusoGenRegistro($currentTimestamp)
+            ->setTipoHuella('01')
+            ->setHuella('PLACEHOLDER_HUELLA');
+
+
+
+// <sum:Cabecera>
+//                 <!-- ObligadoEmision: The computer system submitting on behalf of the invoice issuer -->
+//                 <sum1:ObligadoEmision>
+//                     <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+//                     <sum1:NIF>99999910G</sum1:NIF>
+//                 </sum1:ObligadoEmision>
+//             </sum:Cabecera>
+
+
+        // Add emitter
+        $emisor = new PersonaFisicaJuridica();
+        $emisor
+            ->setNif('B12345678')
+            ->setRazonSocial('Empresa Ejemplo SL');
+        $invoice->setTercero($emisor);
+
+        // Add breakdown
+        $desglose = new Desglose();
+        $desglose->setDesgloseFactura([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '01',
+            'CalificacionOperacion' => 'S1',
+            'BaseImponibleOimporteNoSujeto' => 1000.00,
+            'TipoImpositivo' => 21,
+            'CuotaRepercutida' => 210.00
+        ]);
+        $invoice->setDesglose($desglose);
+
+        // Add information system
+        $sistema = new SistemaInformatico();
+        $sistema
+            ->setNombreRazon('Sistema de Facturación')
+            ->setNif('99999910G')
+            ->setNombreSistemaInformatico('SistemaFacturacion')
+            ->setIdSistemaInformatico('01')
+            ->setVersion('1.0')
+            ->setNumeroInstalacion('INST-001');
+        $invoice->setSistemaInformatico($sistema);
+
+        // Add chain
+        $encadenamiento = new Encadenamiento();
+        $encadenamiento->setPrimerRegistro('S');
+        $invoice->setEncadenamiento($encadenamiento);
+
+        $soapXml = $invoice->toSoapEnvelope();
+
+        $this->assertNotNull($soapXml);
+
+
+
+$correctHash = $this->calculateVerifactuHash(
+    $invoice->getTercero()->getNif(),           // IDEmisorFactura
+    $invoice->getIdFactura(), // NumSerieFactura
+    $invoice->getFechaHoraHusoGenRegistro(),          // FechaExpedicionFactura
+    $invoice->getTipoFactura(),                  // TipoFactura
+    $invoice->getCuotaTotal(),               // CuotaTotal
+    $invoice->getImporteTotal(),              // ImporteTotal
+    '',                    // Huella (empty for first calculation)
+    $currentTimestamp      // FechaHoraHusoGenRegistro (current time)
+);
+
+// Replace the placeholder with the correct hash
+$soapXml = str_replace('PLACEHOLDER_HUELLA', $correctHash, $soapXml);
+
+\Log::info('Calculated hash for XML: ' . $correctHash);
+
+// Sign the XML before sending
+$certPath = storage_path('aeat-cert2.pem');
+$keyPath = storage_path('aeat-key2.pem');
+$signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
+$soapXml = $signingService->sign();
+
+// Try direct HTTP approach instead of SOAP client
+$response = Http::withHeaders([
+        'Content-Type' => 'text/xml; charset=utf-8',
+        'SOAPAction' => '',
+    ])
+    ->withOptions([
+        'cert' => storage_path('aeat-cert2.pem'),
+        'ssl_key' => storage_path('aeat-key2.pem'),
+        'verify' => false,
+        'timeout' => 30,
+    ])
+    ->withBody($soapXml, 'text/xml')
+    ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+
+\Log::info('Request with AEAT official test data:');
+\Log::info($soapXml);
+\Log::info('Response with AEAT official test data:');
+\Log::info('Response Status: ' . $response->status());
+\Log::info('Response Headers: ' . json_encode($response->headers()));
+\Log::info('Response Body: ' . $response->body());
+
+if (!$response->successful()) {
+    \Log::error('Request failed with status: ' . $response->status());
+    \Log::error('Response body: ' . $response->body());
+}
+
+$this->assertTrue($response->successful());
+
+
+
+
+    }
 
 
     public function test_send_aeat_example_to_verifactu()

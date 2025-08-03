@@ -786,6 +786,60 @@ class Invoice extends BaseXmlModel
         }
     }
 
+    public function toSoapEnvelope(): string
+    {
+        // Create the SOAP document
+        $soapDoc = new \DOMDocument('1.0', 'UTF-8');
+        $soapDoc->preserveWhiteSpace = false;
+        $soapDoc->formatOutput = true;
+
+        // Create SOAP envelope with namespaces
+        $envelope = $soapDoc->createElementNS('http://schemas.xmlsoap.org/soap/envelope/', 'soapenv:Envelope');
+        $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:soapenv', 'http://schemas.xmlsoap.org/soap/envelope/');
+        $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:sum', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd');
+        $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:sum1', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
+        
+        $soapDoc->appendChild($envelope);
+
+        // Create Header
+        $header = $soapDoc->createElementNS('http://schemas.xmlsoap.org/soap/envelope/', 'soapenv:Header');
+        $envelope->appendChild($header);
+
+        // Create Body
+        $body = $soapDoc->createElementNS('http://schemas.xmlsoap.org/soap/envelope/', 'soapenv:Body');
+        $envelope->appendChild($body);
+
+        // Create RegFactuSistemaFacturacion
+        $regFactu = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd', 'sum:RegFactuSistemaFacturacion');
+        $body->appendChild($regFactu);
+
+        // Create Cabecera
+        $cabecera = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd', 'sum:Cabecera');
+        $regFactu->appendChild($cabecera);
+
+        // Create ObligadoEmision
+        $obligadoEmision = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sum1:ObligadoEmision');
+        $cabecera->appendChild($obligadoEmision);
+
+        // Add ObligadoEmision content
+        $obligadoEmision->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sum1:NombreRazon', $this->sistemaInformatico->getNombreRazon()));
+        $obligadoEmision->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sum1:NIF', $this->sistemaInformatico->getNif()));
+
+        // Create RegistroFactura
+        $registroFactura = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd', 'sum:RegistroFactura');
+        $regFactu->appendChild($registroFactura);
+
+        // Import your existing XML into the RegistroFactura
+        $yourXmlDoc = new \DOMDocument();
+        $yourXmlDoc->loadXML($this->toXmlString());
+        
+        // Import the root element from your XML
+        $importedNode = $soapDoc->importNode($yourXmlDoc->documentElement, true);
+        $registroFactura->appendChild($importedNode);
+
+        return $soapDoc->saveXML();
+    }
+
     protected function validateXml(\DOMDocument $doc): void
     {
         $xsdPath = $this->getXsdPath();

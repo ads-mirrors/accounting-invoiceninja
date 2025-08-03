@@ -13,10 +13,11 @@ use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
 use Tests\TestCase;
 
-class InvoiceTest extends TestCase
+class VerifactuInvoiceTest extends TestCase
 {
     public function testCreateAndSerializeCompleteInvoice(): void
     {
+
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
@@ -82,6 +83,7 @@ class InvoiceTest extends TestCase
         // echo $xml;
         // echo "\n\n";
 
+        nlog($xml);
         // Validate against XSD
         $doc = new \DOMDocument();
         $doc->loadXML($xml);
