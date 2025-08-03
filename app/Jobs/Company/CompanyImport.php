@@ -304,19 +304,22 @@ class CompanyImport implements ShouldQueue
     {
         set_time_limit(0);
 
+        $json = JsonMachine::fromFile($this->file_path, '/'.$key, new ExtJsonDecoder());
+
         try {
-            $json = JsonMachine::fromFile($this->file_path, '/'.$key, new ExtJsonDecoder());
-
-            if ($force_array) {
-                return iterator_to_array($json);
-            }
-
-            return $json;
+            $iterator_array = iterator_to_array($json);
         } catch (\Throwable $th) {
             nlog("Key '{$key}' does not exist in JSON file: " . $th->getMessage());
             return [];
         }
-    }
+
+        if ($force_array) {
+            return $iterator_array;
+        }
+
+        return $json;
+
+        }
 
     public function handle()
     {
@@ -917,6 +920,8 @@ class CompanyImport implements ShouldQueue
 
     private function import_locations()
     {
+        // $this->ids['locations'] = [];
+        
         $this->genericImport(
             Location::class,
             ['user_id', 'company_id', 'id', 'hashed_id', 'client_id', 'vendor_id'],
@@ -1007,7 +1012,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             RecurringInvoice::class,
-            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id','subscription_id','project_id','vendor_id','status'],
+            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id','subscription_id','project_id','vendor_id', 'status', 'location_id'],
             [
                 ['subscriptions' => 'subscription_id'],
                 ['users' => 'user_id'],
