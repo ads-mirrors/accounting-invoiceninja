@@ -920,7 +920,7 @@ class CompanyImport implements ShouldQueue
 
     private function import_locations()
     {
-        // $this->ids['locations'] = [];
+        $this->ids['locations'] = [];
         
         $this->genericImport(
             Location::class,
@@ -1998,6 +1998,9 @@ class CompanyImport implements ShouldQueue
             if ($resource == 'users') {
                 return $this->company_owner->id;
             }
+            
+            if($resource == 'locations')
+                return null;
 
             if ($this->import_notifications_enabled) {
                 $this->sendImportMail("The Import failed due to missing data in the import file. Key {$old} not found in {$resource}.");

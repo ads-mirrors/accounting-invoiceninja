@@ -654,7 +654,7 @@ class BaseImport
                                 $invoice_data['payments'] as $payment_data
                             ) {
 
-                                if ($payment_data['amount'] == 0 && $invoice_data['status_id'] == 4) {
+                                if ($payment_data['amount'] == 0 && $invoice->status_id == \App\Models\Invoice::STATUS_PAID) {
                                     $payment_data['amount'] = $invoice->amount;
                                 }
 
@@ -669,7 +669,8 @@ class BaseImport
                                 ];
 
                                 /* Make sure we don't apply any payments to invoices with a Zero Amount*/
-                                if ($invoice->amount > 0 && $payment_data['amount'] > 0) {
+                                // if ($invoice->amount > 0 && $payment_data['amount'] > 0) {
+                                if ($invoice->amount > 0) {
 
                                     $payment = $payment_repository->save(
                                         $payment_data,

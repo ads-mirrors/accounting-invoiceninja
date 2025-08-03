@@ -203,70 +203,99 @@ class ActivityController extends BaseController
                 $activity->client_id = $entity->client_id;
                 $activity->project_id = $entity->project_id;
                 $activity->vendor_id = $entity->vendor_id;
-                break;
+
+                $activity->save();
+                return $this->itemResponse($activity);
+
             case Credit::class:
                 $activity->credit_id = $entity->id;
                 $activity->client_id = $entity->client_id;
                 $activity->project_id = $entity->project_id;
                 $activity->vendor_id = $entity->vendor_id;
                 $activity->invoice_id = $entity->invoice_id;
-                break;
+
+                $activity->save();
+                return $this->itemResponse($activity);
+
             case Client::class:
                 $activity->client_id = $entity->id;
-                break;
+
+                $activity->save();
+                return $this->itemResponse($activity);
+
             case Quote::class:
                 $activity->quote_id = $entity->id;
                 $activity->client_id = $entity->client_id;
                 $activity->project_id = $entity->project_id;
                 $activity->vendor_id = $entity->vendor_id;
-                break;
+
+                $activity->save();
+                return $this->itemResponse($activity);
+
             case RecurringInvoice::class:
                 $activity->recurring_invoice_id = $entity->id;
                 $activity->client_id = $entity->client_id;
-                break;
+                                
+                $activity->save();
+                return $this->itemResponse($activity);
+
             case Expense::class:
                 $activity->expense_id = $entity->id;
                 $activity->client_id = $entity->client_id;
                 $activity->project_id = $entity->project_id;
                 $activity->vendor_id = $entity->vendor_id;
-                break;
+
+                $activity->save();
+                return $this->itemResponse($activity);
             case RecurringExpense::class:
                 $activity->recurring_expense_id = $entity->id;
                 $activity->expense_id = $entity->id;
                 $activity->client_id = $entity->client_id;
                 $activity->project_id = $entity->project_id;
                 $activity->vendor_id = $entity->vendor_id;
-                break;
+
+                $activity->save();
+                return $this->itemResponse($activity);
             case Vendor::class:
                 $activity->vendor_id = $entity->id;
-                break;
+
+
+                $activity->save();
+
+                return $this->itemResponse($activity);
+
             case PurchaseOrder::class:
                 $activity->purchase_order_id = $entity->id;
                 $activity->expense_id = $entity->id;
                 $activity->client_id = $entity->client_id;
                 $activity->project_id = $entity->project_id;
                 $activity->vendor_id = $entity->vendor_id;
-                // no break
-                break;
+
+                $activity->save();
+
+                return $this->itemResponse($activity);
             case Task::class:
                 $activity->task_id = $entity->id;
                 $activity->client_id = $entity->client_id;
                 $activity->project_id = $entity->project_id;
-                // no break
-                break;
+
+                $activity->save();
+
+                return $this->itemResponse($activity);
+
             case Payment::class:
                 $activity->payment_id = $entity->id;
                 $activity->client_id = $entity->client_id;
                 $activity->project_id = $entity->project_id;
-                // no break
-                break;
+                
+                $activity->save();
+                return $this->itemResponse($activity);
+
             default:
                 # code...
                 break;
         }
 
-        $activity->save();
-
-        return $this->itemResponse($activity);
+        
     }
 }
