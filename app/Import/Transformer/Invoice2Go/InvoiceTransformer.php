@@ -121,7 +121,6 @@ class InvoiceTransformer extends BaseTransformer
 
         }
 
-        nlog($transformed);
         return $transformed;
     }
 
