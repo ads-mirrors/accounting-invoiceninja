@@ -124,7 +124,7 @@ class StoreSchedulerRequest extends Request
             $input['remaining_cycles'] = count($input['parameters']['schedule']);
         }
 
-        if($input['template'] == 'payment_schedule'){
+        if($input['template'] == 'payment_schedule' && isset($input['parameters']['invoice_id'])){
             $i = Invoice::withTrashed()->find($this->decodePrimaryKey($input['parameters']['invoice_id']));
             $input['name'] = ctrans('texts.payment_schedule'). " " . ctrans('texts.invoice_number_short') . " " . $i->number;
         }
@@ -139,7 +139,8 @@ class StoreSchedulerRequest extends Request
     {
         return [
             'parameters.schedule.min' => 'The schedule must have at least one item.',
-            'parameters.schedule' => 'You must have at least one schedule entry.'
+            'parameters.schedule' => 'You must have at least one schedule entry.',
+            'parameters.invoice_id.required_if' => 'The invoice is required for the payment schedule template.'
         ];
     }
 }
