@@ -846,10 +846,11 @@ class Invoice extends BaseModel
             return [];
         }
 
-        return collect($schedule->parameters['schedule'])->map(function ($item) {
+        return collect($schedule->parameters['schedule'])->map(function ($item) use ($schedule) {
             return [
                 'date' => $item['date'],
-                'amount' => $item['is_amount'] ? \App\Utils\Number::formatMoney($item['amount'], $this->client) : $this->amount ." %",
+                'amount' => $item['is_amount'] ? \App\Utils\Number::formatMoney($item['amount'], $this->client) : $item['amount'] ." %",
+                'auto_bill' => $schedule->parameters['auto_bill'],
             ];
         })->toArray();
     }

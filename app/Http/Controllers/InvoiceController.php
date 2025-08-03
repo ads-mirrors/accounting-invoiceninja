@@ -16,6 +16,7 @@ use App\Utils\Ninja;
 use App\Models\Quote;
 use App\Models\Account;
 use App\Models\Invoice;
+use App\Models\Scheduler;
 use App\Jobs\Cron\AutoBill;
 use Illuminate\Http\Response;
 use App\Factory\InvoiceFactory;
@@ -1077,5 +1078,21 @@ class InvoiceController extends BaseController
 
         return $this->itemResponse($invoice->fresh());
 
+    }
+
+    public function deletePaymentSchedule(Invoice $invoice)
+    {
+        $repo = new SchedulerRepository();
+
+        $scheduler = Scheduler::where('company_id', $invoice->company_id)
+                                ->where('template', 'payment_schedule')
+                                ->where('parameters->invoice_id', $invoice->hashed_id)
+                                ->first();
+
+        if($scheduler) {
+            $scheduler->forceDelete();
+        }
+
+        return $this->itemResponse($invoice->fresh());
     }
 }

@@ -5598,6 +5598,15 @@ $lang = array(
     'time_zone' => 'Time Zone',
     'tax_names' => 'Tax Names',
     'auto_bill_help' => 'If enabled, when the schedule runs, auto bill will be attempted for the scheduled amount',
+    'choose_schedule_type' => 'Choose Schedule Type',
+    'split_payments' => 'Split Payments',
+    'split_payments_help' => 'Splits the invoice amount into multiple payments over a period of time. ie 4 payments over 4 months',
+    'custom_schedule' => 'Manually create a custom payment schedule',
+    'custom_schedule_help' => 'Create a custom payment schedule, allows creating exact dates and amounts for each schedule',
+    'schedule_frequency_help' => 'The interval time between each payment',
+    'first_payment_date' => 'First Payment Date',
+    'first_payment_date_help' => 'The date of the first payment',
+    
 );
 
 return $lang;

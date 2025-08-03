@@ -128,8 +128,7 @@ class StoreSchedulerRequest extends Request
     {
         return [
             'parameters.schedule.min' => 'The schedule must have at least one item.',
-            'parameters.schedule' => 'You must have at least one schedule entry.',
-            'parameters.invoice_id' => 'You must select an invoice.'
+            'parameters.schedule' => 'You must have at least one schedule entry.'
         ];
     }
 }

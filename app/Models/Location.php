@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * App\Models\Client
+ * App\Models\Location
  *
  * @property int $id
  * @property int $company_id
