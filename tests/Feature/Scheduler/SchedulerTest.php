@@ -31,6 +31,7 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\Services\Scheduler\InvoiceOutstandingTasksService;
 use App\Http\Requests\TaskScheduler\PaymentScheduleRequest;
+use App\Utils\Traits\MakesDates;
 
 /**
  * 
@@ -41,6 +42,7 @@ class SchedulerTest extends TestCase
     use MakesHash;
     use MockAccountData;
     use DatabaseTransactions;
+    use MakesDates;
 
     protected $faker;
 
@@ -521,10 +523,10 @@ $response = $this->withHeaders([
         $response->assertStatus(200);
 
         $arr = $response->json();
-        nlog($arr);
+    
         $this->assertEquals(2, count($arr['data']['schedule']));
-        $this->assertEquals(now()->format('Y-m-d'), $arr['data']['schedule'][0]['date']);
-        $this->assertEquals(now()->addDays(30)->format('Y-m-d'), $arr['data']['schedule'][1]['date']);
+        $this->assertEquals(now()->format($this->company->date_format()), $arr['data']['schedule'][0]['date']);
+        $this->assertEquals(now()->addDays(30)->format($this->company->date_format()), $arr['data']['schedule'][1]['date']);
     }
 
 
@@ -571,8 +573,8 @@ $response = $this->withHeaders([
         $arr = $response->json();
         
         $this->assertEquals(2, count($arr['data']['schedule']));
-        $this->assertEquals(now()->format('Y-m-d'), $arr['data']['schedule'][0]['date']);
-        $this->assertEquals(now()->addDays(30)->format('Y-m-d'), $arr['data']['schedule'][1]['date']);
+        $this->assertEquals(now()->format($this->company->date_format()), $arr['data']['schedule'][0]['date']);
+        $this->assertEquals(now()->addDays(30)->format($this->company->date_format()), $arr['data']['schedule'][1]['date']);
     }
 
     public function testPaymentScheduleRequestWithFrequency()
@@ -609,9 +611,9 @@ $response = $this->withHeaders([
         $date = Carbon::parse($invoice->due_date);
 
         $this->assertEquals(3, count($arr['data']['schedule']));
-        $this->assertEquals($date->startOfDay()->format('Y-m-d'), $arr['data']['schedule'][0]['date']);
-        $this->assertEquals($date->addMonthNoOverflow()->format('Y-m-d'), $arr['data']['schedule'][1]['date']);
-        $this->assertEquals($date->addMonthNoOverflow()->format('Y-m-d'), $arr['data']['schedule'][2]['date']);
+        $this->assertEquals($date->startOfDay()->format($this->company->date_format()), $arr['data']['schedule'][0]['date']);
+        $this->assertEquals($date->addMonthNoOverflow()->format($this->company->date_format()), $arr['data']['schedule'][1]['date']);
+        $this->assertEquals($date->addMonthNoOverflow()->format($this->company->date_format()), $arr['data']['schedule'][2]['date']);
     }
 
   
@@ -644,7 +646,7 @@ $response = $this->withHeaders([
 
         $this->assertNotNull($next_schedule);
 
-        $this->assertEquals($next_schedule['date'], now()->format('Y-m-d'));
+        $this->assertEquals($next_schedule['date'], now()->format($this->company->date_format()));
         
         $this->travelTo(now()->addDays(1));
 
@@ -654,7 +656,7 @@ $response = $this->withHeaders([
 
         $this->assertNotNull($next_schedule);
 
-        $this->assertEquals($next_schedule['date'], now()->format('Y-m-d'));
+        $this->assertEquals($next_schedule['date'], now()->format($this->company->date_format()));
         
     }
 
