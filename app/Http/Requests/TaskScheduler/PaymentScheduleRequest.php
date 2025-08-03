@@ -95,10 +95,11 @@ class PaymentScheduleRequest extends Request
             $input['parameters']['schedule'] = $this->generateSchedule($input['frequency_id'], $input['remaining_cycles'], Carbon::parse($due_date));
         }
 
-        // $input['next_run'] = $input['parameters']['schedule'][0]['date'];
-
         $input['remaining_cycles'] = count($input['parameters']['schedule']);
 
+        $input['next_run_client'] = $input['next_run'];
+        $input['next_run'] = Carbon::parse($input['next_run'])->addSeconds($this->invoice->company->timezone_offset())->format('Y-m-d');
+        
         $this->replace($input);
     }
 
@@ -107,10 +108,10 @@ class PaymentScheduleRequest extends Request
         
         
         $amount = round($this->invoice->amount / $remaining_cycles, 2);
-
+        
         $delta = round($amount * $remaining_cycles, 2);
         $adjustment = 0;
-
+        
         if(floatval($delta) != floatval($this->invoice->amount)) {
             $adjustment = round(floatval($this->invoice->amount) - floatval($delta), 2); //adjustment to make the total amount equal to the invoice amount
         }
@@ -126,7 +127,7 @@ class PaymentScheduleRequest extends Request
             ];
         }
 
-        if($adjustment > 0) {
+        if($adjustment != 0) {
             $schedule[$remaining_cycles-1]['amount'] += $adjustment;
         }
 

@@ -190,7 +190,14 @@ class HtmlEngine
         $data['$tax_info'] = ['value' => $this->taxLabel(), 'label' => ''];
         $data['$net'] = ['value' => '', 'label' => ctrans('texts.net')];
 
+        $data['$payment_schedule'] = ['value' => '', 'label' => ctrans('texts.payment_schedule')];
+        $data['$payment_schedule_interval'] = ['value' => '', 'label' => ctrans('texts.payment_schedule')];
+
         if ($this->entity_string == 'invoice' || $this->entity_string == 'recurring_invoice') {
+            
+            $data['$payment_schedule'] = ['value' => $this->entity->paymentSchedule(true), 'label' => ctrans('texts.payment_schedule')];
+            $data['$payment_schedule_interval'] = ['value' => $this->entity->paymentScheduleInterval(), 'label' => ctrans('texts.payment_schedule')];
+
             $data['$entity'] = ['value' => ctrans('texts.invoice'), 'label' => ctrans('texts.invoice')];
             $data['$number'] = ['value' => $this->entity->number ?: ' ', 'label' => ctrans('texts.invoice_number')];
             $data['$invoice'] = ['value' => $this->entity->number ?: ' ', 'label' => ctrans('texts.invoice_number')];

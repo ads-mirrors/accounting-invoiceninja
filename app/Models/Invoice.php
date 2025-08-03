@@ -834,7 +834,7 @@ class Invoice extends BaseModel
         return $reminder_schedule;
     }
 
-    public function paymentSchedule(): array 
+    public function paymentSchedule(bool $formatted = false): mixed 
     {
 
         $schedule = \App\Models\Scheduler::where('company_id', $this->company_id)
@@ -843,15 +843,63 @@ class Invoice extends BaseModel
                             ->first();
 
         if (! $schedule) {
-            return [];
+
+            if($formatted){
+                return '';
+            }
+            else{
+                return [];
+            }
         }
 
-        return collect($schedule->parameters['schedule'])->map(function ($item) use ($schedule) {
-            return [
-                'date' => $item['date'],
-                'amount' => $item['is_amount'] ? \App\Utils\Number::formatMoney($item['amount'], $this->client) : $item['amount'] ." %",
-                'auto_bill' => $schedule->parameters['auto_bill'],
-            ];
-        })->toArray();
+        if(!$formatted){
+            return collect($schedule->parameters['schedule'])->map(function ($item) use ($schedule) {
+                return [
+                    'date' => $this->formatDate($item['date'], $this->client->date_format()),
+                    'amount' => $item['is_amount'] ? \App\Utils\Number::formatMoney($item['amount'], $this->client) : $item['amount'] ." %",
+                    'auto_bill' => $schedule->parameters['auto_bill'],
+                ];
+            })->toArray();
+        }
+
+        
+        $formatted_string = "<div id=\"payment-schedule\">";
+
+        foreach($schedule->parameters['schedule'] as $item){
+            $amount = $item['is_amount'] ? $item['amount'] : round($this->amount * ($item['amount']/100),2);
+            $amount = \App\Utils\Number::formatMoney($amount, $this->client);
+
+            $formatted_string .= "<p><span class=\"payment-schedule-date\">".$this->formatDate($item['date'], $this->client->date_format()) . "</span> - <span class=\"payment-schedule-amount\"> " . $amount."</span></p>";
+        }
+
+        $formatted_string .= "</div>";
+
+        return htmlspecialchars($formatted_string, ENT_QUOTES, 'UTF-8');
+
+    }
+
+    public function paymentScheduleInterval(): string
+    {
+        $schedule = \App\Models\Scheduler::where('company_id', $this->company_id)
+                            ->where('template', 'payment_schedule')                           
+                            ->where('parameters->invoice_id', $this->hashed_id)
+                            ->first();
+
+        if(!$schedule)
+            return '';
+
+        $schedule_array = $schedule->parameters['schedule'] ?? [];
+
+        $index = 0;
+
+        foreach($schedule_array as $key => $item){
+            if($date = Carbon::parse($item['date'])->eq(Carbon::parse($schedule->next_run_client))){
+                $index = $key;
+            }
+        }
+
+        $amount = $schedule_array[$index]['is_amount'] ? \App\Utils\Number::formatMoney($schedule_array[$index]['amount'], $this->client) : \App\Utils\Number::formatMoney(($schedule_array[$index]['amount']/100)*$this->amount, $this->client);
+
+        return ctrans('texts.payment_schedule_interval', ['index' => $index+1, 'total' => count($schedule_array), 'amount' => $amount]);
     }
 }

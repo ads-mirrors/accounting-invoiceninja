@@ -5606,7 +5606,11 @@ $lang = array(
     'schedule_frequency_help' => 'The interval time between each payment',
     'first_payment_date' => 'First Payment Date',
     'first_payment_date_help' => 'The date of the first payment',
-    
+    'payment_schedule_interval' => 'Payment :index of :total for :amount',
+    'auto_send' => 'Auto Send',
+    'auto_send_help' => 'Automatically emails the invoice to the client',
+    'include_project_tasks' => 'Include Project Tasks',
+    'include_project_tasks_help' => 'Also invoice tasks that are part of a project',
 );
 
 return $lang;

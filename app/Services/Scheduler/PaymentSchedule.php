@@ -54,15 +54,8 @@ class PaymentSchedule
             return;
         }
 
-        nlog($next_schedule);
         
-        if($next_schedule['is_amount']){
-        nlog("is an amount");
-            $amount = $next_schedule['amount'];
-        }
-        else{
-            $amount = round(($next_schedule['amount']/100)*$invoice->amount, 2);
-        }
+        $amount = $next_schedule['is_amount'] ? $next_schedule['amount'] : round(($next_schedule['amount']/100)*$invoice->amount, 2);
 
         $amount = min($amount, $invoice->amount);
         
@@ -70,16 +63,11 @@ class PaymentSchedule
             $amount = $invoice->balance;
         }
 
-        nlog("amount to add: {$amount}");
-        nlog("invoice partial before: {$invoice->partial}");
         $invoice->partial += $amount;
         $invoice->partial_due_date = $next_schedule['date'];
         $invoice->due_date = Carbon::parse($next_schedule['date'])->addDay()->format('Y-m-d');
         
         $invoice->save();
-
-        
-        nlog("invoice partial after: {$invoice->partial}");
 
         if($this->scheduler->parameters['auto_bill']){
 
