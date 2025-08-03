@@ -387,6 +387,9 @@ class HtmlEngine
 
         $data['$total'] = ['value' => Number::formatMoney($this->entity_calc->getTotal(), $this->client) ?: ' ', 'label' => ctrans('texts.total')];
         $data['$amount'] = &$data['$total'];
+        $data['$amount_bgn_eur'] = ['value' => Number::formatValue($this->entity_calc->getTotal()/1.95583, app('currencies')->first(function ($currency) {
+            return $currency->code == 'EUR';
+        })) ?: ' ', 'label' => ''];
         $data['$amount_due'] = ['value' => &$data['$balance_due']['value'], 'label' => ctrans('texts.amount_due')];
         $data['$quote.total'] = &$data['$total'];
         $data['$invoice.total'] = ['value' => Number::formatMoney($this->entity_calc->getTotal(), $this->client) ?: ' ', 'label' => ctrans('texts.invoice_total')];
