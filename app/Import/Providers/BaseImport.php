@@ -654,6 +654,9 @@ class BaseImport
                                 $invoice_data['payments'] as $payment_data
                             ) {
 
+                                if($invoice->status_id == \App\Models\Invoice::STATUS_DRAFT)
+                                    continue;
+
                                 if ($payment_data['amount'] == 0 && $invoice->status_id == \App\Models\Invoice::STATUS_PAID) {
                                     $payment_data['amount'] = $invoice->amount;
                                 }
