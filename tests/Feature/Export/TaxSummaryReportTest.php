@@ -170,6 +170,57 @@ class TaxSummaryReportTest extends TestCase
         $this->account->delete();
     }
 
+    public function testSimpleReportXLS()
+    {
+        $this->buildData();
+
+
+        $this->payload = [
+            'start_date' => '2000-01-01',
+            'end_date' => '2030-01-11',
+            'date_range' => 'custom',
+            'client_id' => $this->client->id,
+            'report_keys' => []
+        ];
+
+        $i = Invoice::factory()->create([
+            'client_id' => $this->client->id,
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'amount' => 0,
+            'balance' => 0,
+            'status_id' => 2,
+            'total_taxes' => 1,
+            'date' => now()->format('Y-m-d'),
+            'terms' => 'nada',
+            'discount' => 0,
+            'tax_rate1' => 10,
+            'tax_rate2' => 17.5,
+            'tax_rate3' => 5,
+            'tax_name1' => 'GST',
+            'tax_name2' => 'VAT',
+            'tax_name3' => 'CA Sales Tax',
+            'uses_inclusive_taxes' => false,
+            'line_items' => $this->buildLineItems(),
+        ]);
+
+        $i = $i->calc()->getInvoice();
+
+        $pl = new TaxSummaryReport($this->company, $this->payload);
+        
+        $query = Invoice::query()
+            ->withTrashed()
+            ->where('company_id', $this->company->id)
+            ->whereIn('status_id', [2,3,4])
+            ->where('is_deleted', 0);
+
+        $tr = new \App\Services\Report\XLS\TaxReport($this->company, $pl, $query);
+        $response = $tr->run()->getXlsFile();
+
+        $this->assertNotEmpty($response);
+
+        $this->account->delete();
+    }
 
     private function buildLineItems()
     {
