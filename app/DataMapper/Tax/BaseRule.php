@@ -39,10 +39,6 @@ class BaseRule implements RuleInterface
 
     public string $client_subregion = '';
 
-    private string $nexus = '';
-    
-    private string $country_nexus = '';
-    
     public array $eu_country_codes = [
             'AT', // Austria
             'BE', // Belgium
@@ -191,6 +187,7 @@ class BaseRule implements RuleInterface
 
         $this->resolveRegions();
 
+
         if (!$this->isTaxableRegion()) {
             $this->tax_data = null;
             $this->tax_rate1 = 0;
@@ -237,6 +234,7 @@ class BaseRule implements RuleInterface
          * Destination - Client Tax Data
          *
          */
+
         $tax_data = false;
 
         if ($this->seller_region == 'US' && $this->client_region == 'US') {
@@ -254,35 +252,19 @@ class BaseRule implements RuleInterface
             if ($company->origin_tax_data->originDestination == 'O' && ($company->tax_data?->seller_subregion == $this->client_subregion)) {
 
                 $tax_data = $company->origin_tax_data;
-                $tax_data->nexus = $tax_data->geoState;
-                $tax_data->country_nexus = 'US';
 
             } elseif ($this->invoice->location && $this->invoice->location->is_shipping_location && $this->invoice->location->tax_data) {
 
                 $tax_data = $this->invoice->location->tax_data;
 
-                $tax_data->nexus = $tax_data->geoState;
-                $tax_data->country_nexus = 'US';
-
             } elseif ($this->client->tax_data) {
 
-                $tax_data = $this->client->tax_data;
 
-                $tax_data->nexus = $tax_data->geoState;
-                $tax_data->country_nexus = 'US';
+                $tax_data = $this->client->tax_data;
 
             }
 
         }
-
-        $this->saveTaxData($tax_data);
-
-        return $this;
-
-    }
-    
-    private function saveTaxData(mixed $tax_data): self
-    {
 
         /** Applies the tax data to the invoice */
         if (($this->invoice instanceof Invoice || $this->invoice instanceof Quote) && $tax_data) {
@@ -301,7 +283,9 @@ class BaseRule implements RuleInterface
         }
 
         return $this;
+
     }
+
 
     /**
      * Resolve Regions & Subregions
@@ -377,9 +361,6 @@ class BaseRule implements RuleInterface
             $this->tax_rate1 = $this->client->company->tax_data->regions->AU->subregions->AU->tax_rate;
             $this->tax_name1 = $this->client->company->tax_data->regions->AU->subregions->AU->tax_name;
 
-            $this->nexus = 'AU';
-            $this->country_nexus = 'AU';
-            
             return $this;
         }
 
@@ -399,33 +380,18 @@ class BaseRule implements RuleInterface
                 if ($is_b2c && $is_over_threshold) {
                     $this->tax_rate1 = $this->client->company->tax_data->regions->{$this->client_region}->subregions->{$this->client_subregion}->tax_rate;
                     $this->tax_name1 = $this->client->company->tax_data->regions->{$this->client_region}->subregions->{$this->client_subregion}->tax_name;
-
-                    $this->nexus = $this->client_subregion;
-                    $this->country_nexus = $this->client_region;
                 }
                 // Otherwise, use origin country tax rates
                 elseif (in_array($company_country_code, $this->eu_country_codes)) {
                     $this->tax_rate1 = $this->client->company->tax_data->regions->{$this->client_region}->subregions->{$company_country_code}->tax_rate;
                     $this->tax_name1 = $this->client->company->tax_data->regions->{$this->client_region}->subregions->{$company_country_code}->tax_name;
-
-                    $this->nexus = $company_country_code;
-                    $this->country_nexus = $company_country_code;
-
                 } elseif ($is_over_threshold) {
                     $this->tax_rate1 = $this->client->company->tax_data->regions->{$this->client_region}->subregions->{$this->client_subregion}->tax_rate;
                     $this->tax_name1 = $this->client->company->tax_data->regions->{$this->client_region}->subregions->{$this->client_subregion}->tax_name;
-                    
-                    $this->nexus = $this->client_subregion;
-                    $this->country_nexus = $this->client_region;
-
                 }
             } else {
                 $this->tax_rate1 = $this->client->company->tax_data->regions->{$this->client_region}->subregions->{$this->client_subregion}->tax_rate;
                 $this->tax_name1 = $this->client->company->tax_data->regions->{$this->client_region}->subregions->{$this->client_subregion}->tax_name;
-                
-                $this->nexus = $this->client_subregion;
-                $this->country_nexus = $this->client_region;
-
             }
         }
 
