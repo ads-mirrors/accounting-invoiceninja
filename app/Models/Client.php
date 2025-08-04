@@ -44,6 +44,7 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
  * @property string|null $private_notes
  * @property string|null $public_notes
  * @property string|null $client_hash
+ * @property string|null $classification
  * @property string|null $logo
  * @property string|null $phone
  * @property string|null $routing_id

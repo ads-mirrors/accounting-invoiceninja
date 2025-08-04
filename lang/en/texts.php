@@ -5611,6 +5611,7 @@ $lang = array(
     'auto_send_help' => 'Automatically emails the invoice to the client',
     'include_project_tasks' => 'Include Project Tasks',
     'include_project_tasks_help' => 'Also invoice tasks that are part of a project',
+    'tax_nexus' => 'Tax Nexus',
 );
 
 return $lang;

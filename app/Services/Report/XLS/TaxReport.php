@@ -17,7 +17,11 @@ class TaxReport
     private Spreadsheet $spreadsheet;
 
     private array $data = [];
-    
+
+    private string $currency_format;
+
+    private string $number_format;
+
     public function __construct(public Company $company, public TaxSummaryReport $tsr, public Builder $query)
     {
     }
@@ -34,6 +38,7 @@ class TaxReport
         $this->spreadsheet = new Spreadsheet();
 
         $this->buildData()
+        ->setCurrencyFormat()
             ->createSummarySheet()
             ->createInvoiceSummarySheetAccrual()
             ->createInvoiceSummarySheetCash()
@@ -46,11 +51,28 @@ class TaxReport
 
     }
 
+    public function setCurrencyFormat()
+    {
+        $currency = $this->company->currency();
+
+        $formatted = number_format(9990.00, $currency->precision, $currency->decimal_separator, $currency->thousand_separator);
+        $formatted = str_replace('9', '#', $formatted);
+        $this->number_format = $formatted;
+        
+        $formatted = "{$currency->symbol}{$formatted}";
+        $this->currency_format = $formatted;
+
+        return $this;
+    }
+
     public function createSummarySheet()
     {
         
         $worksheet = $this->spreadsheet->getActiveSheet();
         $worksheet->setTitle(ctrans('texts.tax_summary'));
+
+        // Add summary data and formatting here if needed
+        // For now, this sheet is empty but could be populated with summary statistics
 
         return $this;
     }
@@ -59,9 +81,15 @@ class TaxReport
     public function createInvoiceSummarySheetAccrual()
     {
         
-        $newWorksheet = $this->spreadsheet->createSheet();
-        $newWorksheet->setTitle(ctrans('texts.invoice')." ".ctrans('texts.cash_vs_accrual'));
-        $newWorksheet->fromArray($this->data['invoices'], null, 'A1');
+        $worksheet = $this->spreadsheet->createSheet();
+        $worksheet->setTitle(ctrans('texts.invoice')." ".ctrans('texts.cash_vs_accrual'));
+        $worksheet->fromArray($this->data['invoices'], null, 'A1');
+
+        $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format()); // Invoice date column
+        $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode($this->currency_format); // Invoice total column
+        $worksheet->getStyle('D:D')->getNumberFormat()->setFormatCode($this->currency_format); // Paid amount column
+        $worksheet->getStyle('E:E')->getNumberFormat()->setFormatCode($this->currency_format); // Total taxes column
+        $worksheet->getStyle('F:F')->getNumberFormat()->setFormatCode($this->currency_format); // Tax paid column
 
         return $this;
     }
@@ -73,18 +101,33 @@ class TaxReport
             return $invoice[3] != 0;
         })->toArray();
         
-        $newWorksheet = $this->spreadsheet->createSheet();
-        $newWorksheet->setTitle(ctrans('texts.invoice')." ".ctrans('texts.cash_accounting'));
-        $newWorksheet->fromArray($cash_invoices, null, 'A1');
+        $worksheet = $this->spreadsheet->createSheet();
+        $worksheet->setTitle(ctrans('texts.invoice')." ".ctrans('texts.cash_accounting'));
+        $worksheet->fromArray($cash_invoices, null, 'A1');        
+        $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format()); // Invoice date column
+        $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode($this->currency_format); // Invoice total column
+        $worksheet->getStyle('D:D')->getNumberFormat()->setFormatCode($this->currency_format); // Paid amount column
+        $worksheet->getStyle('E:E')->getNumberFormat()->setFormatCode($this->currency_format); // Total taxes column
+        $worksheet->getStyle('F:F')->getNumberFormat()->setFormatCode($this->currency_format); // Tax paid column
+
         return $this;
     }
 
     public function createInvoiceItemSummarySheetAccrual()
     {
 
-        $newWorksheet = $this->spreadsheet->createSheet();
-        $newWorksheet->setTitle(ctrans('texts.invoice_item')." ".ctrans('texts.cash_vs_accrual'));
-        $newWorksheet->fromArray($this->data['invoice_items'], null, 'A1');
+        $worksheet = $this->spreadsheet->createSheet();
+        $worksheet->setTitle(ctrans('texts.invoice_item')." ".ctrans('texts.cash_vs_accrual'));
+        $worksheet->fromArray($this->data['invoice_items'], null, 'A1');
+
+        $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format()); // Invoice date column
+        $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode($this->currency_format); // Invoice total column
+        $worksheet->getStyle('D:D')->getNumberFormat()->setFormatCode($this->currency_format); // Paid amount column
+        $worksheet->getStyle('F:F')->getNumberFormat()->setFormatCode($this->number_format."%"); // Tax rate column
+        $worksheet->getStyle('G:G')->getNumberFormat()->setFormatCode($this->currency_format); // Tax amount column
+        $worksheet->getStyle('H:H')->getNumberFormat()->setFormatCode($this->currency_format); // Tax paid column
+        $worksheet->getStyle('I:I')->getNumberFormat()->setFormatCode($this->currency_format); // Taxable amount column
+        // Column J (tax_nexus) is text, so no special formatting needed
 
         return $this;
     }
@@ -96,9 +139,18 @@ class TaxReport
             return $invoice_item[3] != 0;
         })->toArray();
 
-        $newWorksheet = $this->spreadsheet->createSheet();
-        $newWorksheet->setTitle(ctrans('texts.invoice_item')." ".ctrans('texts.cash_accounting'));
-        $newWorksheet->fromArray($cash_invoice_items, null, 'A1');
+        $worksheet = $this->spreadsheet->createSheet();
+        $worksheet->setTitle(ctrans('texts.invoice_item')." ".ctrans('texts.cash_accounting'));
+        $worksheet->fromArray($cash_invoice_items, null, 'A1');
+
+        $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format()); // Invoice date column
+        $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode($this->currency_format); // Invoice total column
+        $worksheet->getStyle('D:D')->getNumberFormat()->setFormatCode($this->currency_format); // Paid amount column
+        $worksheet->getStyle('F:F')->getNumberFormat()->setFormatCode($this->number_format."%"); // Tax rate column
+        $worksheet->getStyle('G:G')->getNumberFormat()->setFormatCode($this->currency_format); // Tax amount column
+        $worksheet->getStyle('H:H')->getNumberFormat()->setFormatCode($this->currency_format); // Tax paid column
+        $worksheet->getStyle('I:I')->getNumberFormat()->setFormatCode($this->currency_format); // Taxable amount column
+        // Column J (tax_nexus) is text, so no special formatting needed
 
         return $this;
     }
@@ -130,6 +182,7 @@ class TaxReport
             ctrans('texts.tax_amount'),
             ctrans('texts.tax_paid'),
             ctrans('texts.taxable_amount'),
+            ctrans('texts.tax_nexus'),
         ];
 
         $offset = $this->company->timezone_offset();
@@ -181,6 +234,7 @@ class TaxReport
                     $tax['total'],
                     $tax['total'] * $pro_rata_payment_ratio,
                     $tax['base_amount'] ?? $calc->getNetSubtotal(),
+                    $tax['nexus'] ?? '',
                 ];
             }
 
@@ -192,16 +246,20 @@ class TaxReport
     public function getXlsFile()
     {
        
-        
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($this->spreadsheet);
-        $writer->save('/tmp/tax_report.xlsx');
+        $tempFile = tempnam(sys_get_temp_dir(), 'tax_report_');
 
-        // return $this->spreadsheet;
-        // Use output buffering to capture the file content
-        // ob_start();
-        // $this->spreadsheet->save('php://output');
-        // $fileContent = ob_get_clean();
-        
-        // return $fileContent;
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($this->spreadsheet);
+        $writer->save($tempFile);
+
+        $writer->save('/home/david/ttx.xslx');
+        // Read file content
+        $fileContent = file_get_contents($tempFile);
+
+        nlog($tempFile);
+        // Clean up temp file
+        // unlink($tempFile);
+
+        return $fileContent;
+
     }
 }
