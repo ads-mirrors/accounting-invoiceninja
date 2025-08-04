@@ -19,7 +19,6 @@ class InvoiceSyncCast implements CastsAttributes
 {
     public function get($model, string $key, $value, array $attributes)
     {
-
         if (is_null($value)) {
             return null; // Return null if the value is null
         }
@@ -37,21 +36,21 @@ class InvoiceSyncCast implements CastsAttributes
 
     public function set($model, string $key, $value, array $attributes)
     {
-
-
-
         if (is_null($value)) {
             return [$key => null];
         }
 
-
-
-        return [
-            $key => json_encode([
-                'qb_id' => $value->qb_id,
-            ])
+        $data = [
+            'qb_id' => $value->qb_id,
         ];
 
+        // Handle structured nested object
+        if ($value->tax_report !== null) {
+            $data['tax_report'] = $value->tax_report->toArray();
+        }
 
+        return [
+            $key => json_encode($data)
+        ];
     }
 }

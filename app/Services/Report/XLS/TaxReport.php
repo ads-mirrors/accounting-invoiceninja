@@ -251,11 +251,11 @@ class TaxReport
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($this->spreadsheet);
         $writer->save($tempFile);
 
-        $writer->save('/home/david/ttx.xslx');
+        // $writer->save('/home/david/ttx.xslx');
         // Read file content
         $fileContent = file_get_contents($tempFile);
 
-        nlog($tempFile);
+        // nlog($tempFile);
         // Clean up temp file
         // unlink($tempFile);
 
