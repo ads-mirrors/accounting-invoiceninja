@@ -29,8 +29,9 @@ class InvoiceSyncCast implements CastsAttributes
             return null;
         }
 
-        $is = new InvoiceSync($data);
-
+        $is = new InvoiceSync();
+        $is->qb_id = $data['qb_id'];
+        
         return $is;
     }
 
@@ -43,11 +44,6 @@ class InvoiceSyncCast implements CastsAttributes
         $data = [
             'qb_id' => $value->qb_id,
         ];
-
-        // Handle structured nested object
-        if ($value->tax_report !== null) {
-            $data['tax_report'] = $value->tax_report->toArray();
-        }
 
         return [
             $key => json_encode($data)

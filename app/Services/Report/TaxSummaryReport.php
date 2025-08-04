@@ -24,6 +24,7 @@ use App\Export\CSV\BaseExport;
 use App\Utils\Traits\MakesDates;
 use Illuminate\Support\Facades\App;
 use App\Services\Template\TemplateService;
+use App\Jobs\Invoice\InvoiceTaxReportUpdate;
 
 class TaxSummaryReport extends BaseExport
 {

@@ -37,17 +37,45 @@ class TaxReport
 
         $this->spreadsheet = new Spreadsheet();
 
+        $this->updateTaxData();
+
+        
+            // ->createGroupedTaxSummarySheetAccrual()
+            // ->createGroupedTaxSummarySheetCash();
+
+        return $this;
+
+    }
+
+    private function postUpdateContinuation()
+    {
         $this->buildData()
-        ->setCurrencyFormat()
+            ->setCurrencyFormat()
             ->createSummarySheet()
             ->createInvoiceSummarySheetAccrual()
             ->createInvoiceSummarySheetCash()
             ->createInvoiceItemSummarySheetAccrual()
             ->createInvoiceItemSummarySheetCash();
-            // ->createGroupedTaxSummarySheetAccrual()
-            // ->createGroupedTaxSummarySheetCash();
+    }
 
-        return $this;
+    private function updateTaxData()
+    {
+
+    $batch_key = Str::uuid();
+
+    $updates = Invoice::withTrashed()
+                    ->whereIn('id', $this->ids)
+                    ->get()
+                    ->map(function ($invoice) use ($batch_key) {
+                        return new InvoiceTaxReportUpdate($invoice, $this->company->db);
+                    })->toArray();
+
+
+    $batch = Bus::batch($updates)
+                ->then(function (Batch $batch) {
+                    $this->postUpdateContinuation();
+                })
+                ->name($batch_key)->dispatch();
 
     }
 
