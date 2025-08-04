@@ -657,7 +657,7 @@ class OfficeParseTest extends TestCase
         $worksheet = $spreadsheet->getActiveSheet();
         
         // Look for the problematic cell D3
-        $cell = $worksheet->getCell('D3');
+        $cell = $worksheet->getCell('E3');
         $rawValue = $cell->getValue();
         $formattedValue = $cell->getFormattedValue();
         $dataType = $cell->getDataType();
