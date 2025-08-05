@@ -206,7 +206,6 @@ class TaxReport
                     $invoice->load('transaction_events');
                 }
 
-                nlog($invoice->transaction_events->toArray());
                 /** @var TransactionEvent $invoice_state */
                 $invoice_state = $invoice->transaction_events()->where('event_id', TransactionEvent::INVOICE_UPDATED)->where('period', now()->endOfMonth()->format('Y-m-d'))->orderBy('timestamp', 'desc')->first();
                 $payment_state = $invoice->transaction_events()->where('event_id', TransactionEvent::PAYMENT_CASH)->where('period', now()->endOfMonth()->format('Y-m-d'))->orderBy('timestamp', 'desc')->first();
@@ -269,7 +268,7 @@ class TaxReport
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($this->spreadsheet);
         $writer->save($tempFile);
 
-        // $writer->save('/home/david/ttx.xlsx');
+        $writer->save('/home/david/ttx.xlsx');
         // Read file content
         $fileContent = file_get_contents($tempFile);
 
