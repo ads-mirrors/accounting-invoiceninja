@@ -24,12 +24,15 @@ class TaxReport
 
     private string $number_format;
 
-    public function __construct(public Company $company, public TaxSummaryReport $tsr, public Builder $query)
+    public function __construct(public Company $company, private string $start_date, private string $end_date)
     {
     }
 
     public function run()
     {
+
+        $this->start_date = Carbon::parse($this->start_date);
+        $this->end_date = Carbon::parse($this->end_date);
 
         MultiDB::setDb($this->company->db);
         App::forgetInstance('translator');
@@ -153,8 +156,8 @@ class TaxReport
     private function buildData()
     {
 
-        $start_date_instance = Carbon::parse($this->tsr->start_date);
-        $end_date_instance = Carbon::parse($this->tsr->end_date);
+        $start_date_instance = $this->start_date;
+        $end_date_instance = $this->end_date;
 
         $this->data['invoices'] = [];
         $this->data['invoices'][] =
@@ -203,11 +206,14 @@ class TaxReport
                     $invoice->load('transaction_events');
                 }
 
+                nlog($invoice->transaction_events->toArray());
                 /** @var TransactionEvent $invoice_state */
-                $invoice_state = $invoice->transaction_events->where('event_id', TransactionEvent::INVOICE_UPDATED)->sortByDesc('timestamp')->first();
-                $adjustments = $invoice->transaction_events->whereIn('event_id',[TransactionEvent::PAYMENT_REFUNDED, TransactionEvent::PAYMENT_DELETED]);
+                $invoice_state = $invoice->transaction_events()->where('event_id', TransactionEvent::INVOICE_UPDATED)->where('period', now()->endOfMonth()->format('Y-m-d'))->orderBy('timestamp', 'desc')->first();
+                $payment_state = $invoice->transaction_events()->where('event_id', TransactionEvent::PAYMENT_CASH)->where('period', now()->endOfMonth()->format('Y-m-d'))->orderBy('timestamp', 'desc')->first();
+                $adjustments = $invoice->transaction_events()->whereIn('event_id',[TransactionEvent::PAYMENT_REFUNDED, TransactionEvent::PAYMENT_DELETED])->where('period', now()->endOfMonth()->format('Y-m-d'))->get();
 
-                if($invoice_state->event_id == TransactionEvent::INVOICE_UPDATED){
+               
+                if($invoice_state && $invoice_state->event_id == TransactionEvent::INVOICE_UPDATED){
                     $this->data['accrual']['invoices'][] = [
                         $invoice->number,
                         $invoice->date,
@@ -218,15 +224,16 @@ class TaxReport
                         'payable',
                     ];
                 }
-                elseif($invoice_state->event_id == TransactionEvent::PAYMENT_CASH){
+
+                if($payment_state && $payment_state->event_id == TransactionEvent::PAYMENT_CASH){
                 
                     $this->data['cash']['invoices'][] = [
                         $invoice->number,
                         $invoice->date,
                         $invoice->amount,
-                        $invoice_state->invoice_paid_to_date,
-                        $invoice_state->metadata->tax_report->tax_summary->total_taxes,
-                        $invoice_state->metadata->tax_report->tax_summary->total_paid,
+                        $payment_state->invoice_paid_to_date,
+                        $payment_state->metadata->tax_report->tax_summary->total_taxes,
+                        $payment_state->metadata->tax_report->tax_summary->total_paid,
                         'payable',
                     ];
 
@@ -252,36 +259,7 @@ class TaxReport
 
             return $this;
     }
-    //     $offset = $this->company->timezone_offset();
 
-    //     /** @var Invoice $invoice */
-    //     foreach($this->query->cursor() as $invoice){
-
-    //         if($invoice->transaction_events->count() == 0){
-    //             (new InvoiceTransactionEventEntry())->run($invoice);
-    //         }
-
-    //         //get the invoice state as at the end of the current period.
-    //         $invoice_state =$invoice->transaction_events()
-    //                                 ->where('period', Carbon::parse($invoice->date)->endOfMonth()->format('Y-m-d'))
-    //                                 ->where('event_id', TransactionEvent::INVOICE_UPDATED)
-    //                                 ->latest()
-    //                                 ->first();
-
-                    
-
-    //         //anything period the reporting period is considered an ADJUSTMENT 
-    //     }
-
-    //     Invoice::withTrashed()
-    //         ->where('company_id', $this->company->id)
-    //         ->whereHas('transaction_events', function ($query){
-    //             return $query->where('period', Carbon::parse($invoice->date)->endOfMonth()->format('Y-m-d'))
-    //                         ->whereIn('event_id',[TransactionEvent::PAYMENT_REFUNDED, TransactionEvent::PAYMENT_DELETED]);
-    //         });
-
-    //     return $this;
-    // }
 
     public function getXlsFile()
     {

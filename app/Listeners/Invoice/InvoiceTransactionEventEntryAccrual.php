@@ -66,7 +66,7 @@ class InvoiceTransactionEventEntryAccrual
             'invoice_partial' => $invoice->partial ?? 0,
             'invoice_paid_to_date' => $invoice->paid_to_date ?? 0,
             'invoice_status' => $invoice->is_deleted ? 7 : $invoice->status_id,
-            'event_id' => TransactionEvent::INVOICE_UPDATED,
+            'event_id' => TransactionEvent::PAYMENT_CASH,
             'timestamp' => now()->timestamp,
             'metadata' => $this->getMetadata($invoice),
             'period' => now()->endOfMonth()->format('Y-m-d'),

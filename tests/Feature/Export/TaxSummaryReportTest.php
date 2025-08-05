@@ -18,6 +18,7 @@ use App\Models\Account;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Utils\Traits\MakesHash;
+use App\Models\TransactionEvent;
 use App\DataMapper\CompanySettings;
 use App\Factory\InvoiceItemFactory;
 use App\Services\Report\TaxSummaryReport;
@@ -217,9 +218,9 @@ class TaxSummaryReportTest extends TestCase
             'client_id' => $this->client->id,
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
-            'amount' => 0,
+            'amount' => 220,
             'balance' => 0,
-            'status_id' => 2,
+            'status_id' => 1,
             'total_taxes' => 1,
             'date' => now()->format('Y-m-d'),
             'terms' => 'nada',
@@ -235,14 +236,15 @@ class TaxSummaryReportTest extends TestCase
         ]);
 
         $i = $i->calc()->getInvoice();
-
+        $i->service()->markSent()->save();
+        
         (new InvoiceTransactionEventEntry())->run($i);
 
 $i2 = Invoice::factory()->create([
             'client_id' => $this->client->id,
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
-            'amount' => 0,
+            'amount' => 550,
             'balance' => 0,
             'status_id' => 2,
             'total_taxes' => 1,
@@ -260,24 +262,22 @@ $i2 = Invoice::factory()->create([
         ]);
 
 $i2 = $i2->calc()->getInvoice();
-$i2->service()->markPaid();
+$i2->service()->markPaid()->save();
 
 (new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
 
-        $pl = new TaxSummaryReport($this->company, $this->payload);
-        
-        $query = Invoice::query()
-            ->withTrashed()
-            ->where('company_id', $this->company->id)
-            ->whereIn('status_id', [2,3,4])
-            ->where('is_deleted', 0);
-
-        $tr = new \App\Services\Report\XLS\TaxReport($this->company, $pl, $query);
+        $tr = new \App\Services\Report\XLS\TaxReport($this->company, '2025-01-01', '2025-12-31');
         $response = $tr->run()->getXlsFile();
 
         $this->assertNotEmpty($response);
 
-        $this->account->delete();
+        $this->assertNotNull(TransactionEvent::where('invoice_id', $i->id)->first());
+        $this->assertNotNull(TransactionEvent::where('invoice_id', $i2->id)->first());
+
+
+        nlog(TransactionEvent::where('invoice_id', $i->id)->first()->toArray());
+        nlog(TransactionEvent::where('invoice_id', $i2->id)->first()->toArray());
+$this->account->delete();
     }
 
     private function buildLineItems()

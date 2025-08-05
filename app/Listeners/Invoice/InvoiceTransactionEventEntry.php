@@ -39,7 +39,6 @@ class InvoiceTransactionEventEntry
      */
     public function run($invoice)
     {
-        
         $this->setPaidRatio($invoice);
 
         $this->payments = $invoice->payments->flatMap(function ($payment) {
