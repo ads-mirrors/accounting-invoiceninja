@@ -11,6 +11,7 @@ use App\Services\Report\TaxSummaryReport;
 use Illuminate\Database\Eloquent\Builder;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use App\Models\Invoice;
+use App\Listeners\Invoice\InvoiceTransactionEventEntry;
 
 class TaxReport
 {
@@ -189,53 +190,16 @@ class TaxReport
         /** @var Invoice $invoice */
         foreach($this->query->cursor() as $invoice){
 
-            $calc = $invoice->calc();
-            //Combine the line taxes with invoice taxes here to get a total tax amount
-            $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
-            
-            $payment_amount = 0;
-
-            foreach ($invoice->payments()->get() as $payment) {
-
-                if($payment->pivot->created_at->addSeconds($offset)->isBetween($start_date_instance,$end_date_instance)){
-                    $payment_amount += ($payment->pivot->amount - $payment->pivot->refunded);
-                }
+            if($invoice->transaction_events->count() == 0){
+                (new InvoiceTransactionEventEntry())->run($invoice);
             }
 
-            $payment_amount = round($payment_amount,2);
-            $invoice_amount = round($invoice->amount,2);
-            
-            $total_taxes = round($invoice->total_taxes,2);
+            //get the invoice state as at the end of the current period.
+            $invoice->transaction_events->each(function($event){
 
-            $pro_rata_payment_ratio = $payment_amount != 0 ? ($payment_amount/$invoice_amount) : 0;
-            $total_taxes = $payment_amount != 0 ? ($payment_amount/$invoice_amount) * $invoice->total_taxes : 0;
-            $taxable_amount = $calc->getNetSubtotal();
+            });
 
-                $this->data['invoices'][] = [
-                    $invoice->number,
-                    $invoice->date,
-                    $invoice_amount,
-                    $payment_amount,
-                    $total_taxes,
-                    $taxable_amount,
-                ];
-
-
-            foreach($taxes as $tax){
-
-                $this->data['invoice_items'][] = [
-                    $invoice->number,
-                    $invoice->date,
-                    $invoice_amount,
-                    $payment_amount,
-                    $tax['name'],
-                    $tax['tax_rate'],
-                    $tax['total'],
-                    $tax['total'] * $pro_rata_payment_ratio,
-                    $tax['base_amount'] ?? $calc->getNetSubtotal(),
-                    $tax['nexus'] ?? '',
-                ];
-            }
+            //anything period the reporting period is considered an ADJUSTMENT 
 
         }
 

@@ -42,6 +42,7 @@ use App\DataMapper\TransactionEventMetadata;
  * @property string $credit_balance
  * @property string $credit_amount
  * @property int|null $credit_status
+ * @property Carbon|null $period
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|StaticModel exclude($columns)
  * @mixin \Eloquent
@@ -56,11 +57,12 @@ class TransactionEvent extends StaticModel
         'metadata' => TransactionEventMetadata::class,
         'payment_request' => 'array',
         'paymentables' => 'array',
+        'period' => 'date',
     ];
 
     public const INVOICE_UPDATED = 1;
 
-    public const INVOICE_DELETED = 2;
+    public const PAYMENT_REFUNDED = 2;
 
     public const PAYMENT_DELETED = 3;
 }

@@ -67,6 +67,7 @@ class InvoiceTransactionEventEntry
             'event_id' => $invoice->is_deleted ? TransactionEvent::INVOICE_DELETED : TransactionEvent::INVOICE_UPDATED,
             'timestamp' => now()->timestamp,
             'metadata' => $this->getMetadata($invoice),
+            'period' => now()->endOfMonth()->format('Y-m-d'),
         ]);
     }
 
