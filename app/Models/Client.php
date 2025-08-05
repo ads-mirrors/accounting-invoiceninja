@@ -982,19 +982,7 @@ class Client extends BaseModel implements HasLocalePreference
 
         return $offset;
     }
-
-    public function transaction_event()
-    {
-        $client = $this->fresh();
-
-        return [
-            'client_id' => $client->id,
-            'client_balance' => $client->balance ?: 0,
-            'client_paid_to_date' => $client->paid_to_date ?: 0,
-            'client_credit_balance' => $client->credit_balance ?: 0,
-        ];
-    }
-
+    
     public function translate_entity(): string
     {
         return ctrans('texts.client');

@@ -309,6 +309,7 @@ class RefundPayment
                 if ($invoice->is_deleted) {
                     $invoice->delete();
                 }
+
             }
 
         } else {

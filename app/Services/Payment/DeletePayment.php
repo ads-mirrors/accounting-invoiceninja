@@ -156,6 +156,8 @@ class DeletePayment
                     $paymentable_invoice->delete();
 
                 }
+                
+
             });
         }
 

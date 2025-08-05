@@ -163,6 +163,8 @@ class UpdateInvoicePayment
                 $invoice->service()
                         ->applyNumber()
                         ->save();
+
+                    
             }
 
             /* Updates the company ledger */

@@ -127,6 +127,7 @@ use App\Utils\Number;
  * @property-read int|null $tasks_count
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TransactionEvent> $transaction_events
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Credit> $credits
@@ -348,6 +349,11 @@ class Invoice extends BaseModel
     {
         return $this->hasMany(InvoiceInvitation::class);
     }
+
+    public function transaction_events(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TransactionEvent::class);
+    }    
 
     public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -684,21 +690,7 @@ class Invoice extends BaseModel
                 break;
         }
     }
-
-    public function transaction_event()
-    {
-        $invoice = $this->fresh();
-
-        return [
-            'invoice_id' => $invoice->id,
-            'invoice_amount' => $invoice->amount ?: 0,
-            'invoice_partial' => $invoice->partial ?: 0,
-            'invoice_balance' => $invoice->balance ?: 0,
-            'invoice_paid_to_date' => $invoice->paid_to_date ?: 0,
-            'invoice_status' => $invoice->status_id ?: 1,
-        ];
-    }
-
+    
     public function expense_documents()
     {
         $line_items = $this->line_items;

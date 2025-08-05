@@ -65,6 +65,7 @@ class PaymentService
                         ->updatePaidToDate($invoice->pivot->amount * -1)
                         ->setStatus(Invoice::STATUS_SENT)
                         ->save();
+
             }
         });
 

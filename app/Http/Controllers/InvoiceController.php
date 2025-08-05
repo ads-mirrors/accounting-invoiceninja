@@ -241,14 +241,6 @@ class InvoiceController extends BaseController
 
         event(new InvoiceWasCreated($invoice, $invoice->company, Ninja::eventVars($user ? $user->id : null)));
 
-        $transaction = [
-            'invoice' => $invoice->transaction_event(),
-            'payment' => [],
-            'client' => $invoice->client->transaction_event(),
-            'credit' => [],
-            'metadata' => [],
-        ];
-
         return $this->itemResponse($invoice);
     }
 
