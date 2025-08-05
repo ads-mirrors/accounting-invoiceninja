@@ -14,6 +14,7 @@ namespace App\DataMapper\TaxReport;
 
 use App\DataMapper\TaxReport\TaxDetail;
 use App\DataMapper\TaxReport\TaxSummary;
+use Illuminate\Support\Collection;
 
 /**
  * Tax report object for InvoiceSync - tracks incremental tax history
@@ -23,7 +24,7 @@ class TaxReport
     public ?TaxSummary $tax_summary; // Summary totals
     public ?array $tax_details; // Array of TaxDetail objects (includes adjustments)
     public float $amount; // The total amount of the invoice
-    public ?array $payment_history; // Array of PaymentHistory objects
+    public ?Collection $payment_history; // Collection of PaymentHistory objects
 
     public function __construct(array $attributes = [])
     {
@@ -34,7 +35,7 @@ class TaxReport
             ? array_map(fn ($detail) => new TaxDetail($detail), $attributes['tax_details'])
             : null;
         $this->payment_history = isset($attributes['payment_history'])
-            ? array_map(fn ($payment) => new PaymentHistory($payment), $attributes['payment_history'])
+            ? collect($attributes['payment_history'])->map(fn ($payment) => new PaymentHistory($payment))
             : null;
     }
 
@@ -43,7 +44,7 @@ class TaxReport
         return [
             'tax_summary' => $this->tax_summary?->toArray(),
             'tax_details' => $this->tax_details ? array_map(fn ($detail) => $detail->toArray(), $this->tax_details) : null,
-            'payment_history' => $this->payment_history ? array_map(fn ($payment) => $payment->toArray(), $this->payment_history) : null,
+            'payment_history' => $this->payment_history ? $this->payment_history->map(fn ($payment) => $payment->toArray())->toArray() : null,
         ];
     }
 }

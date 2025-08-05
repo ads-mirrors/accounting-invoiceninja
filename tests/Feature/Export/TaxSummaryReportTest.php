@@ -218,6 +218,10 @@ class TaxSummaryReportTest extends TestCase
                         
             $i3 = $i3->calc()->getInvoice();
 
+            $i3 = $i3->service()->markSent()->save();
+
+            (new InvoiceTransactionEventEntry())->run($i3);
+
             $i3 = $i3->service()->markPaid()->save();
 
             $this->assertEquals($i3->amount, $i3->paid_to_date);
@@ -226,10 +230,20 @@ class TaxSummaryReportTest extends TestCase
 
         }
 
+        (new InvoiceTransactionEventEntry())->run($i);
+
         $pl = new \App\Services\Report\XLS\TaxReport($this->company, '2025-01-01', '2025-12-31');
         $response = $pl->run()->getXlsFile();
 
         $this->assertIsString($response);
+
+        
+        try{
+            file_put_contents('/home/david/ttx.xlsx', $response);
+        }
+        catch(\Throwable $e){
+            nlog($e->getMessage());
+        }
 
         $this->account->delete();
     
@@ -298,7 +312,7 @@ class TaxSummaryReportTest extends TestCase
         $i2 = $i2->calc()->getInvoice();
         $i2->service()->markPaid();
 
-        (new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
+        (new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(3000)->format('Y-m-d'), now()->addDays(3000)->format('Y-m-d'));
 
         $pl = new TaxSummaryReport($this->company, $this->payload);
         $response = $pl->run();

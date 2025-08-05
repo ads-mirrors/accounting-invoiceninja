@@ -40,7 +40,7 @@ class InvoiceTransactionEventEntryAccrual
     {
 
         $this->setPaidRatio($invoice);
-
+        
         $this->payments = $invoice->payments->flatMap(function ($payment) use ($start_date, $end_date) {
             return $payment->invoices()->get()->map(function ($invoice) use ($payment) {
                 return [
@@ -173,11 +173,11 @@ class InvoiceTransactionEventEntryAccrual
     private function getMetadata($invoice)
     {
 
-        if ($invoice->status_id == Invoice::STATUS_CANCELLED) {
-            return $this->getCancelledMetaData($invoice);
-        } elseif ($invoice->is_deleted) {
-            return $this->getDeletedMetaData($invoice);
-        }
+        // if ($invoice->status_id == Invoice::STATUS_CANCELLED) {
+        //     return $this->getCancelledMetaData($invoice);
+        // } elseif ($invoice->is_deleted) {
+        //     return $this->getDeletedMetaData($invoice);
+        // }
 
         $calc = $invoice->calc();
 
@@ -196,7 +196,7 @@ class InvoiceTransactionEventEntryAccrual
             ];
             $details[] = $tax_detail;
         }
-
+        
         return new TransactionEventMetadata([
             'tax_report' => [
                 'tax_details' => $details,
