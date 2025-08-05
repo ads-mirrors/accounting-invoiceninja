@@ -646,7 +646,7 @@ $response = $this->withHeaders([
 
         $this->assertNotNull($next_schedule);
 
-        $this->assertEquals($next_schedule['date'], now()->format($this->company->date_format()));
+        $this->assertEquals(Carbon::parse($next_schedule['date'])->format($this->company->date_format()), now()->format($this->company->date_format()));
         
         $this->travelTo(now()->addDays(1));
 
@@ -656,7 +656,7 @@ $response = $this->withHeaders([
 
         $this->assertNotNull($next_schedule);
 
-        $this->assertEquals($next_schedule['date'], now()->format($this->company->date_format()));
+        $this->assertEquals(Carbon::parse($next_schedule['date'])->format($this->company->date_format()), now()->format($this->company->date_format()));
         
     }
 
