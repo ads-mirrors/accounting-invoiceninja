@@ -38,7 +38,7 @@ use App\DataMapper\TransactionEventMetadata;
  * @property int $event_id
  * @property int $timestamp
  * @property array|null $payment_request
- * @property array|null $metadata
+ * @property TransactionEventMetadata|null $metadata
  * @property string $credit_balance
  * @property string $credit_amount
  * @property int|null $credit_status
@@ -65,4 +65,6 @@ class TransactionEvent extends StaticModel
     public const PAYMENT_REFUNDED = 2;
 
     public const PAYMENT_DELETED = 3;
+
+    public const PAYMENT_CASH = 4;
 }

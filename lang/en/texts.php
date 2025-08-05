@@ -5607,6 +5607,7 @@ $lang = array(
     'first_payment_date' => 'First Payment Date',
     'first_payment_date_help' => 'The date of the first payment',
     'payment_schedule_interval' => 'Payment :index of :total for :amount',
+    'payment_schedule_table' => 'Payment :key on :date for :amount',
     'auto_send' => 'Auto Send',
     'auto_send_help' => 'Automatically emails the invoice to the client',
     'include_project_tasks' => 'Include Project Tasks',

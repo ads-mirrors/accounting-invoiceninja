@@ -24,9 +24,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use App\DataMapper\TransactionEventMetadata;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 
-class InvoiceTransactionEventEntry
+class InvoiceTransactionEventEntryAccrual
 {
-
     private Collection $payments;
 
     private float $paid_ratio;
@@ -37,12 +36,12 @@ class InvoiceTransactionEventEntry
      * @param  Invoice  $invoice
      * @return void
      */
-    public function run($invoice)
+    public function run($invoice, $start_date, $end_date)
     {
-        
+
         $this->setPaidRatio($invoice);
 
-        $this->payments = $invoice->payments->flatMap(function ($payment) {
+        $this->payments = $invoice->payments->flatMap(function ($payment) use ($start_date, $end_date) {
             return $payment->invoices()->get()->map(function ($invoice) use ($payment) {
                 return [
                     'number' => $payment->number,
@@ -50,6 +49,9 @@ class InvoiceTransactionEventEntry
                     'refunded' => $invoice->pivot->refunded,
                     'date' => $invoice->pivot->created_at->format('Y-m-d'),
                 ];
+            })->filter(function ($payment) use ($start_date, $end_date) {
+                // Filter payments where the pivot created_at is within the date boundaries
+                return \Carbon\Carbon::parse($payment['date'])->isBetween($start_date, $end_date);
             });
         });
 
@@ -73,7 +75,7 @@ class InvoiceTransactionEventEntry
 
     private function setPaidRatio(Invoice $invoice): self
     {
-        if($invoice->amount == 0){
+        if ($invoice->amount == 0) {
             $this->paid_ratio = 0;
             return $this;
         }
@@ -87,7 +89,7 @@ class InvoiceTransactionEventEntry
     {
         return round($amount * $this->paid_ratio, 2);
     }
-    
+
     /**
      * Existing tax details are not deleted, but pending taxes are set to 0
      *
@@ -95,7 +97,7 @@ class InvoiceTransactionEventEntry
      */
     private function getCancelledMetaData($invoice)
     {
-                
+
         $calc = $invoice->calc();
 
         $details = [];
@@ -127,7 +129,7 @@ class InvoiceTransactionEventEntry
         ]);
 
     }
-    
+
     /**
      * Set all tax details to 0
      *
@@ -135,7 +137,7 @@ class InvoiceTransactionEventEntry
      */
     private function getDeletedMetaData($invoice)
     {
-                
+
         $calc = $invoice->calc();
 
         $details = [];
@@ -211,7 +213,7 @@ class InvoiceTransactionEventEntry
 
     private function getTotalTaxPaid($invoice)
     {
-        if($invoice->amount == 0){
+        if ($invoice->amount == 0) {
             return 0;
         }
 
@@ -221,5 +223,5 @@ class InvoiceTransactionEventEntry
 
     }
 
-    
+
 }

@@ -12,19 +12,21 @@
 
 namespace App\Jobs\Cron;
 
+use Carbon\Carbon;
+use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Webhook;
-use App\Models\Company;
 use App\Models\Timezone;
 use App\Libraries\MultiDB;
 use Illuminate\Bus\Queueable;
 use App\Jobs\Entity\EmailEntity;
+use App\Models\TransactionEvent;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Carbon\Carbon;
 use App\Listeners\Invoice\InvoiceTransactionEventEntry;
+use App\Listeners\Invoice\InvoiceTransactionEventEntryAccrual;
 
 class InvoiceTaxSummary implements ShouldQueue
 {
@@ -51,7 +53,6 @@ class InvoiceTaxSummary implements ShouldQueue
             $companies = $this->getCompaniesInTimezones($transitioningTimezones);
             
             foreach ($companies as $company) {
-                
                 $this->processCompanyTaxSummary($company);
             }
         }
@@ -64,6 +65,7 @@ class InvoiceTaxSummary implements ShouldQueue
         // Get all timezones from the database
         $timezones = app('timezones');
         
+        /** @var \App\Models\Timezone $timezone */
         foreach ($timezones as $timezone) {
             // Calculate the current UTC offset for this timezone (accounting for DST)
             $currentOffset = $this->getCurrentUtcOffset($timezone->name);
@@ -152,11 +154,45 @@ class InvoiceTaxSummary implements ShouldQueue
                 ->whereBetween('date', [$startDate, $endDate])
                 ->whereDoesntHave('transaction_events', function ($query) use ($todayStart, $todayEnd) {
                     $query->where('timestamp', '>=', $todayStart)
-                          ->where('timestamp', '<=', $todayEnd);
+                          ->where('timestamp', '<=', $todayEnd)
+                          ->where('event_id', TransactionEvent::INVOICE_UPDATED);
                 })
                 ->cursor()
                 ->each(function (Invoice $invoice) {
                     (new InvoiceTransactionEventEntry())->run($invoice);
                 });
+
+        Invoice::withTrashed()
+                ->with('payments')
+                ->where('company_id', $company->id)
+                ->whereIn('status_id', [3,4,5]) // Paid statuses
+                ->where('is_deleted', 0)
+                ->whereColumn('amount', '!=', 'balance')
+                ->whereHas('client', function ($query) {
+                    $query->where('is_deleted', false);
+                })
+                ->whereHas('company', function ($query) {
+                    $query->where('is_disabled', 0)
+                    ->whereHas('account', function ($q) {
+                        $q->where('is_flagged', false);
+                    });
+                })
+                ->whereHas('payments', function ($query) use ($startDate, $endDate) {
+                    $query->whereHas('paymentables', function ($subQuery) use ($startDate, $endDate) {
+                        $subQuery->where('paymentable_type', Invoice::class)
+                                ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                    });
+                })
+                ->whereDoesntHave('transaction_events', function ($q) use ($todayStart, $todayEnd) {
+                    $q->where('event_id', TransactionEvent::PAYMENT_CASH)
+                        ->where('timestamp', '>=', $todayStart)
+                        ->where('timestamp', '<=', $todayEnd);
+                })
+                ->cursor()
+                ->each(function (Invoice $invoice) use ($startDate, $endDate) {
+                    (new InvoiceTransactionEventEntryAccrual())->run($invoice, $startDate, $endDate);
+                });
+
     }
+
 }

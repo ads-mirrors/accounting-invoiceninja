@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use App\Models\Invoice;
 use App\Listeners\Invoice\InvoiceTransactionEventEntry;
+use App\Models\TransactionEvent;
 
 class TaxReport
 {
@@ -83,7 +84,7 @@ class TaxReport
         
         $worksheet = $this->spreadsheet->createSheet();
         $worksheet->setTitle(ctrans('texts.invoice')." ".ctrans('texts.cash_vs_accrual'));
-        $worksheet->fromArray($this->data['invoices'], null, 'A1');
+        $worksheet->fromArray($this->data['accrual']['invoices'], null, 'A1');
 
         $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format()); // Invoice date column
         $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode($this->currency_format); // Invoice total column
@@ -97,13 +98,11 @@ class TaxReport
     // All paid invoices within a time period
     public function createInvoiceSummarySheetCash()
     {
-        $cash_invoices = collect($this->data['invoices'])->filter(function($invoice){
-            return $invoice[3] != 0;
-        })->toArray();
         
         $worksheet = $this->spreadsheet->createSheet();
         $worksheet->setTitle(ctrans('texts.invoice')." ".ctrans('texts.cash_accounting'));
-        $worksheet->fromArray($cash_invoices, null, 'A1');        
+
+        $worksheet->fromArray($this->data['cash']['invoices'], null, 'A1');
         $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format()); // Invoice date column
         $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode($this->currency_format); // Invoice total column
         $worksheet->getStyle('D:D')->getNumberFormat()->setFormatCode($this->currency_format); // Paid amount column
@@ -118,7 +117,7 @@ class TaxReport
 
         $worksheet = $this->spreadsheet->createSheet();
         $worksheet->setTitle(ctrans('texts.invoice_item')." ".ctrans('texts.cash_vs_accrual'));
-        $worksheet->fromArray($this->data['invoice_items'], null, 'A1');
+        $worksheet->fromArray($this->data['accrual']['invoice_items'], null, 'A1');
 
         $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format()); // Invoice date column
         $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode($this->currency_format); // Invoice total column
@@ -135,13 +134,9 @@ class TaxReport
     public function createInvoiceItemSummarySheetCash()
     {
 
-        $cash_invoice_items = collect($this->data['invoice_items'])->filter(function($invoice_item){
-            return $invoice_item[3] != 0;
-        })->toArray();
-
         $worksheet = $this->spreadsheet->createSheet();
         $worksheet->setTitle(ctrans('texts.invoice_item')." ".ctrans('texts.cash_accounting'));
-        $worksheet->fromArray($cash_invoice_items, null, 'A1');
+        $worksheet->fromArray($this->data['cash']['invoice_items'], null, 'A1');
 
         $worksheet->getStyle('B:B')->getNumberFormat()->setFormatCode($this->company->date_format()); // Invoice date column
         $worksheet->getStyle('C:C')->getNumberFormat()->setFormatCode($this->currency_format); // Invoice total column
@@ -162,17 +157,19 @@ class TaxReport
         $end_date_instance = Carbon::parse($this->tsr->end_date);
 
         $this->data['invoices'] = [];
-        $this->data['invoices'][] = [
+        $this->data['invoices'][] =
+
+        $invoice_headers = [
             ctrans('texts.invoice_number'),
             ctrans('texts.invoice_date'),
             ctrans('texts.invoice_total'),
             ctrans('texts.paid'),
             ctrans('texts.total_taxes'),
-            ctrans('texts.tax_paid')
+            ctrans('texts.tax_paid'),
+            ctrans('texts.notes')
         ];
 
-        $this->data['invoice_items'] = [];
-        $this->data['invoice_items'][] = [
+        $invoice_item_headers = [
             ctrans('texts.invoice_number'),
             ctrans('texts.invoice_date'),
             ctrans('texts.invoice_total'),
@@ -185,26 +182,106 @@ class TaxReport
             ctrans('texts.tax_nexus'),
         ];
 
-        $offset = $this->company->timezone_offset();
 
-        /** @var Invoice $invoice */
-        foreach($this->query->cursor() as $invoice){
+        $this->data['accrual']['invoices'] = [$invoice_headers];
+        $this->data['cash']['invoices'] = [$invoice_headers];
+        $this->data['accrual']['invoice_items']     = [$invoice_item_headers];
+        $this->data['cash']['invoice_items'] = [$invoice_item_headers];
 
-            if($invoice->transaction_events->count() == 0){
-                (new InvoiceTransactionEventEntry())->run($invoice);
-            }
 
-            //get the invoice state as at the end of the current period.
-            $invoice->transaction_events->each(function($event){
+        Invoice::withTrashed()
+            ->with('transaction_events')
+            ->where('company_id', $this->company->id)
+            ->whereHas('transaction_events', function ($query){
+                return $query->where('period', now()->endOfMonth()->format('Y-m-d'));
+            })
+            ->cursor()
+            ->each(function($invoice){
+
+                if($invoice->transaction_events->count() == 0){
+                    (new InvoiceTransactionEventEntry())->run($invoice);
+                    $invoice->load('transaction_events');
+                }
+
+                /** @var TransactionEvent $invoice_state */
+                $invoice_state = $invoice->transaction_events->where('event_id', TransactionEvent::INVOICE_UPDATED)->sortByDesc('timestamp')->first();
+                $adjustments = $invoice->transaction_events->whereIn('event_id',[TransactionEvent::PAYMENT_REFUNDED, TransactionEvent::PAYMENT_DELETED]);
+
+                if($invoice_state->event_id == TransactionEvent::INVOICE_UPDATED){
+                    $this->data['accrual']['invoices'][] = [
+                        $invoice->number,
+                        $invoice->date,
+                        $invoice->amount,
+                        $invoice_state->invoice_paid_to_date,
+                        $invoice_state->metadata->tax_report->tax_summary->total_taxes,
+                        $invoice_state->metadata->tax_report->tax_summary->total_paid,
+                        'payable',
+                    ];
+                }
+                elseif($invoice_state->event_id == TransactionEvent::PAYMENT_CASH){
+                
+                    $this->data['cash']['invoices'][] = [
+                        $invoice->number,
+                        $invoice->date,
+                        $invoice->amount,
+                        $invoice_state->invoice_paid_to_date,
+                        $invoice_state->metadata->tax_report->tax_summary->total_taxes,
+                        $invoice_state->metadata->tax_report->tax_summary->total_paid,
+                        'payable',
+                    ];
+
+                }
+                    $_adjustments = [];
+
+                    foreach($adjustments as $adjustment){
+                        $_adjustments[] = [
+                            $invoice->number,
+                            $invoice->date,
+                            $invoice->amount,
+                            $invoice_state->invoice_paid_to_date,
+                            $invoice_state->metadata->tax_report->tax_summary->total_taxes,
+                            $invoice_state->metadata->tax_report->tax_summary->adjustment,
+                            'adjustment',
+                        ];
+                    }
+
+                    $this->data['accrual']['invoices'] = array_merge($this->data['accrual']['invoices'], $_adjustments);
+                    $this->data['cash']['invoices'] = array_merge($this->data['cash']['invoices'], $_adjustments);
 
             });
 
-            //anything period the reporting period is considered an ADJUSTMENT 
-
-        }
-
-        return $this;
+            return $this;
     }
+    //     $offset = $this->company->timezone_offset();
+
+    //     /** @var Invoice $invoice */
+    //     foreach($this->query->cursor() as $invoice){
+
+    //         if($invoice->transaction_events->count() == 0){
+    //             (new InvoiceTransactionEventEntry())->run($invoice);
+    //         }
+
+    //         //get the invoice state as at the end of the current period.
+    //         $invoice_state =$invoice->transaction_events()
+    //                                 ->where('period', Carbon::parse($invoice->date)->endOfMonth()->format('Y-m-d'))
+    //                                 ->where('event_id', TransactionEvent::INVOICE_UPDATED)
+    //                                 ->latest()
+    //                                 ->first();
+
+                    
+
+    //         //anything period the reporting period is considered an ADJUSTMENT 
+    //     }
+
+    //     Invoice::withTrashed()
+    //         ->where('company_id', $this->company->id)
+    //         ->whereHas('transaction_events', function ($query){
+    //             return $query->where('period', Carbon::parse($invoice->date)->endOfMonth()->format('Y-m-d'))
+    //                         ->whereIn('event_id',[TransactionEvent::PAYMENT_REFUNDED, TransactionEvent::PAYMENT_DELETED]);
+    //         });
+
+    //     return $this;
+    // }
 
     public function getXlsFile()
     {
@@ -214,7 +291,7 @@ class TaxReport
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($this->spreadsheet);
         $writer->save($tempFile);
 
-        // $writer->save('/home/david/ttx.xslx');
+        $writer->save('/home/david/ttx.xlsx');
         // Read file content
         $fileContent = file_get_contents($tempFile);
 

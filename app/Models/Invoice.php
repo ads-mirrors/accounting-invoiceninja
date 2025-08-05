@@ -857,11 +857,15 @@ class Invoice extends BaseModel
         
         $formatted_string = "<div id=\"payment-schedule\">";
 
-        foreach($schedule->parameters['schedule'] as $item){
+        $formatted_string .= "<p><span class=\"payment-schedule-title\"><b>".ctrans('texts.payment_schedule')."</b></span></p>";
+
+        foreach($schedule->parameters['schedule'] as $key => $item){
             $amount = $item['is_amount'] ? $item['amount'] : round($this->amount * ($item['amount']/100),2);
             $amount = \App\Utils\Number::formatMoney($amount, $this->client);
 
-            $formatted_string .= "<p><span class=\"payment-schedule-date\">".$this->formatDate($item['date'], $this->client->date_format()) . "</span> - <span class=\"payment-schedule-amount\"> " . $amount."</span></p>";
+            $schedule_text = ctrans('texts.payment_schedule_table', ['key' => $key+1, 'date' => $this->formatDate($item['date'], $this->client->date_format()), 'amount' => $amount]);
+
+            $formatted_string .= "<p><span class=\"payment-schedule\">".$schedule_text."</span></p>";
         }
 
         $formatted_string .= "</div>";

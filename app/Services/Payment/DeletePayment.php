@@ -89,7 +89,7 @@ class DeletePayment
 
         if ($this->payment->invoices()->exists()) {
         
-            $invoice_ids = $this->payment->invoices()->pluck('id');
+            $invoice_ids = $this->payment->invoices()->pluck('invoices.id')->toArray();
 
             $this->payment->invoices()->each(function ($paymentable_invoice) {
                 $net_deletable = $paymentable_invoice->pivot->amount - $paymentable_invoice->pivot->refunded;
@@ -161,10 +161,10 @@ class DeletePayment
 
                 }
                 
+                PaymentTransactionEventEntry::dispatch($this->payment, [$paymentable_invoice->id], $this->payment->company->db, $net_deletable, true);
 
             });
 
-            PaymentTransactionEventEntry::dispatch($this->payment, $invoice_ids, $this->payment->company->db);
         }
 
         //sometimes the payment is NOT created properly, this catches the payment and prevents the paid to date reducing inappropriately.

@@ -313,7 +313,7 @@ class RefundPayment
 
             }
 
-            PaymentTransactionEventEntry::dispatch($this->payment, array_column($this->refund_data['invoices'], 'invoice_id'), $this->payment->company->db);
+            PaymentTransactionEventEntry::dispatch($this->payment, array_column($this->refund_data['invoices'], 'invoice_id'), $this->payment->company->db, 0, false);
 
         } else {
             //if we are refunding and no payments have been tagged, then we need to decrement the client->paid_to_date by the total refund amount.

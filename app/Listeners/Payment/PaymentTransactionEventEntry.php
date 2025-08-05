@@ -43,14 +43,15 @@ class PaymentTransactionEventEntry implements ShouldQueue
     private float $paid_ratio;
 
     private Collection $payments;
+
     /**
      */
-    public function __construct(private Payment $payment, private array $invoice_ids, private string $db)
+    public function __construct(private Payment $payment, private array $invoice_ids, private string $db, private float $invoice_adjustment = 0, private int $is_deleted = false)
     {}
 
     public function handle()
     {
-        nlog("PaymentTransactionEventEntry::handle");
+        
         //payment vs refunded
         MultiDB::setDb($this->db);
 
@@ -81,6 +82,12 @@ class PaymentTransactionEventEntry implements ShouldQueue
 
                 $this->setPaidRatio($invoice);
 
+                //delete any other payment mutations here if this is a delete event, the refunds are redundant in this time period
+                $invoice->transaction_events()
+                        ->where('event_id', TransactionEvent::PAYMENT_REFUNDED)
+                        ->where('period', now()->endOfMonth()->format('Y-m-d'))
+                        ->delete();
+                
                 TransactionEvent::create([
                     'invoice_id' => $invoice->id,
                     'client_id' => $invoice->client_id,
@@ -92,7 +99,7 @@ class PaymentTransactionEventEntry implements ShouldQueue
                     'invoice_partial' => $invoice->partial ?? 0,
                     'invoice_paid_to_date' => $invoice->paid_to_date ?? 0,
                     'invoice_status' => $invoice->is_deleted ? 7 : $invoice->status_id,
-                    'event_id' => $this->payment->is_deleted ? TransactionEvent::PAYMENT_DELETED : TransactionEvent::PAYMENT_REFUNDED,
+                    'event_id' => $this->is_deleted ? TransactionEvent::PAYMENT_DELETED : TransactionEvent::PAYMENT_REFUNDED,
                     'timestamp' => now()->timestamp,
                     'metadata' => $this->getMetadata($invoice),
                     'period' => now()->endOfMonth()->format('Y-m-d'),
@@ -137,10 +144,14 @@ class PaymentTransactionEventEntry implements ShouldQueue
         $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
 
         foreach ($taxes as $tax) {
+
+            $base_amount = $tax['base_amount'] ?? $calc->getNetSubtotal();
+            
+
             $tax_detail = [
                 'tax_name' => $tax['name'],
                 'tax_rate' => $tax['tax_rate'],
-                'taxable_amount' => $tax['base_amount'] ?? $calc->getNetSubtotal(),
+                'taxable_amount' => $base_amount,
                 'tax_amount' => $tax['total'],
                 'tax_amount_paid' => $this->calculateRatio($tax['total']),
                 'tax_amount_remaining' => round($tax['total'] - $this->calculateRatio($tax['total']), 2),
@@ -178,14 +189,26 @@ class PaymentTransactionEventEntry implements ShouldQueue
         $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
 
         foreach ($taxes as $tax) {
+
+            
+            $base_amount = $tax['base_amount'] ?? $calc->getNetSubtotal();
+            
+            if($this->invoice_adjustment > 0)
+                $tax_amount_paid = round(($this->invoice_adjustment / ($base_amount+$tax['total'])) * $tax['total'], 2);
+            else {
+                $tax_amount_paid = $this->calculateRatio($tax['total']);
+            }
+
             $tax_detail = [
                 'tax_name' => $tax['name'],
                 'tax_rate' => $tax['tax_rate'],
-                'taxable_amount' => $tax['base_amount'] ?? $calc->getNetSubtotal(),
+                'taxable_amount' => $base_amount,
                 'tax_amount' => $tax['total'],
-                'tax_amount_paid' => $this->calculateRatio($tax['total']),
+                'tax_amount_paid' => $tax_amount_paid,
                 'tax_amount_remaining' => 0,
+                'tax_status' => 'payment_deleted',
             ];
+
             $details[] = $tax_detail;
         }
 

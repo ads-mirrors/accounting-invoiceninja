@@ -11,17 +11,19 @@
 
 namespace Tests\Feature\Export;
 
-use App\DataMapper\CompanySettings;
-use App\Factory\InvoiceItemFactory;
-use App\Models\Account;
+use Tests\TestCase;
+use App\Models\User;
 use App\Models\Client;
+use App\Models\Account;
 use App\Models\Company;
 use App\Models\Invoice;
-use App\Models\User;
-use App\Services\Report\TaxSummaryReport;
 use App\Utils\Traits\MakesHash;
+use App\DataMapper\CompanySettings;
+use App\Factory\InvoiceItemFactory;
+use App\Services\Report\TaxSummaryReport;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Tests\TestCase;
+use App\Listeners\Invoice\InvoiceTransactionEventEntry;
+use App\Listeners\Invoice\InvoiceTransactionEventEntryAccrual;
 
 /**
  * 
@@ -162,6 +164,34 @@ class TaxSummaryReportTest extends TestCase
 
         $i = $i->calc()->getInvoice();
 
+        (new InvoiceTransactionEventEntry())->run($i);
+
+        $i2 = Invoice::factory()->create([
+            'client_id' => $this->client->id,
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'amount' => 0,
+            'balance' => 0,
+            'status_id' => 2,
+            'total_taxes' => 1,
+            'date' => now()->format('Y-m-d'),
+            'terms' => 'nada',
+            'discount' => 0,
+            'tax_rate1' => 10,
+            'tax_rate2' => 17.5,
+            'tax_rate3' => 5,
+            'tax_name1' => 'GST',
+            'tax_name2' => 'VAT',
+            'tax_name3' => 'CA Sales Tax',
+            'uses_inclusive_taxes' => false,
+            'line_items' => $this->buildLineItems(),
+        ]);
+
+        $i2 = $i2->calc()->getInvoice();
+        $i2->service()->markPaid();
+
+        (new InvoiceTransactionEventEntryAccrual())->run($i2);
+
         $pl = new TaxSummaryReport($this->company, $this->payload);
         $response = $pl->run();
 
@@ -205,6 +235,34 @@ class TaxSummaryReportTest extends TestCase
         ]);
 
         $i = $i->calc()->getInvoice();
+
+        (new InvoiceTransactionEventEntry())->run($i);
+
+$i2 = Invoice::factory()->create([
+            'client_id' => $this->client->id,
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'amount' => 0,
+            'balance' => 0,
+            'status_id' => 2,
+            'total_taxes' => 1,
+            'date' => now()->format('Y-m-d'),
+            'terms' => 'nada',
+            'discount' => 0,
+            'tax_rate1' => 10,
+            'tax_rate2' => 17.5,
+            'tax_rate3' => 5,
+            'tax_name1' => 'GST',
+            'tax_name2' => 'VAT',
+            'tax_name3' => 'CA Sales Tax',
+            'uses_inclusive_taxes' => false,
+            'line_items' => $this->buildLineItems(),
+        ]);
+
+$i2 = $i2->calc()->getInvoice();
+$i2->service()->markPaid();
+
+(new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
 
         $pl = new TaxSummaryReport($this->company, $this->payload);
         
