@@ -191,7 +191,7 @@ class TaxSummaryReportTest extends TestCase
         $i2 = $i2->calc()->getInvoice();
         $i2->service()->markPaid();
 
-        (new InvoiceTransactionEventEntryAccrual())->run($i2);
+        (new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
 
         $pl = new TaxSummaryReport($this->company, $this->payload);
         $response = $pl->run();
