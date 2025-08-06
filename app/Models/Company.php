@@ -655,12 +655,16 @@ class Company extends BaseModel
 
     public function country()
     {
+        return once(function () {   
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
-        $countries = app('countries');
+            /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+            $countries = app('countries');
+            $country_id = $this->getSetting('country_id');
 
-        return $countries->first(function ($item) {
-            return $item->id == $this->getSetting('country_id');
+            return $countries->first(function ($item) use ($country_id) {
+                    return $item->id == $country_id;
+                });
+
         });
     }
 
@@ -671,14 +675,16 @@ class Company extends BaseModel
 
     public function timezone()
     {
+        return once(function () {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\TimeZone> */
-        $timezones = app('timezones');
+            /** @var \Illuminate\Support\Collection<\App\Models\TimeZone> */
+            $timezones = app('timezones');
 
-        return $timezones->first(function ($item) {
-            return $item->id == $this->settings->timezone_id;
+            return $timezones->first(function ($item) {
+                return $item->id == $this->settings->timezone_id;
+            });
+
         });
-
     }
 
     public function designs()
@@ -703,15 +709,18 @@ class Company extends BaseModel
 
     public function language()
     {
+        return once(function () {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Language> */
-        $languages = app('languages');
+            /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+            $languages = app('languages');
 
-        $language = $languages->first(function ($item) {
-            return $item->id == $this->settings->language_id;
+            $language = $languages->first(function ($item) {
+                return $item->id == $this->settings->language_id;
+            });
+
+            return $language ?? $languages->first();
+
         });
-
-        return $language ?? $languages->first();
     }
 
     public function getLocale()
@@ -752,12 +761,13 @@ class Company extends BaseModel
 
     public function currency()
     {
+        return once(function () {
+            /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+            $currencies = app('currencies');
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
-        $currencies = app('currencies');
-
-        return $currencies->first(function ($item) {
-            return $item->id == $this->settings->currency_id;
+            return $currencies->first(function ($item) {
+                return $item->id == $this->settings->currency_id;
+            });
         });
     }
 
@@ -976,13 +986,15 @@ class Company extends BaseModel
 
     public function date_format()
     {
+        return once(function () {
+            /** @var \Illuminate\Support\Collection<\App\Models\DateFormat> */
+            $date_formats = app('date_formats');
+                $date_format = $this->getSetting('date_format_id');
 
-        /** @var \Illuminate\Support\Collection<\App\Models\DateFormat> */
-        $date_formats = app('date_formats');
-
-        return $date_formats->first(function ($item) {
-            return $item->id == $this->getSetting('date_format_id');
-        })->format;
+                return $date_formats->first(function ($item) use ($date_format) {
+                    return $item->id == $date_format;
+                })->format;
+        });
     }
 
     public function getInvoiceCert()

@@ -581,15 +581,16 @@ class VendorHtmlEngine
 
     private function getCountryName(): string
     {
+        return once(function () {
+            /** @var \Illuminate\Support\Collection<\App\Models\Country> */
+            $countries = app('countries');
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Country> */
-        $countries = app('countries');
+            $country = $countries->first(function ($item) {
+                return $item->id == $this->settings->country_id;
+            });
 
-        $country = $countries->first(function ($item) {
-            return $item->id == $this->settings->country_id;
+            return $country ? ctrans('texts.country_' . $country->name) : '&nbsp;';
         });
-
-        return $country ? ctrans('texts.country_' . $country->name) : '&nbsp;';
     }
 
 
@@ -600,10 +601,7 @@ class VendorHtmlEngine
         if ($country) {
             return $country->iso_3166_2;
         }
-        // if ($country) {
-        //     return ctrans('texts.country_' . $country->iso_3166_2);
-        // }
-
+        
         return '&nbsp;';
     }
     /**

@@ -61,6 +61,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property bool $is_tax_exempt
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read int|null $activities_count
+ * @property-read \App\Models\Language|null $language
  * @property-read \App\Models\User|null $assigned_user
  * @property-read \App\Models\Company $company
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VendorContact> $contacts
@@ -232,16 +233,17 @@ class Vendor extends BaseModel
 
     public function currency()
     {
+        return once(function () {
+            /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
+            $currencies = app('currencies');
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Currency> */
-        $currencies = app('currencies');
+            if (!$this->currency_id) {
+                return $this->company->currency();
+            }
 
-        if (!$this->currency_id) {
-            return $this->company->currency();
-        }
-
-        return $currencies->first(function ($item) {
-            return $item->id == $this->currency_id;
+            return $currencies->first(function ($item) {
+                    return $item->id == $this->currency_id;
+                });
         });
     }
 

@@ -186,7 +186,7 @@ class HtmlEngine
         $data['$payment_qrcode_raw'] = ['value' => $this->invitation->getPaymentQrCodeRaw(), 'label' => ctrans('texts.pay_now')];
 
         $data['$exchange_rate'] = ['value' => $this->entity->exchange_rate ?: ' ', 'label' => ctrans('texts.exchange_rate')];
-        $data['$triangular_tax'] = ['value' => ctrans('texts.triangular_tax'), 'label' => ''];
+        $data['$triangular_tax'] = ['value' => ctrans('texts.triangular_tax_info'), 'label' => ''];
         $data['$tax_info'] = ['value' => $this->taxLabel(), 'label' => ''];
         $data['$net'] = ['value' => '', 'label' => ctrans('texts.net')];
 
