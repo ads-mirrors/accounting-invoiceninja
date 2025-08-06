@@ -116,6 +116,7 @@ use App\Http\Controllers\Reports\ARDetailReportController;
 use App\Http\Controllers\Reports\DocumentReportController;
 use App\Http\Controllers\Reports\ARSummaryReportController;
 use App\Http\Controllers\Reports\QuoteItemReportController;
+use App\Http\Controllers\Reports\TaxPeriodReportController;
 use App\Http\Controllers\Reports\UserSalesReportController;
 use App\Http\Controllers\Reports\TaxSummaryReportController;
 use App\Http\Controllers\Support\Messages\SendingController;
@@ -372,6 +373,7 @@ Route::group(['middleware' => ['throttle:api', 'token_auth', 'valid_json','local
     Route::post('reports/client_balance_report', ClientBalanceReportController::class);
     Route::post('reports/client_sales_report', ClientSalesReportController::class);
     Route::post('reports/tax_summary_report', TaxSummaryReportController::class);
+    Route::post('reports/tax_period_report', TaxPeriodReportController::class);
     Route::post('reports/user_sales_report', UserSalesReportController::class);
     Route::post('reports/projects', ProjectReportController::class);
     Route::post('reports/preview/{hash}', ReportPreviewController::class);

@@ -5613,6 +5613,7 @@ $lang = array(
     'include_project_tasks' => 'Include Project Tasks',
     'include_project_tasks_help' => 'Also invoice tasks that are part of a project',
     'tax_nexus' => 'Tax Nexus',
+    'tax_period_report' => 'Tax Period Report',
 );
 
 return $lang;

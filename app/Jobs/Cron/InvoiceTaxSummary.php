@@ -26,7 +26,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Listeners\Invoice\InvoiceTransactionEventEntry;
-use App\Listeners\Invoice\InvoiceTransactionEventEntryAccrual;
+use App\Listeners\Invoice\InvoiceTransactionEventEntryCash;
 
 class InvoiceTaxSummary implements ShouldQueue
 {
@@ -165,7 +165,7 @@ class InvoiceTaxSummary implements ShouldQueue
         Invoice::withTrashed()
                 ->with('payments')
                 ->where('company_id', $company->id)
-                ->whereIn('status_id', [3,4,5]) // Paid statuses
+                ->whereIn('status_id', [3,4]) // Paid statuses
                 ->where('is_deleted', 0)
                 ->whereColumn('amount', '!=', 'balance')
                 ->whereHas('client', function ($query) {
@@ -190,7 +190,7 @@ class InvoiceTaxSummary implements ShouldQueue
                 })
                 ->cursor()
                 ->each(function (Invoice $invoice) use ($startDate, $endDate) {
-                    (new InvoiceTransactionEventEntryAccrual())->run($invoice, $startDate, $endDate);
+                    (new InvoiceTransactionEventEntryCash())->run($invoice, $startDate, $endDate);
                 });
 
     }

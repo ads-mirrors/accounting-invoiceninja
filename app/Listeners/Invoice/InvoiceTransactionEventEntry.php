@@ -37,10 +37,12 @@ class InvoiceTransactionEventEntry
      * @param  Invoice  $invoice
      * @return void
      */
-    public function run($invoice)
+    public function run(Invoice $invoice, ?string $force_period = null)
     {
         $this->setPaidRatio($invoice);
 
+        $period = $force_period ?? now()->endOfMonth()->format('Y-m-d');
+        
         $this->payments = $invoice->payments->flatMap(function ($payment) {
             return $payment->invoices()->get()->map(function ($invoice) use ($payment) {
                 return [
@@ -66,7 +68,7 @@ class InvoiceTransactionEventEntry
             'event_id' => TransactionEvent::INVOICE_UPDATED,
             'timestamp' => now()->timestamp,
             'metadata' => $this->getMetadata($invoice),
-            'period' => now()->endOfMonth()->format('Y-m-d'),
+            'period' => $period,
         ]);
     }
 

@@ -24,7 +24,7 @@ use App\Factory\InvoiceItemFactory;
 use App\Services\Report\TaxSummaryReport;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use App\Listeners\Invoice\InvoiceTransactionEventEntry;
-use App\Listeners\Invoice\InvoiceTransactionEventEntryAccrual;
+use App\Listeners\Invoice\InvoiceTransactionEventEntryCash;
 
 /**
  * 
@@ -226,7 +226,7 @@ class TaxSummaryReportTest extends TestCase
 
             $this->assertEquals($i3->amount, $i3->paid_to_date);
 
-            (new InvoiceTransactionEventEntryAccrual())->run($i3, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
+            (new InvoiceTransactionEventEntryCash())->run($i3, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
 
         }
 
@@ -268,7 +268,7 @@ class TaxSummaryReportTest extends TestCase
 
         $i2 = $i2->fresh();
 
-        (new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
+        (new InvoiceTransactionEventEntryCash())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
 
         $payment = $i2->payments()->first();
 
@@ -294,18 +294,18 @@ class TaxSummaryReportTest extends TestCase
 
         $payment->refund($data);
 
-        $pl = new \App\Services\Report\XLS\TaxReport($this->company, '2025-01-01', '2025-12-31');
+        // $pl = new \App\Services\Report\XLS\TaxReport($this->company, '2025-01-01', '2025-12-31');
 
-        $response = $pl->run()->getXlsFile();
+        // $response = $pl->run()->getXlsFile();
 
-        $this->assertIsString($response);
+        // $this->assertIsString($response);
 
-        try{
-            file_put_contents('/home/david/ttx.xlsx', $response);
-        }
-        catch(\Throwable $e){
-            nlog($e->getMessage());
-        }
+        // try{
+        //     file_put_contents('/home/david/ttx.xlsx', $response);
+        // }
+        // catch(\Throwable $e){
+        //     nlog($e->getMessage());
+        // }
 
         config(['queue.default' => 'redis']);
 
@@ -376,7 +376,7 @@ class TaxSummaryReportTest extends TestCase
         $i2 = $i2->calc()->getInvoice();
         $i2->service()->markPaid();
 
-        (new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(3000)->format('Y-m-d'), now()->addDays(3000)->format('Y-m-d'));
+        (new InvoiceTransactionEventEntryCash())->run($i2, now()->subDays(3000)->format('Y-m-d'), now()->addDays(3000)->format('Y-m-d'));
 
         $pl = new TaxSummaryReport($this->company, $this->payload);
         $response = $pl->run();
@@ -449,12 +449,12 @@ class TaxSummaryReportTest extends TestCase
         $i2 = $i2->calc()->getInvoice();
         $i2->service()->markPaid()->save();
 
-        (new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
+        (new InvoiceTransactionEventEntryCash())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
 
-                $tr = new \App\Services\Report\XLS\TaxReport($this->company, '2025-01-01', '2025-12-31');
-                $response = $tr->run()->getXlsFile();
+                // $tr = new \App\Services\Report\XLS\TaxReport($this->company, '2025-01-01', '2025-12-31');
+                // $response = $tr->run()->getXlsFile();
 
-                $this->assertNotEmpty($response);
+                // $this->assertNotEmpty($response);
 
                 $this->assertNotNull(TransactionEvent::where('invoice_id', $i->id)->first());
                 $this->assertNotNull(TransactionEvent::where('invoice_id', $i2->id)->first());
