@@ -127,6 +127,7 @@ use App\Utils\Number;
  * @property-read int|null $tasks_count
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TransactionEvent> $transaction_events
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Credit> $credits
@@ -348,6 +349,11 @@ class Invoice extends BaseModel
     {
         return $this->hasMany(InvoiceInvitation::class);
     }
+
+    public function transaction_events(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TransactionEvent::class);
+    }    
 
     public function client(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -684,21 +690,7 @@ class Invoice extends BaseModel
                 break;
         }
     }
-
-    public function transaction_event()
-    {
-        $invoice = $this->fresh();
-
-        return [
-            'invoice_id' => $invoice->id,
-            'invoice_amount' => $invoice->amount ?: 0,
-            'invoice_partial' => $invoice->partial ?: 0,
-            'invoice_balance' => $invoice->balance ?: 0,
-            'invoice_paid_to_date' => $invoice->paid_to_date ?: 0,
-            'invoice_status' => $invoice->status_id ?: 1,
-        ];
-    }
-
+    
     public function expense_documents()
     {
         $line_items = $this->line_items;
@@ -834,7 +826,7 @@ class Invoice extends BaseModel
         return $reminder_schedule;
     }
 
-    public function paymentSchedule(): array 
+    public function paymentSchedule(bool $formatted = false): mixed 
     {
 
         $schedule = \App\Models\Scheduler::where('company_id', $this->company_id)
@@ -843,14 +835,67 @@ class Invoice extends BaseModel
                             ->first();
 
         if (! $schedule) {
-            return [];
+
+            if($formatted){
+                return '';
+            }
+            else{
+                return [];
+            }
         }
 
-        return collect($schedule->parameters['schedule'])->map(function ($item) {
-            return [
-                'date' => $item['date'],
-                'amount' => $item['is_amount'] ? \App\Utils\Number::formatMoney($item['amount'], $this->client) : $this->amount ." %",
-            ];
-        })->toArray();
+        if(!$formatted){
+            return collect($schedule->parameters['schedule'])->map(function ($item) use ($schedule) {
+                return [
+                    'date' => $this->formatDate($item['date'], $this->client->date_format()),
+                    'amount' => $item['is_amount'] ? \App\Utils\Number::formatMoney($item['amount'], $this->client) : $item['amount'] ." %",
+                    'auto_bill' => $schedule->parameters['auto_bill'],
+                ];
+            })->toArray();
+        }
+
+        
+        $formatted_string = "<div id=\"payment-schedule\">";
+
+        $formatted_string .= "<p><span class=\"payment-schedule-title\"><b>".ctrans('texts.payment_schedule')."</b></span></p>";
+
+        foreach($schedule->parameters['schedule'] as $key => $item){
+            $amount = $item['is_amount'] ? $item['amount'] : round($this->amount * ($item['amount']/100),2);
+            $amount = \App\Utils\Number::formatMoney($amount, $this->client);
+
+            $schedule_text = ctrans('texts.payment_schedule_table', ['key' => $key+1, 'date' => $this->formatDate($item['date'], $this->client->date_format()), 'amount' => $amount]);
+
+            $formatted_string .= "<p><span class=\"payment-schedule\">".$schedule_text."</span></p>";
+        }
+
+        $formatted_string .= "</div>";
+
+        return htmlspecialchars($formatted_string, ENT_QUOTES, 'UTF-8');
+
+    }
+
+    public function paymentScheduleInterval(): string
+    {
+        $schedule = \App\Models\Scheduler::where('company_id', $this->company_id)
+                            ->where('template', 'payment_schedule')                           
+                            ->where('parameters->invoice_id', $this->hashed_id)
+                            ->first();
+
+        if(!$schedule)
+            return '';
+
+        $schedule_array = $schedule->parameters['schedule'] ?? [];
+
+        $index = 0;
+
+        foreach($schedule_array as $key => $item){
+            if($date = Carbon::parse($item['date'])->eq(Carbon::parse($schedule->next_run_client))){
+                $index = $key;
+            }
+        }
+
+        $amount = $schedule_array[$index]['is_amount'] ? \App\Utils\Number::formatMoney($schedule_array[$index]['amount'], $this->client) : \App\Utils\Number::formatMoney(($schedule_array[$index]['amount']/100)*$this->amount, $this->client);
+
+        return ctrans('texts.payment_schedule_interval', ['index' => $index+1, 'total' => count($schedule_array), 'amount' => $amount]);
     }
 }

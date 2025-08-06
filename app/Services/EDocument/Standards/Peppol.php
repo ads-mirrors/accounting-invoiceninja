@@ -242,7 +242,7 @@ class Peppol extends AbstractService
                                     ->getPeppol();
 
         } catch (\Throwable $th) {
-            nlog("Unable to create Peppol Invoice" . $th->getMessage());
+            nlog("Unable to create Peppol Invoice - " . $th->getMessage());
             $this->errors[] = $th->getMessage();
         }
 

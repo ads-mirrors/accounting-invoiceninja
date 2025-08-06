@@ -210,13 +210,19 @@ class VendorContact extends Authenticatable implements HasLocalePreference
 
     public function preferredLocale()
     {
+        return once(function () {
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Language> */
-        $languages = app('languages');
+            /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+            $languages = app('languages');
 
-        return $languages->first(function ($item) {
-            return $item->id == $this->company->getSetting('language_id');
-        })->locale ?? 'en';
+            $language_id = $this->company->getSetting('language_id');
+
+            return $languages->first(function ($item) use ($language_id) {
+                return $item->id == $language_id;
+            })->locale ?? 'en';
+            
+        });
+
     }
 
     /**

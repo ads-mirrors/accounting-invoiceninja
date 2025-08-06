@@ -33,6 +33,7 @@ use App\Models\Webhook;
 use App\Utils\TempFile;
 use App\Models\Activity;
 use App\Models\Document;
+use App\Models\Location;
 use App\Libraries\MultiDB;
 use App\Models\TaskStatus;
 use App\Models\CompanyUser;
@@ -137,6 +138,7 @@ class CompanyImport implements ShouldQueue
         'client_contacts',
         'vendors',
         'vendor_contacts',
+        'locations',
         'projects',
         'products',
         'company_gateways',
@@ -304,12 +306,20 @@ class CompanyImport implements ShouldQueue
 
         $json = JsonMachine::fromFile($this->file_path, '/'.$key, new ExtJsonDecoder());
 
+        try {
+            $iterator_array = iterator_to_array($json);
+        } catch (\Throwable $th) {
+            nlog("Key '{$key}' does not exist in JSON file: " . $th->getMessage());
+            return [];
+        }
+
         if ($force_array) {
-            return iterator_to_array($json);
+            return $iterator_array;
         }
 
         return $json;
-    }
+
+        }
 
     public function handle()
     {
@@ -908,6 +918,21 @@ class CompanyImport implements ShouldQueue
         return $this;
     }
 
+    private function import_locations()
+    {
+        $this->ids['locations'] = [];
+        
+        $this->genericImport(
+            Location::class,
+            ['user_id', 'company_id', 'id', 'hashed_id', 'client_id', 'vendor_id'],
+            [['users' => 'user_id'], ['clients' => 'client_id'], ['vendors' => 'vendor_id']],
+            'locations',
+            'name'
+        );
+
+        return $this;
+    }
+
     private function import_projects()
     {
         $this->genericImport(
@@ -987,7 +1012,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             RecurringInvoice::class,
-            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id','subscription_id','project_id','vendor_id','status'],
+            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id','subscription_id','project_id','vendor_id', 'status', 'location_id'],
             [
                 ['subscriptions' => 'subscription_id'],
                 ['users' => 'user_id'],
@@ -995,7 +1020,7 @@ class CompanyImport implements ShouldQueue
                 ['clients' => 'client_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
-                ['clients' => 'client_id'],
+                ['locations' => 'location_id'],
             ],
             'recurring_invoices',
             'number'
@@ -1026,7 +1051,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Invoice::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'sync'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'sync', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1035,6 +1060,7 @@ class CompanyImport implements ShouldQueue
                 ['subscriptions' => 'subscription_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
+                ['locations' => 'location_id'],
             ],
             'invoices',
             'number'
@@ -1064,13 +1090,14 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             PurchaseOrder::class,
-            ['user_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'vendor_id', 'subscription_id','client_id'],
+            ['user_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'vendor_id', 'subscription_id','client_id', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
                 ['recurring_invoices' => 'recurring_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
+                ['locations' => 'location_id'],
             ],
             'purchase_orders',
             'number'
@@ -1101,7 +1128,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Quote::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1110,6 +1137,7 @@ class CompanyImport implements ShouldQueue
                 ['subscriptions' => 'subscription_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
+                ['locations' => 'location_id'],
             ],
             'quotes',
             'number'
@@ -1140,7 +1168,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Credit::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1149,6 +1177,7 @@ class CompanyImport implements ShouldQueue
                 ['subscriptions' => 'subscription_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
+                ['locations' => 'location_id'],
             ],
             'credits',
             'number'
@@ -1969,6 +1998,9 @@ class CompanyImport implements ShouldQueue
             if ($resource == 'users') {
                 return $this->company_owner->id;
             }
+            
+            if($resource == 'locations')
+                return null;
 
             if ($this->import_notifications_enabled) {
                 $this->sendImportMail("The Import failed due to missing data in the import file. Key {$old} not found in {$resource}.");

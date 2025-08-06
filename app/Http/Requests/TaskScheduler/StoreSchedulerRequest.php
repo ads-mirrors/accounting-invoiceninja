@@ -13,10 +13,14 @@
 namespace App\Http\Requests\TaskScheduler;
 
 use App\Http\Requests\Request;
+use App\Utils\Traits\MakesHash;
 use App\Http\ValidationRules\Scheduler\ValidClientIds;
+use App\Http\ValidationRules\Scheduler\InvoiceWithNoExistingSchedule;
+use App\Models\Invoice;
 
 class StoreSchedulerRequest extends Request
 {
+    use MakesHash;
     public array $client_statuses = [
                         'all',
                         'draft',
@@ -72,7 +76,7 @@ class StoreSchedulerRequest extends Request
             'parameters.status' => ['bail','sometimes', 'nullable', 'string'],
             'parameters.include_project_tasks' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
             'parameters.auto_send' => ['bail','sometimes', 'boolean', 'required_if:template,invoice_outstanding_tasks'],
-            'parameters.invoice_id' => ['bail', 'string', 'required_if:template,payment_schedule'],
+            'parameters.invoice_id' => ['bail', 'string', 'required_if:template,payment_schedule', new InvoiceWithNoExistingSchedule()],
             'parameters.auto_bill' => ['bail', 'boolean', 'required_if:template,payment_schedule'],
             'parameters.schedule' => ['bail', 'array', 'required_if:template,payment_schedule', 'min:1'],
             'parameters.schedule.*.id' => ['bail','sometimes', 'integer'],
@@ -120,6 +124,14 @@ class StoreSchedulerRequest extends Request
             $input['remaining_cycles'] = count($input['parameters']['schedule']);
         }
 
+        if($input['template'] == 'payment_schedule' && isset($input['parameters']['invoice_id'])){
+            $i = Invoice::withTrashed()->find($this->decodePrimaryKey($input['parameters']['invoice_id']));
+            $input['name'] = ctrans('texts.payment_schedule'). " " . ctrans('texts.invoice_number_short') . " " . $i->number;
+        }
+        elseif($input['template'] == 'invoice_outstanding_tasks'){
+            $input['name'] = ctrans('texts.invoice_outstanding_tasks');
+        }
+
         $this->replace($input);
     }
 
@@ -128,7 +140,7 @@ class StoreSchedulerRequest extends Request
         return [
             'parameters.schedule.min' => 'The schedule must have at least one item.',
             'parameters.schedule' => 'You must have at least one schedule entry.',
-            'parameters.invoice_id' => 'You must select an invoice.'
+            'parameters.invoice_id.required_if' => 'The invoice is required for the payment schedule template.'
         ];
     }
 }

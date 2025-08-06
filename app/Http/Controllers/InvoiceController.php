@@ -16,6 +16,7 @@ use App\Utils\Ninja;
 use App\Models\Quote;
 use App\Models\Account;
 use App\Models\Invoice;
+use App\Models\Scheduler;
 use App\Jobs\Cron\AutoBill;
 use Illuminate\Http\Response;
 use App\Factory\InvoiceFactory;
@@ -239,16 +240,6 @@ class InvoiceController extends BaseController
                            ->save();
 
         event(new InvoiceWasCreated($invoice, $invoice->company, Ninja::eventVars($user ? $user->id : null)));
-
-        $transaction = [
-            'invoice' => $invoice->transaction_event(),
-            'payment' => [],
-            'client' => $invoice->client->transaction_event(),
-            'credit' => [],
-            'metadata' => [],
-        ];
-
-        // TransactionLog::dispatch(TransactionEvent::INVOICE_UPDATED, $transaction, $invoice->company->db);
 
         return $this->itemResponse($invoice);
     }
@@ -1077,5 +1068,21 @@ class InvoiceController extends BaseController
 
         return $this->itemResponse($invoice->fresh());
 
+    }
+
+    public function deletePaymentSchedule(Invoice $invoice)
+    {
+        $repo = new SchedulerRepository();
+
+        $scheduler = Scheduler::where('company_id', $invoice->company_id)
+                                ->where('template', 'payment_schedule')
+                                ->where('parameters->invoice_id', $invoice->hashed_id)
+                                ->first();
+
+        if($scheduler) {
+            $scheduler->forceDelete();
+        }
+
+        return $this->itemResponse($invoice->fresh());
     }
 }

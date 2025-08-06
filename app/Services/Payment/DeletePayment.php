@@ -12,10 +12,11 @@
 
 namespace App\Services\Payment;
 
-use App\Models\BankTransaction;
 use App\Models\Credit;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\BankTransaction;
+use App\Listeners\Payment\PaymentTransactionEventEntry;
 use Illuminate\Contracts\Container\BindingResolutionException;
 
 class DeletePayment
@@ -87,6 +88,9 @@ class DeletePayment
         $this->_paid_to_date_deleted = 0;
 
         if ($this->payment->invoices()->exists()) {
+        
+            $invoice_ids = $this->payment->invoices()->pluck('invoices.id')->toArray();
+
             $this->payment->invoices()->each(function ($paymentable_invoice) {
                 $net_deletable = $paymentable_invoice->pivot->amount - $paymentable_invoice->pivot->refunded;
 
@@ -156,7 +160,11 @@ class DeletePayment
                     $paymentable_invoice->delete();
 
                 }
+                
+                PaymentTransactionEventEntry::dispatch($this->payment, [$paymentable_invoice->id], $this->payment->company->db, $net_deletable, true);
+
             });
+
         }
 
         //sometimes the payment is NOT created properly, this catches the payment and prevents the paid to date reducing inappropriately.

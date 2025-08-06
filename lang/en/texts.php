@@ -5598,6 +5598,22 @@ $lang = array(
     'time_zone' => 'Time Zone',
     'tax_names' => 'Tax Names',
     'auto_bill_help' => 'If enabled, when the schedule runs, auto bill will be attempted for the scheduled amount',
+    'choose_schedule_type' => 'Choose Schedule Type',
+    'split_payments' => 'Split Payments',
+    'split_payments_help' => 'Splits the invoice amount into multiple payments over a period of time. ie 4 payments over 4 months',
+    'custom_schedule' => 'Manually create a custom payment schedule',
+    'custom_schedule_help' => 'Create a custom payment schedule, allows creating exact dates and amounts for each schedule',
+    'schedule_frequency_help' => 'The interval time between each payment',
+    'first_payment_date' => 'First Payment Date',
+    'first_payment_date_help' => 'The date of the first payment',
+    'payment_schedule_interval' => 'Payment :index of :total for :amount',
+    'payment_schedule_table' => 'Payment :key on :date for :amount',
+    'auto_send' => 'Auto Send',
+    'auto_send_help' => 'Automatically emails the invoice to the client',
+    'include_project_tasks' => 'Include Project Tasks',
+    'include_project_tasks_help' => 'Also invoice tasks that are part of a project',
+    'tax_nexus' => 'Tax Nexus',
+    'tax_period_report' => 'Tax Period Report',
 );
 
 return $lang;

@@ -44,6 +44,7 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
  * @property string|null $private_notes
  * @property string|null $public_notes
  * @property string|null $client_hash
+ * @property string|null $classification
  * @property string|null $logo
  * @property string|null $phone
  * @property string|null $routing_id
@@ -432,12 +433,16 @@ class Client extends BaseModel implements HasLocalePreference
 
     public function language()
     {
+        return once(function () {
+            /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+            $languages = app('languages');
 
-        /** @var \Illuminate\Support\Collection<\App\Models\Language> */
-        $languages = app('languages');
+            $language_id = $this->getSetting('language_id');
 
-        return $languages->first(function ($item) {
-            return $item->id == $this->getSetting('language_id');
+            return $languages->first(function ($item) use ($language_id) {
+                return $item->id == $language_id;
+            });
+
         });
     }
 
@@ -462,23 +467,36 @@ class Client extends BaseModel implements HasLocalePreference
 
     public function date_format()
     {
-        /** @var \Illuminate\Support\Collection<DateFormat> */
-        $date_formats = app('date_formats');
+        return once(function () {
 
-        return $date_formats->first(function ($item) {
-            return $item->id == $this->getSetting('date_format_id');
-        })->format;
+            /** @var \Illuminate\Support\Collection<DateFormat> */
+            $date_formats = app('date_formats');
+
+            $date_format = $this->getSetting('date_format_id');
+
+            return $date_formats->first(function ($item) use ($date_format) {
+                return $item->id == $date_format;
+            })->format;
+
+        });
     }
 
     public function currency()
     {
 
-        /** @var \Illuminate\Support\Collection<Currency> */
-        $currencies = app('currencies');
+        return once(function () {
+            
+            /** @var \Illuminate\Support\Collection<Currency> */
+            $currencies = app('currencies');
 
-        return $currencies->first(function ($item) {
-            return $item->id == $this->getSetting('currency_id');
+            $currency_id = $this->getSetting('currency_id');
+
+            return $currencies->first(function ($item) use ($currency_id) {
+                return $item->id == $currency_id;
+            });
+
         });
+
     }
 
     public function service(): ClientService
@@ -981,19 +999,7 @@ class Client extends BaseModel implements HasLocalePreference
 
         return $offset;
     }
-
-    public function transaction_event()
-    {
-        $client = $this->fresh();
-
-        return [
-            'client_id' => $client->id,
-            'client_balance' => $client->balance ?: 0,
-            'client_paid_to_date' => $client->paid_to_date ?: 0,
-            'client_credit_balance' => $client->credit_balance ?: 0,
-        ];
-    }
-
+    
     public function translate_entity(): string
     {
         return ctrans('texts.client');

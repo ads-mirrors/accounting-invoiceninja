@@ -54,7 +54,6 @@ class ActivityExport extends BaseExport
             return ['identifier' => $key, 'display_value' => $headerdisplay[$value]];
         })->toArray();
 
-
         $report = $query->cursor()
             ->map(function ($resource) {
                 /** @var \App\Models\Activity $resource */
