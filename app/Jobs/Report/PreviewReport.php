@@ -50,7 +50,7 @@ class PreviewReport implements ShouldQueue
             $report = $export->run();
         }
 
-        Cache::put($this->hash, $report, 60 * 60);
+        Cache::put($this->hash, base64_encode($report), 60 * 60);
     }
 
     // public function middleware()
