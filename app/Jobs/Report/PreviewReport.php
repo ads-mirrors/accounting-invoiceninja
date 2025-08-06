@@ -53,16 +53,6 @@ class PreviewReport implements ShouldQueue
         Cache::put($this->hash, base64_encode($report), 60 * 60);
     }
 
-    // public function middleware()
-    // {
-    //     return [
-    //         (new WithoutOverlapping("report-{$this->company->company_key}-{$this->report_class}"))
-    //             ->releaseAfter(60)
-    //             ->expireAfter(60) // 5 minutes
-    //             ->dontRelease(), // This prevents the job from being marked as a "release" which counts towards attempts
-    //     ];
-    // }
-
     /**
      * Handle a job failure.
      */

@@ -61,7 +61,7 @@ class TaxPeriodReport extends BaseExport
 
     public function run()
     {
-
+        nlog($this->input);
         MultiDB::setDb($this->company->db);
         App::forgetInstance('translator');
         App::setLocale($this->company->locale());
@@ -97,16 +97,20 @@ class TaxPeriodReport extends BaseExport
      */
     private function initializeData(): self
     {
-        Invoice::withTrashed()
+        $q = Invoice::withTrashed()
             ->where('company_id', $this->company->id)
             ->where('is_deleted', 0)
             ->whereIn('status_id', [2,3,4,5])
             ->whereBetween('date', ['1970-01-01', now()->subMonth()->endOfMonth()->format('Y-m-d')])
-            ->whereDoesntHave('transaction_events')
-            ->cursor()
+            ->whereDoesntHave('transaction_events');
+
+            nlog($q->count(). " records to update");
+            
+            $q->cursor()
             ->each(function($invoice){
 
                 if($invoice->status_id == Invoice::STATUS_SENT){
+                    nlog($invoice->id. " - ".$invoice->number);
                     (new InvoiceTransactionEventEntry())->run($invoice, \Carbon\Carbon::parse($invoice->date)->endOfMonth()->format('Y-m-d'));
                 }
                 elseif(in_array($invoice->status_id, [Invoice::STATUS_PAID, Invoice::STATUS_PARTIAL])){
@@ -121,9 +125,13 @@ class TaxPeriodReport extends BaseExport
                         ->map(function ($group) {
                             return $group->first();
                         })->each(function ($pp){
+                            nlog($pp->paymentable->id. " - Paid Updater");
                             (new InvoiceTransactionEventEntryCash())->run($pp->paymentable, \Carbon\Carbon::parse($pp->created_at)->startOfMonth()->format('Y-m-d'), \Carbon\Carbon::parse($pp->created_at)->endOfMonth()->format('Y-m-d'));
                         });
 
+                }
+                else {
+                    nlog($invoice->id. " - ".$invoice->status_id. " NOT PROCESSED");
                 }
             });
 
@@ -132,6 +140,8 @@ class TaxPeriodReport extends BaseExport
 
     private function resolveQuery()
     {
+        nlog($this->start_date. " - ".$this->end_date);
+        nlog($this->company->id);
         $query = Invoice::query()
             ->withTrashed()
             ->with('transaction_events')
@@ -180,15 +190,19 @@ class TaxPeriodReport extends BaseExport
             case 'last_month':
                 $this->start_date = now()->startOfMonth()->subMonth()->format('Y-m-d');
                 $this->end_date = now()->startOfMonth()->subMonth()->endOfMonth()->format('Y-m-d');
+                break;
             case 'this_quarter':
                 $this->start_date = (new \Carbon\Carbon('0 months'))->startOfQuarter()->format('Y-m-d');
                 $this->end_date = (new \Carbon\Carbon('0 months'))->endOfQuarter()->format('Y-m-d');
+                break;
             case 'last_quarter':
                 $this->start_date = (new \Carbon\Carbon('-3 months'))->startOfQuarter()->format('Y-m-d');
                 $this->end_date = (new \Carbon\Carbon('-3 months'))->endOfQuarter()->format('Y-m-d');
+                break;
             case 'last365_days':
                 $this->start_date = now()->startOfDay()->subDays(365)->format('Y-m-d');
                 $this->end_date = now()->startOfDay()->format('Y-m-d');
+                break;
             case 'this_year':
 
                 $first_month_of_year = $this->company->first_month_of_year ?? 1;
@@ -200,6 +214,7 @@ class TaxPeriodReport extends BaseExport
 
                 $this->start_date = $fin_year_start->format('Y-m-d');
                 $this->end_date = $fin_year_start->copy()->addYear()->subDay()->format('Y-m-d');
+                break;
             case 'last_year':
 
                 $first_month_of_year = $this->company->first_month_of_year ?? 1;
@@ -212,6 +227,8 @@ class TaxPeriodReport extends BaseExport
 
                 $this->start_date = $fin_year_start->format('Y-m-d');
                 $this->end_date = $fin_year_start->copy()->addYear()->subDay()->format('Y-m-d');
+                
+                break;
             case 'custom':
                 
                 try {
@@ -224,6 +241,7 @@ class TaxPeriodReport extends BaseExport
 
                 $this->start_date = $custom_start_date->format('Y-m-d');
                 $this->end_date = $custom_end_date->format('Y-m-d');
+                break;
             case 'all':
             default:
                 $this->start_date = now()->startOfYear()->format('Y-m-d');
@@ -310,6 +328,7 @@ class TaxPeriodReport extends BaseExport
 
         $query = $this->resolveQuery();
 
+        nlog($query->count(). "records to iterate");
         $this->data['invoices'] = [];
         $this->data['invoices'][] =
 
