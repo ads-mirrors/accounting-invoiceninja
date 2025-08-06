@@ -232,18 +232,82 @@ class TaxSummaryReportTest extends TestCase
 
         (new InvoiceTransactionEventEntry())->run($i);
 
+
+
+        $i2 = Invoice::factory()->create([
+            'client_id' => $this->client->id,
+            'user_id' => $this->user->id,
+            'company_id' => $this->company->id,
+            'amount' => 0,
+            'balance' => 0,
+            'status_id' => 2,
+            'total_taxes' => 1,
+            'date' => now()->format('Y-m-d'),
+            'terms' => 'nada',
+            'discount' => 0,
+            'tax_rate1' => 10,
+            'tax_rate2' => 17.5,
+            'tax_rate3' => 5,
+            'tax_name1' => 'GST',
+            'tax_name2' => 'VAT',
+            'tax_name3' => 'CA Sales Tax',
+            'uses_inclusive_taxes' => false,
+            'line_items' => $this->buildLineItems(),
+        ]);
+
+        $i2 = $i2->calc()->getInvoice();
+        $i2->service()->applyPaymentAmount(10, 'yadda')->save();
+
+        $this->travelTo(now()->addDay());
+        
+        $i2->service()->applyPaymentAmount(1, 'yadda - 1')->save();
+
+        $this->travelTo(now()->addDay());
+
+        $i2->service()->applyPaymentAmount(2, 'yadda - 2')->save();
+
+        $i2 = $i2->fresh();
+
+        (new InvoiceTransactionEventEntryAccrual())->run($i2, now()->subDays(30)->format('Y-m-d'), now()->addDays(30)->format('Y-m-d'));
+
+        $payment = $i2->payments()->first();
+
+        // nlog(config('queue.default'));
+        config(['queue.default' => 'sync']);
+
+        $this->assertNotNull($payment);
+        
+        $data = [
+            'id' => $payment->id,
+            'amount' => $payment->amount,
+            'invoices' => [
+                [
+                    'invoice_id' => $i2->id,
+                    'amount' => $payment->amount
+                ]
+            ],
+            'date' => now()->format('Y-m-d'),
+            'gateway_refund' => false,
+            'email_receipt' => false,
+            'via_webhook' => true,
+        ];
+
+        $payment->refund($data);
+
         $pl = new \App\Services\Report\XLS\TaxReport($this->company, '2025-01-01', '2025-12-31');
+
         $response = $pl->run()->getXlsFile();
 
         $this->assertIsString($response);
 
-        
         try{
             file_put_contents('/home/david/ttx.xlsx', $response);
         }
         catch(\Throwable $e){
             nlog($e->getMessage());
         }
+
+        config(['queue.default' => 'redis']);
 
         $this->account->delete();
     

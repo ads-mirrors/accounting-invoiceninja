@@ -99,7 +99,7 @@
         "razorpay/razorpay": "2.*",
         "sentry/sentry-laravel": "^4",
         "setasign/fpdf": "^1.8",
-        "setasign/fpdi": "^2.3",
+        "setasign/fpdi": "^2.6",
         "socialiteproviders/apple": "dev-master",
         "socialiteproviders/microsoft": "^4.1",
         "sprain/swiss-qr-bill": "^4.3",

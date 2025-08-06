@@ -254,4 +254,10 @@ class PaymentTransactionEventEntry implements ShouldQueue
     {
         return [(new WithoutOverlapping("payment_transaction_event_entry_".$this->payment->id.'_'.$this->db))->releaseAfter(10)->expireAfter(30)];
     }
+
+    public function failed(\Throwable $exception = null)
+    {
+        nlog("PaymentTransactionEventEntry::failed");
+        nlog($exception->getMessage());
+    }
 }

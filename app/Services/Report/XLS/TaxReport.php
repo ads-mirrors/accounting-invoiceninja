@@ -211,6 +211,7 @@ class TaxReport
                 $payment_state = $invoice->transaction_events()->where('event_id', TransactionEvent::PAYMENT_CASH)->where('period', now()->endOfMonth()->format('Y-m-d'))->orderBy('timestamp', 'desc')->first();
                 $adjustments = $invoice->transaction_events()->whereIn('event_id',[TransactionEvent::PAYMENT_REFUNDED, TransactionEvent::PAYMENT_DELETED])->where('period', now()->endOfMonth()->format('Y-m-d'))->get();
 
+                
                 if($invoice_state && $invoice_state->event_id == TransactionEvent::INVOICE_UPDATED){
                     $this->data['accrual']['invoices'][] = [
                         $invoice->number,
