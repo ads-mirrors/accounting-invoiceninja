@@ -261,6 +261,22 @@ class ReminderTest extends TestCase
         $this->assertEquals('2024-09-14', \Carbon\Carbon::parse($invoice->reminder_last_sent)->format('Y-m-d'));
         $this->assertEquals(now()->addWeek()->format('Y-m-d'), \Carbon\Carbon::parse($invoice->next_send_date)->format('Y-m-d'));
 
+        $this->travelTo(now()->addDays(6));
+
+        // $x = false;
+        $x = 0;
+        do {
+
+            $this->travelTo(now()->addHour());
+            (new ReminderJob())->handle();
+            $invoice = $invoice->fresh();
+
+            $x++;
+        } while ($x < 24);
+
+        $this->assertEquals('2024-09-21', \Carbon\Carbon::parse($invoice->reminder_last_sent)->format('Y-m-d'));
+        $this->assertEquals(now()->addWeek()->format('Y-m-d'), \Carbon\Carbon::parse($invoice->next_send_date)->format('Y-m-d'));
+
     }
 
 
