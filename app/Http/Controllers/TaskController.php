@@ -281,6 +281,8 @@ class TaskController extends BaseController
             $task = $this->task_repo->save($request->all(), $task);
         }
 
+        $task = $this->task_repo->triggeredActions($request, $task);
+
         if (is_null($task->status_order) || $task->status_order != $old_task_status_order) {
             $this->task_repo->sortStatuses($task);
         }
