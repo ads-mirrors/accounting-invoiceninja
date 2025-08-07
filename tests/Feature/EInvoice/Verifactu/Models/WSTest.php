@@ -21,9 +21,9 @@ class WSTest extends TestCase
     {
         parent::setUp();
 
-        if (config('ninja.is_travis')) {
-            $this->markTestSkipped('No credentials to test Verifactu');
-        }
+        // if (config('ninja.is_travis')) {
+            $this->markTestSkipped('Deliberately skipping Verifactu tests - otherwise we will break the hash chain !!!');
+        // }
 
     }
 
