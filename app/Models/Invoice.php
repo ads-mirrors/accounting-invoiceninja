@@ -400,6 +400,11 @@ class Invoice extends BaseModel
         return $this->hasMany(Credit::class);
     }
 
+    public function verifactu_logs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(VerifactuLog::class);
+    }
+
     public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Task::class);

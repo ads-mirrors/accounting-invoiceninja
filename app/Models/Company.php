@@ -428,6 +428,11 @@ class Company extends BaseModel
         return $this->hasMany(Scheduler::class);
     }
 
+    public function verifactu_logs(): HasMany
+    {
+        return $this->hasMany(VerifactuLog::class);
+    }
+
     public function task_schedulers(): HasMany
     {
         return $this->hasMany(Scheduler::class);

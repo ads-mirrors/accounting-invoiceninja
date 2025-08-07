@@ -5,6 +5,7 @@ namespace Tests\Feature\EInvoice\Verifactu\Models;
 use Tests\TestCase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use App\Services\EDocument\Standards\Verifactu\AeatAuthority;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
@@ -16,21 +17,44 @@ use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 class WSTest extends TestCase
 {
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (config('ninja.is_travis')) {
+            $this->markTestSkipped('No credentials to test Verifactu');
+        }
+
+    }
+
+    //@todo - need to test that the user has granted power of attorney to the system 
+    //@todo - data must be written to the database to confirm this.
+    public function test_verifactu_authority()
+    {
+        $authority = new AeatAuthority();
+        $authority->setTestMode();
+        $success = $authority->run('A39200019');
+
+        $this->assertTrue($success);
+    }
+
+    //@todo - need to confirm that building the xml and sending works.
     public function test_generated_invoice_xml_can_send_to_web_service()
     {
-               
-// Generate current timestamp in the correct format
-$currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
+                    
+        // Generate current timestamp in the correct format
+        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
 
-// $currentTimestamp = \Carbon\Carbon::parse('2023-01-01')->format('Y-m-d\TH:i:s');
-// $currentTimestamp = now()->subDays(5)->format('Y-m-d\TH:i:s');
+        // $currentTimestamp = \Carbon\Carbon::parse('2023-01-01')->format('Y-m-d\TH:i:s');
+        // $currentTimestamp = now()->subDays(5)->format('Y-m-d\TH:i:s');
 
- nlog($currentTimestamp);
+        nlog($currentTimestamp);
+
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
             ->setIdFactura('FAC2023002')
-            ->setFechaExpedicionFactura('2023-01-02')
+            ->setFechaExpedicionFactura('02-01-2025')
             ->setRefExterna('REF-123')
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
@@ -91,152 +115,148 @@ $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
 
         $this->assertNotNull($soapXml);
 
+        $correctHash = $this->calculateVerifactuHash(
+            $invoice->getTercero()->getNif(),           // IDEmisorFactura
+            $invoice->getIdFactura(), // NumSerieFactura
+            $invoice->getFechaHoraHusoGenRegistro(),          // FechaExpedicionFactura
+            $invoice->getTipoFactura(),                  // TipoFactura
+            $invoice->getCuotaTotal(),               // CuotaTotal
+            $invoice->getImporteTotal(),              // ImporteTotal
+            '',                    // Huella (empty for first calculation)
+            $currentTimestamp      // FechaHoraHusoGenRegistro (current time)
+        );
 
+        // Replace the placeholder with the correct hash
+        $soapXml = str_replace('PLACEHOLDER_HUELLA', $correctHash, $soapXml);
 
-$correctHash = $this->calculateVerifactuHash(
-    $invoice->getTercero()->getNif(),           // IDEmisorFactura
-    $invoice->getIdFactura(), // NumSerieFactura
-    $invoice->getFechaHoraHusoGenRegistro(),          // FechaExpedicionFactura
-    $invoice->getTipoFactura(),                  // TipoFactura
-    $invoice->getCuotaTotal(),               // CuotaTotal
-    $invoice->getImporteTotal(),              // ImporteTotal
-    '',                    // Huella (empty for first calculation)
-    $currentTimestamp      // FechaHoraHusoGenRegistro (current time)
-);
+        nlog("test_generated_invoice_xml_can_send_to_web_service");
+        nlog('Calculated hash for XML: ' . $correctHash);
 
-// Replace the placeholder with the correct hash
-$soapXml = str_replace('PLACEHOLDER_HUELLA', $correctHash, $soapXml);
+        // Sign the XML before sending
+        $certPath = storage_path('aeat-cert5.pem');
+        $keyPath = storage_path('aeat-key5.pem');
+        $signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
+        $soapXml = $signingService->sign();
 
-nlog("test_generated_invoice_xml_can_send_to_web_service");
-nlog('Calculated hash for XML: ' . $correctHash);
+        // Try direct HTTP approach instead of SOAP client
+        $response = Http::withHeaders([
+                'Content-Type' => 'text/xml; charset=utf-8',
+                'SOAPAction' => '',
+            ])
+            ->withOptions([
+                'cert' => storage_path('aeat-cert5.pem'),
+                'ssl_key' => storage_path('aeat-key5.pem'),
+                'verify' => false,
+                'timeout' => 30,
+            ])
+            ->withBody($soapXml, 'text/xml')
+            ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
 
-// Sign the XML before sending
-$certPath = storage_path('aeat-cert5.pem');
-$keyPath = storage_path('aeat-key5.pem');
-$signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
-$soapXml = $signingService->sign();
+        nlog('Request with AEAT official test data:');
+        nlog($soapXml);
+        nlog('Response with AEAT official test data:');
+        nlog('Response Status: ' . $response->status());
+        nlog('Response Headers: ' . json_encode($response->headers()));
+        nlog('Response Body: ' . $response->body());
 
-// Try direct HTTP approach instead of SOAP client
-$response = Http::withHeaders([
-        'Content-Type' => 'text/xml; charset=utf-8',
-        'SOAPAction' => '',
-    ])
-    ->withOptions([
-        'cert' => storage_path('aeat-cert5.pem'),
-        'ssl_key' => storage_path('aeat-key5.pem'),
-        'verify' => false,
-        'timeout' => 30,
-    ])
-    ->withBody($soapXml, 'text/xml')
-    ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+        if (!$response->successful()) {
+            \Log::error('Request failed with status: ' . $response->status());
+            \Log::error('Response body: ' . $response->body());
+        }
 
-nlog('Request with AEAT official test data:');
-nlog($soapXml);
-nlog('Response with AEAT official test data:');
-nlog('Response Status: ' . $response->status());
-nlog('Response Headers: ' . json_encode($response->headers()));
-nlog('Response Body: ' . $response->body());
-
-if (!$response->successful()) {
-    \Log::error('Request failed with status: ' . $response->status());
-    \Log::error('Response body: ' . $response->body());
-}
-
-$this->assertTrue($response->successful());
-
-
-
+        $this->assertTrue($response->successful());
 
     }
 
 
+    //Confirmed, this works. requires us to track the previous hash for each company to be used in subsequent calls.
     public function test_send_aeat_example_to_verifactu()
     {
         // Generate current timestamp in the correct format
         // $currentTimestamp = date('Y-m-d\TH:i:sP');
-        
-$currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
-$invoice_number = 'TEST0033343443';
-$previous_invoice_number = 'TEST0033343442';
-$invoice_date = '02-07-2025';
-$previous_hash = '10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C';
-$nif = 'A39200019';
+                
+        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
+        $invoice_number = 'TEST0033343443';
+        $previous_invoice_number = 'TEST0033343442';
+        $invoice_date = '02-07-2025';
+        $previous_hash = '10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C';
+        $nif = 'A39200019';
 
-        $soapXml = <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-    xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd"
-    xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
-    <soapenv:Header/>
-    <soapenv:Body>
-        <sum:RegFactuSistemaFacturacion>
-            <sum:Cabecera>
-                <!-- ObligadoEmision: The computer system submitting on behalf of the invoice issuer -->
-                <sum1:ObligadoEmision>
-                    <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
-                    <sum1:NIF>{$nif}</sum1:NIF>
-                </sum1:ObligadoEmision>
-            </sum:Cabecera>
-            <sum:RegistroFactura>
-                <sum1:RegistroAlta>
-                    <sum1:IDVersion>1.0</sum1:IDVersion>
-                    <!-- IDFactura: The actual invoice issuer (using same test NIF) -->
-                    <sum1:IDFactura>
-                        <sum1:IDEmisorFactura>{$nif}</sum1:IDEmisorFactura>
-                        <sum1:NumSerieFactura>{$invoice_number}</sum1:NumSerieFactura>
-                        <sum1:FechaExpedicionFactura>{$invoice_date}</sum1:FechaExpedicionFactura>
-                    </sum1:IDFactura>
-                    <!-- NombreRazonEmisor: The actual business that issued the invoice -->
-                    <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
-                    <sum1:TipoFactura>F1</sum1:TipoFactura>
-                    <sum1:DescripcionOperacion>Test invoice submitted by computer system on behalf of business</sum1:DescripcionOperacion>
-                    <sum1:Destinatarios>
-                        <sum1:IDDestinatario>
-                            <sum1:NombreRazon>Test Recipient Company</sum1:NombreRazon>
-                            <sum1:NIF>A39200019</sum1:NIF>
-                        </sum1:IDDestinatario>
-                    </sum1:Destinatarios>
-                    <sum1:Desglose>
-                        <sum1:DetalleDesglose>
-                            <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
-                            <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
-                            <sum1:TipoImpositivo>21</sum1:TipoImpositivo>
-                            <sum1:BaseImponibleOimporteNoSujeto>100.00</sum1:BaseImponibleOimporteNoSujeto>
-                            <sum1:CuotaRepercutida>21.00</sum1:CuotaRepercutida>
-                        </sum1:DetalleDesglose>
-                    </sum1:Desglose>
-                    <sum1:CuotaTotal>21.00</sum1:CuotaTotal>
-                    <sum1:ImporteTotal>121.00</sum1:ImporteTotal>
-                    <!-- Encadenamiento: Required chaining information -->
-                    <sum1:Encadenamiento>
-                         <sum1:RegistroAnterior>
-                            <sum1:IDEmisorFactura>{$nif}</sum1:IDEmisorFactura>
-                            <sum1:NumSerieFactura>{$previous_invoice_number}</sum1:NumSerieFactura>
-                            <sum1:FechaExpedicionFactura>02-07-2025</sum1:FechaExpedicionFactura>
-                            <sum1:Huella>{$previous_hash}</sum1:Huella>
-                        </sum1:RegistroAnterior>
-                    </sum1:Encadenamiento>
-                    <!-- SistemaInformatico: The computer system details (same as ObligadoEmision) -->
-                    <sum1:SistemaInformatico>
-                        <sum1:NombreRazon>Sistema de Facturación</sum1:NombreRazon>
-                        <sum1:NIF>A39200019</sum1:NIF>
-                        <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
-                        <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
-                        <sum1:Version>1.0.03</sum1:Version>
-                        <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
-                        <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
-                        <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
-                        <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
-                    </sum1:SistemaInformatico>
-                    <sum1:FechaHoraHusoGenRegistro>{$currentTimestamp}</sum1:FechaHoraHusoGenRegistro>
-                    <sum1:TipoHuella>01</sum1:TipoHuella>
-                    <sum1:Huella>PLACEHOLDER_HUELLA</sum1:Huella>
-                </sum1:RegistroAlta>
-            </sum:RegistroFactura>
-        </sum:RegFactuSistemaFacturacion>
-    </soapenv:Body>
-</soapenv:Envelope>
-XML;
+                $soapXml = <<<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+            xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd"
+            xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+            <soapenv:Header/>
+            <soapenv:Body>
+                <sum:RegFactuSistemaFacturacion>
+                    <sum:Cabecera>
+                        <!-- ObligadoEmision: The computer system submitting on behalf of the invoice issuer -->
+                        <sum1:ObligadoEmision>
+                            <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+                            <sum1:NIF>{$nif}</sum1:NIF>
+                        </sum1:ObligadoEmision>
+                    </sum:Cabecera>
+                    <sum:RegistroFactura>
+                        <sum1:RegistroAlta>
+                            <sum1:IDVersion>1.0</sum1:IDVersion>
+                            <!-- IDFactura: The actual invoice issuer (using same test NIF) -->
+                            <sum1:IDFactura>
+                                <sum1:IDEmisorFactura>{$nif}</sum1:IDEmisorFactura>
+                                <sum1:NumSerieFactura>{$invoice_number}</sum1:NumSerieFactura>
+                                <sum1:FechaExpedicionFactura>{$invoice_date}</sum1:FechaExpedicionFactura>
+                            </sum1:IDFactura>
+                            <!-- NombreRazonEmisor: The actual business that issued the invoice -->
+                            <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
+                            <sum1:TipoFactura>F1</sum1:TipoFactura>
+                            <sum1:DescripcionOperacion>Test invoice submitted by computer system on behalf of business</sum1:DescripcionOperacion>
+                            <sum1:Destinatarios>
+                                <sum1:IDDestinatario>
+                                    <sum1:NombreRazon>Test Recipient Company</sum1:NombreRazon>
+                                    <sum1:NIF>A39200019</sum1:NIF>
+                                </sum1:IDDestinatario>
+                            </sum1:Destinatarios>
+                            <sum1:Desglose>
+                                <sum1:DetalleDesglose>
+                                    <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+                                    <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+                                    <sum1:TipoImpositivo>21</sum1:TipoImpositivo>
+                                    <sum1:BaseImponibleOimporteNoSujeto>100.00</sum1:BaseImponibleOimporteNoSujeto>
+                                    <sum1:CuotaRepercutida>21.00</sum1:CuotaRepercutida>
+                                </sum1:DetalleDesglose>
+                            </sum1:Desglose>
+                            <sum1:CuotaTotal>21.00</sum1:CuotaTotal>
+                            <sum1:ImporteTotal>121.00</sum1:ImporteTotal>
+                            <!-- Encadenamiento: Required chaining information -->
+                            <sum1:Encadenamiento>
+                                <sum1:RegistroAnterior>
+                                    <sum1:IDEmisorFactura>{$nif}</sum1:IDEmisorFactura>
+                                    <sum1:NumSerieFactura>{$previous_invoice_number}</sum1:NumSerieFactura>
+                                    <sum1:FechaExpedicionFactura>02-07-2025</sum1:FechaExpedicionFactura>
+                                    <sum1:Huella>{$previous_hash}</sum1:Huella>
+                                </sum1:RegistroAnterior>
+                            </sum1:Encadenamiento>
+                            <!-- SistemaInformatico: The computer system details (same as ObligadoEmision) -->
+                            <sum1:SistemaInformatico>
+                                <sum1:NombreRazon>Sistema de Facturación</sum1:NombreRazon>
+                                <sum1:NIF>A39200019</sum1:NIF>
+                                <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
+                                <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
+                                <sum1:Version>1.0.03</sum1:Version>
+                                <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
+                                <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
+                                <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
+                                <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
+                            </sum1:SistemaInformatico>
+                            <sum1:FechaHoraHusoGenRegistro>{$currentTimestamp}</sum1:FechaHoraHusoGenRegistro>
+                            <sum1:TipoHuella>01</sum1:TipoHuella>
+                            <sum1:Huella>PLACEHOLDER_HUELLA</sum1:Huella>
+                        </sum1:RegistroAlta>
+                    </sum:RegistroFactura>
+                </sum:RegFactuSistemaFacturacion>
+            </soapenv:Body>
+        </soapenv:Envelope>
+        XML;
 
         // Calculate the correct hash using AEAT's specified format
         $correctHash = $this->calculateVerifactuHash(
@@ -290,168 +310,171 @@ XML;
         $this->assertTrue($response->successful());
 
 
-$responseProcessor = new ResponseProcessor();
-$responseProcessor->processResponse($response->body());
+        $responseProcessor = new ResponseProcessor();
+        $responseProcessor->processResponse($response->body());
 
-nlog($responseProcessor->getSummary());
+        nlog($responseProcessor->getSummary());
 
-$this->assertTrue($responseProcessor->getSummary()['success']);
+        $this->assertTrue($responseProcessor->getSummary()['success']);
 
     }
 
+    //@todo - need to test that cancelling an invoice works.
+    public function test_cancel_existing_invoice()
+    {
+        //@todo - need to test that cancelling an invoice works.
+    }
 
-public function test_cancel_and_modify_existing_invoice()
-{
+    //@todo - Need to test that modifying an invoice works.
+    public function test_cancel_and_modify_existing_invoice()
+    {
 
 
-$currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
-$invoice_number = 'TEST0033343436';
-$invoice_date = '02-07-2025';
-$calc_hash = 'A0B4D14E6F7769860C8A4EAFFA3EEBF52B7044685BD69D1DB5BBD68EA0E2BA21';
-$nif = '99999910G';
+        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
+        $invoice_number = 'TEST0033343436';
+        $invoice_date = '02-07-2025';
+        $calc_hash = 'A0B4D14E6F7769860C8A4EAFFA3EEBF52B7044685BD69D1DB5BBD68EA0E2BA21';
+        $nif = '99999910G';
 
-        $soapXml = <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
-    <soapenv:Header>
-        <tik:ObligadoEmision xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd">
-            <tik:NIF>A39200019</tik:NIF>
-            <tik:NombreRazon>Sistema de Facturación</tik:NombreRazon>
-        </tik:ObligadoEmision>
-    </soapenv:Header>
+                $soapXml = <<<XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+            <soapenv:Header>
+                <tik:ObligadoEmision xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd">
+                    <tik:NIF>A39200019</tik:NIF>
+                    <tik:NombreRazon>Sistema de Facturación</tik:NombreRazon>
+                </tik:ObligadoEmision>
+            </soapenv:Header>
 
-    <soapenv:Body>
-<sum:ModificacionFactura>
+            <soapenv:Body>
+        <sum:ModificacionFactura>
 
-    <sum1:RegistroAnulacion>
-        <sum1:IDFactura>
-            <sum1:IDEmisorFactura>99999910G</sum1:IDEmisorFactura>
-            <sum1:NumSerieFactura>TEST0033343436</sum1:NumSerieFactura>
-            <sum1:FechaExpedicionFactura>02-07-2025</sum1:FechaExpedicionFactura>
-        </sum1:IDFactura>
-        <sum1:MotivoAnulacion>1</sum1:MotivoAnulacion> <!-- 1 = Sustitución por otra factura -->
-    </sum1:RegistroAnulacion>
+            <sum1:RegistroAnulacion>
+                <sum1:IDFactura>
+                    <sum1:IDEmisorFactura>99999910G</sum1:IDEmisorFactura>
+                    <sum1:NumSerieFactura>TEST0033343436</sum1:NumSerieFactura>
+                    <sum1:FechaExpedicionFactura>02-07-2025</sum1:FechaExpedicionFactura>
+                </sum1:IDFactura>
+                <sum1:MotivoAnulacion>1</sum1:MotivoAnulacion> <!-- 1 = Sustitución por otra factura -->
+            </sum1:RegistroAnulacion>
 
-    <sum1:RegistroModificacion>
-        
-        <sum1:IDVersion>1.0</sum1:IDVersion>
-                    <!-- IDFactura: The actual invoice issuer (using same test NIF) -->
-                    <sum1:IDFactura>
-                        <sum1:IDEmisorFactura>99999910G</sum1:IDEmisorFactura>
-                        <sum1:NumSerieFactura>{$invoice_number}</sum1:NumSerieFactura>
-                        <sum1:FechaExpedicionFactura>{$invoice_date}</sum1:FechaExpedicionFactura>
-                    </sum1:IDFactura>
-                    <!-- NombreRazonEmisor: The actual business that issued the invoice -->
-                    <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
-                    <sum1:TipoFactura>F1</sum1:TipoFactura>
-                    <sum1:DescripcionOperacion>Test invoice submitted by computer system on behalf of business</sum1:DescripcionOperacion>
-                    <sum1:Destinatarios>
-                        <sum1:IDDestinatario>
-                            <sum1:NombreRazon>Test Recipient Company</sum1:NombreRazon>
-                            <sum1:NIF>A39200019</sum1:NIF>
-                        </sum1:IDDestinatario>
-                    </sum1:Destinatarios>
-                    <sum1:Desglose>
-                        <sum1:DetalleDesglose>
-                            <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
-                            <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
-                            <sum1:TipoImpositivo>21</sum1:TipoImpositivo>
-                            <sum1:BaseImponibleOimporteNoSujeto>100.00</sum1:BaseImponibleOimporteNoSujeto>
-                            <sum1:CuotaRepercutida>21.00</sum1:CuotaRepercutida>
-                        </sum1:DetalleDesglose>
-                    </sum1:Desglose>
-                    <sum1:CuotaTotal>21.00</sum1:CuotaTotal>
-                    <sum1:ImporteTotal>121.00</sum1:ImporteTotal>
-                    <!-- Encadenamiento: Required chaining information -->
-                    <sum1:Encadenamiento>
-                         <sum1:PrimerRegistro>N</sum1:PrimerRegistro>
-                    </sum1:Encadenamiento>
-                    <!-- SistemaInformatico: The computer system details (same as ObligadoEmision) -->
-                    <sum1:SistemaInformatico>
-                        <sum1:NombreRazon>Sistema de Facturación</sum1:NombreRazon>
-                        <sum1:NIF>A39200019</sum1:NIF>
-                        <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
-                        <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
-                        <sum1:Version>1.0.03</sum1:Version>
-                        <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
-                        <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
-                        <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
-                        <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
-                    </sum1:SistemaInformatico>
-                    <sum1:FechaHoraHusoGenRegistro>{$currentTimestamp}</sum1:FechaHoraHusoGenRegistro>
-                    <sum1:TipoHuella>01</sum1:TipoHuella>
-                    <sum1:Huella>PLACEHOLDER_HUELLA</sum1:Huella>
+            <sum1:RegistroModificacion>
                 
+                <sum1:IDVersion>1.0</sum1:IDVersion>
+                            <!-- IDFactura: The actual invoice issuer (using same test NIF) -->
+                            <sum1:IDFactura>
+                                <sum1:IDEmisorFactura>99999910G</sum1:IDEmisorFactura>
+                                <sum1:NumSerieFactura>{$invoice_number}</sum1:NumSerieFactura>
+                                <sum1:FechaExpedicionFactura>{$invoice_date}</sum1:FechaExpedicionFactura>
+                            </sum1:IDFactura>
+                            <!-- NombreRazonEmisor: The actual business that issued the invoice -->
+                            <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
+                            <sum1:TipoFactura>F1</sum1:TipoFactura>
+                            <sum1:DescripcionOperacion>Test invoice submitted by computer system on behalf of business</sum1:DescripcionOperacion>
+                            <sum1:Destinatarios>
+                                <sum1:IDDestinatario>
+                                    <sum1:NombreRazon>Test Recipient Company</sum1:NombreRazon>
+                                    <sum1:NIF>A39200019</sum1:NIF>
+                                </sum1:IDDestinatario>
+                            </sum1:Destinatarios>
+                            <sum1:Desglose>
+                                <sum1:DetalleDesglose>
+                                    <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+                                    <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+                                    <sum1:TipoImpositivo>21</sum1:TipoImpositivo>
+                                    <sum1:BaseImponibleOimporteNoSujeto>100.00</sum1:BaseImponibleOimporteNoSujeto>
+                                    <sum1:CuotaRepercutida>21.00</sum1:CuotaRepercutida>
+                                </sum1:DetalleDesglose>
+                            </sum1:Desglose>
+                            <sum1:CuotaTotal>21.00</sum1:CuotaTotal>
+                            <sum1:ImporteTotal>121.00</sum1:ImporteTotal>
+                            <!-- Encadenamiento: Required chaining information -->
+                            <sum1:Encadenamiento>
+                                <sum1:PrimerRegistro>N</sum1:PrimerRegistro>
+                            </sum1:Encadenamiento>
+                            <!-- SistemaInformatico: The computer system details (same as ObligadoEmision) -->
+                            <sum1:SistemaInformatico>
+                                <sum1:NombreRazon>Sistema de Facturación</sum1:NombreRazon>
+                                <sum1:NIF>A39200019</sum1:NIF>
+                                <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
+                                <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
+                                <sum1:Version>1.0.03</sum1:Version>
+                                <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
+                                <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
+                                <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
+                                <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
+                            </sum1:SistemaInformatico>
+                            <sum1:FechaHoraHusoGenRegistro>{$currentTimestamp}</sum1:FechaHoraHusoGenRegistro>
+                            <sum1:TipoHuella>01</sum1:TipoHuella>
+                            <sum1:Huella>PLACEHOLDER_HUELLA</sum1:Huella>
+                        
 
-    </sum1:RegistroModificacion>
+            </sum1:RegistroModificacion>
 
-</sum:ModificacionFactura>
-</soapenv:Body>
-</soapenv:Envelope>
-XML;
-
-
-// Calculate the correct hash using AEAT's specified format
-$correctHash = $this->calculateVerifactuHash(
-    $nif,           // IDEmisorFactura
-    $invoice_number, // NumSerieFactura
-    $invoice_date,          // FechaExpedicionFactura
-    'F1',                  // TipoFactura
-    '21.00',               // CuotaTotal
-    '121.00',              // ImporteTotal
-    '',                    // Huella (empty for first calculation)
-    $currentTimestamp      // FechaHoraHusoGenRegistro (current time)
-);
-
-// Replace the placeholder with the correct hash
-$soapXml = str_replace('PLACEHOLDER_HUELLA', $correctHash, $soapXml);
-
-nlog('Calculated hash for XML: ' . $correctHash);
-
-// Sign the XML before sending
-$certPath = storage_path('aeat-cert5.pem');
-$keyPath = storage_path('aeat-key5.pem');
-$signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
-$soapXml = $signingService->sign();
-
-// Try direct HTTP approach instead of SOAP client
-$response = Http::withHeaders([
-        'Content-Type' => 'text/xml; charset=utf-8',
-        'SOAPAction' => '',
-    ])
-    ->withOptions([
-        'cert' => storage_path('aeat-cert5.pem'),
-        'ssl_key' => storage_path('aeat-key5.pem'),
-        'verify' => false,
-        'timeout' => 30,
-    ])
-    ->withBody($soapXml, 'text/xml')
-    ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
-
-nlog('Request with AEAT official test data:');
-nlog($soapXml);
-nlog('Response with AEAT official test data:');
-nlog('Response Status: ' . $response->status());
-nlog('Response Headers: ' . json_encode($response->headers()));
-nlog('Response Body: ' . $response->body());
-
-if (!$response->successful()) {
-    \Log::error('Request failed with status: ' . $response->status());
-    \Log::error('Response body: ' . $response->body());
-}
-
-$this->assertTrue($response->successful());
+        </sum:ModificacionFactura>
+        </soapenv:Body>
+        </soapenv:Envelope>
+        XML;
 
 
-$responseProcessor = new ResponseProcessor();
-$responseProcessor->processResponse($response->body());
+        // Calculate the correct hash using AEAT's specified format
+        $correctHash = $this->calculateVerifactuHash(
+            $nif,           // IDEmisorFactura
+            $invoice_number, // NumSerieFactura
+            $invoice_date,          // FechaExpedicionFactura
+            'F1',                  // TipoFactura
+            '21.00',               // CuotaTotal
+            '121.00',              // ImporteTotal
+            '',                    // Huella (empty for first calculation)
+            $currentTimestamp      // FechaHoraHusoGenRegistro (current time)
+        );
 
-nlog($responseProcessor->getSummary());
+        // Replace the placeholder with the correct hash
+        $soapXml = str_replace('PLACEHOLDER_HUELLA', $correctHash, $soapXml);
 
-$this->assertTrue($responseProcessor->getSummary()['success']);
+        nlog('Calculated hash for XML: ' . $correctHash);
+
+        // Sign the XML before sending
+        $certPath = storage_path('aeat-cert5.pem');
+        $keyPath = storage_path('aeat-key5.pem');
+        $signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
+        $soapXml = $signingService->sign();
+
+        // Try direct HTTP approach instead of SOAP client
+        $response = Http::withHeaders([
+                'Content-Type' => 'text/xml; charset=utf-8',
+                'SOAPAction' => '',
+            ])
+            ->withOptions([
+                'cert' => storage_path('aeat-cert5.pem'),
+                'ssl_key' => storage_path('aeat-key5.pem'),
+                'verify' => false,
+                'timeout' => 30,
+            ])
+            ->withBody($soapXml, 'text/xml')
+            ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+
+        nlog('Request with AEAT official test data:');
+        nlog($soapXml);
+        nlog('Response with AEAT official test data:');
+        nlog('Response Status: ' . $response->status());
+        nlog('Response Headers: ' . json_encode($response->headers()));
+        nlog('Response Body: ' . $response->body());
+
+        if (!$response->successful()) {
+            \Log::error('Request failed with status: ' . $response->status());
+            \Log::error('Response body: ' . $response->body());
+        }
+
+        $this->assertTrue($response->successful());
 
 
+        $responseProcessor = new ResponseProcessor();
+        $responseProcessor->processResponse($response->body());
 
+        nlog($responseProcessor->getSummary());
+
+        $this->assertTrue($responseProcessor->getSummary()['success']);
 
     }
 

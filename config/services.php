@@ -156,4 +156,9 @@ return [
     'quickbooks_webhook' => [
         'verifier_token' => env('QUICKBOOKS_VERIFIER_TOKEN', false),
     ],
+    'verifactu' => [
+        'sender_nif' => env('VERIFACTU_SENDER_NIF', ''),
+        'certificate' => env('VERIFACTU_CERTIFICATE', ''),
+        'ssl_key' => env('VERIFACTU_SSL_KEY', ''),
+    ],
 ];
