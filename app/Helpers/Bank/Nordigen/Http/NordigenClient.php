@@ -8,15 +8,14 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class Client
+class NordigenClient
 {
-    private string $baseUrl;
-    private string $accessToken;
+    private string $baseUrl = 'https://bankaccountdata.gocardless.com/api/v2';
+
     private PendingRequest $httpClient;
 
-    public function __construct(string $baseUrl, string $accessToken)
+    public function __construct(private string $accessToken)
     {
-        $this->baseUrl = rtrim($baseUrl, '/');
         $this->accessToken = $accessToken;
         $this->httpClient = Http::withHeaders([
             'Authorization' => "Bearer {$this->accessToken}",
@@ -39,7 +38,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/requisitions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'requisitions');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -94,6 +93,7 @@ class Client
         do {
             $requisitions = $this->getRequisitions($limit, $offset);
             
+            nlog($requisitions);
             if ($requisitions->isEmpty()) {
                 break;
             }
@@ -122,7 +122,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/agreements/", $params);
         
-        return $this->handlePaginatedResponse($response, 'agreements');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -198,14 +198,11 @@ class Client
      */
     public function getInstitutions(int $limit = 100, ?string $offset = null): Collection
     {
-        $params = ['limit' => $limit];
-        if ($offset) {
-            $params['offset'] = $offset;
-        }
+        $params = [];
 
         $response = $this->httpClient->get("{$this->baseUrl}/institutions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'institutions');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -230,7 +227,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/institutions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'institutions');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -273,7 +270,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/enduser-agreements/", $params);
         
-        return $this->handlePaginatedResponse($response, 'enduser_agreements');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -330,7 +327,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/accounts/", $params);
         
-        return $this->handlePaginatedResponse($response, 'accounts');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -447,7 +444,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/accounts/{$accountId}/transactions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'transactions');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -475,7 +472,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/transactions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'transactions');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -527,7 +524,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/accounts/{$accountId}/transactions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'transactions');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -550,7 +547,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/accounts/{$accountId}/transactions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'transactions');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -573,7 +570,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/accounts/{$accountId}/transactions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'transactions');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -598,7 +595,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/accounts/{$accountId}/transactions/", $params);
         
-        return $this->handlePaginatedResponse($response, 'transactions');
+        return $this->handlePaginatedResponse($response);
     }
 
     // ==================== PAYMENTS ====================
@@ -615,7 +612,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/payments/", $params);
         
-        return $this->handlePaginatedResponse($response, 'payments');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -672,7 +669,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/mandates/", $params);
         
-        return $this->handlePaginatedResponse($response, 'mandates');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -729,7 +726,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/refunds/", $params);
         
-        return $this->handlePaginatedResponse($response, 'refunds');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -766,7 +763,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/events/", $params);
         
-        return $this->handlePaginatedResponse($response, 'events');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -793,7 +790,7 @@ class Client
 
         $response = $this->httpClient->get("{$this->baseUrl}/webhooks/", $params);
         
-        return $this->handlePaginatedResponse($response, 'webhooks');
+        return $this->handlePaginatedResponse($response);
     }
 
     /**
@@ -841,20 +838,16 @@ class Client
     /**
      * Handle paginated response
      */
-    private function handlePaginatedResponse(Response $response, string $dataKey): Collection
+    private function handlePaginatedResponse(Response $response): Collection
     {
         if (!$response->successful()) {
             $this->logError('Paginated request failed', $response);
             return collect();
         }
 
-        $data = $response->json();
-        
-        if (!isset($data[$dataKey])) {
-            return collect();
-        }
-
-        return collect($data[$dataKey]);
+        $data = $response->json()['results'];
+    
+        return collect($data);
     }
 
     /**
@@ -875,7 +868,8 @@ class Client
      */
     private function logError(string $message, Response $response): void
     {
-        Log::error($message, [
+        nlog([
+            'message' => $message,
             'status' => $response->status(),
             'body' => $response->body(),
             'headers' => $response->headers()
