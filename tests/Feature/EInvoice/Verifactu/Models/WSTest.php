@@ -156,10 +156,11 @@ $this->assertTrue($response->successful());
         // $currentTimestamp = date('Y-m-d\TH:i:sP');
         
 $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
-$invoice_number = 'TEST0033343437';
+$invoice_number = 'TEST0033343443';
+$previous_invoice_number = 'TEST0033343442';
 $invoice_date = '02-07-2025';
-$calc_hash = 'A0B4D14E6F7769860C8A4EAFFA3EEBF52B7044685BD69D1DB5BBD68EA0E2BA21';
-$nif = '99999910G';
+$previous_hash = '10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C';
+$nif = 'A39200019';
 
         $soapXml = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -173,7 +174,7 @@ $nif = '99999910G';
                 <!-- ObligadoEmision: The computer system submitting on behalf of the invoice issuer -->
                 <sum1:ObligadoEmision>
                     <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
-                    <sum1:NIF>99999910G</sum1:NIF>
+                    <sum1:NIF>{$nif}</sum1:NIF>
                 </sum1:ObligadoEmision>
             </sum:Cabecera>
             <sum:RegistroFactura>
@@ -181,7 +182,7 @@ $nif = '99999910G';
                     <sum1:IDVersion>1.0</sum1:IDVersion>
                     <!-- IDFactura: The actual invoice issuer (using same test NIF) -->
                     <sum1:IDFactura>
-                        <sum1:IDEmisorFactura>99999910G</sum1:IDEmisorFactura>
+                        <sum1:IDEmisorFactura>{$nif}</sum1:IDEmisorFactura>
                         <sum1:NumSerieFactura>{$invoice_number}</sum1:NumSerieFactura>
                         <sum1:FechaExpedicionFactura>{$invoice_date}</sum1:FechaExpedicionFactura>
                     </sum1:IDFactura>
@@ -209,10 +210,10 @@ $nif = '99999910G';
                     <!-- Encadenamiento: Required chaining information -->
                     <sum1:Encadenamiento>
                          <sum1:RegistroAnterior>
-                            <sum1:IDEmisorFactura>99999910G</sum1:IDEmisorFactura>
-                            <sum1:NumSerieFactura>TEST0033343437</sum1:NumSerieFactura>
+                            <sum1:IDEmisorFactura>{$nif}</sum1:IDEmisorFactura>
+                            <sum1:NumSerieFactura>{$previous_invoice_number}</sum1:NumSerieFactura>
                             <sum1:FechaExpedicionFactura>02-07-2025</sum1:FechaExpedicionFactura>
-                            <sum1:Huella>A0B4D14E6F7769860C8A4EAFFA3EEBF52B7044685BD69D1DB5BBD68EA0E2BA21</sum1:Huella>
+                            <sum1:Huella>{$previous_hash}</sum1:Huella>
                         </sum1:RegistroAnterior>
                     </sum1:Encadenamiento>
                     <!-- SistemaInformatico: The computer system details (same as ObligadoEmision) -->
@@ -245,7 +246,7 @@ XML;
             'F1',                  // TipoFactura
             '21.00',               // CuotaTotal
             '121.00',              // ImporteTotal
-            '',                    // Huella (empty for first calculation)
+            $previous_hash,                    // Huella (empty for first calculation)
             $currentTimestamp      // FechaHoraHusoGenRegistro (current time)
         );  
         
