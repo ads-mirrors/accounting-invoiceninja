@@ -1270,6 +1270,11 @@ class VerifactuInvoiceTest extends TestCase
         $validateXmlMethod = $reflectionClass->getMethod('validateXml');
         $validateXmlMethod->setAccessible(true);
         $validateXmlMethod->invoke(new Invoice(), $doc);
+
+        $xslt = new XsltDocumentValidator($validXml);
+        $xslt->validate();
+
+        $this->assertCount(0, $xslt->getErrors());
     }
 
     // public function testSignatureGeneration(): void

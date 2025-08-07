@@ -68,7 +68,7 @@ class Invoice extends BaseXmlModel
 
     public function getFechaExpedicionFactura(): string
     {
-        return $this->fechaExpedicionFactura ?? now()->format('Y-m-d');
+        return $this->fechaExpedicionFactura ?? now()->format('d-m-Y');
     }
 
     public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
