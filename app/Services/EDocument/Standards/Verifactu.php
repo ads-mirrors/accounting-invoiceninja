@@ -128,14 +128,26 @@ class Verifactu extends AbstractService
         
         // The tax breakdown
         $desglose = new Desglose();
-        $desglose->setDesgloseIVA([
-            'Impuesto' => '01', //tax type
-            'ClaveRegimen' => '01', //tax regime classification code
-            'CalificacionOperacion' => 'S1', //operation classification code
-            'BaseImponibleOimporteNoSujeto' => $this->calc->getNetSubtotal(), // taxable base amount
-            'TipoImpositivo' => 21.00, // Tax Rate
-            'CuotaRepercutida' => $this->invoice->total_taxes // Tax Amount
-        ]);
+
+        //Combine the line taxes with invoice taxes here to get a total tax amount
+        $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
+
+        $desglose_iva = [];
+
+        foreach ($taxes as $tax) {
+
+            $desglose_iva[] = [
+                'Impuesto' => '01' //tax type
+                'ClaveRegimen' => '01', //tax regime classification code
+                'CalificacionOperacion' => 'S1', //operation classification code
+                'BaseImponibleOimporteNoSujeto' => $tax['base_amount'] ?? $this->calc->getNetSubtotal(), // taxable base amount
+                'TipoImpositivo' => $tax['tax_rate'], // Tax Rate
+                'CuotaRepercutida' => $tax['total'] // Tax Amount
+            ];
+
+        };
+
+        $desglose->setDesgloseIVA($desglose_iva);
         $invoice->setDesglose($desglose);
 
 
