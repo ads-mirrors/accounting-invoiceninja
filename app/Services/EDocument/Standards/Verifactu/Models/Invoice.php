@@ -43,6 +43,7 @@ class Invoice extends BaseXmlModel
     protected ?string $privateKeyPath = null;
     protected ?string $publicKeyPath = null;
     protected ?string $certificatePath = null;
+    protected ?string $fechaExpedicionFactura = null;
 
     public function __construct()
     {
@@ -62,6 +63,17 @@ class Invoice extends BaseXmlModel
     public function setIdVersion(string $idVersion): self
     {
         $this->idVersion = $idVersion;
+        return $this;
+    }
+
+    public function getFechaExpedicionFactura(): string
+    {
+        return $this->fechaExpedicionFactura ?? now()->format('Y-m-d');
+    }
+
+    public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
+    {
+        $this->fechaExpedicionFactura = $fechaExpedicionFactura;
         return $this;
     }
 
@@ -598,7 +610,7 @@ class Invoice extends BaseXmlModel
         $idFactura = $this->createElement($doc, 'IDFactura');
         $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->tercero?->getNif() ?? 'B12345678'));
         $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->idFactura));
-        $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', date('d-m-Y')));
+        $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', $this->getFechaExpedicionFactura()));
         $root->appendChild($idFactura);
         
         if ($this->refExterna !== null) {
