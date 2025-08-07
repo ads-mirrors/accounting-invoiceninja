@@ -38,6 +38,84 @@ class WSTest extends TestCase
         $this->assertTrue($success);
     }
 
+
+//@todo - need to confirm that building the xml and sending works.
+    public function test_verifactu_invoice_model_can_build_xml()
+    {
+                    
+        // Generate current timestamp in the correct format
+        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
+
+        nlog($currentTimestamp);
+
+        $invoice = new Invoice();
+        $invoice
+            ->setIdVersion('1.0')
+            ->setIdFactura('FAC2023002')
+            ->setFechaExpedicionFactura('02-01-2025')
+            ->setRefExterna('REF-123')
+            ->setNombreRazonEmisor('Empresa Ejemplo SL')
+            ->setTipoFactura('F1')
+            ->setDescripcionOperacion('Venta de productos varios')
+            ->setCuotaTotal(210.00)
+            ->setImporteTotal(1000.00)
+            ->setFechaHoraHusoGenRegistro($currentTimestamp)
+            ->setTipoHuella('01')
+            ->setHuella('PLACEHOLDER_HUELLA');
+        // Add emitter
+        $emisor = new PersonaFisicaJuridica();
+        $emisor
+            ->setNif('A39200019')
+            ->setRazonSocial('Empresa Ejemplo SL');
+        $invoice->setTercero($emisor);
+
+        // Add breakdown
+        $desglose = new Desglose();
+        $desglose->setDesgloseFactura([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '01',
+            'CalificacionOperacion' => 'S1',
+            'BaseImponibleOimporteNoSujeto' => 1000.00,
+            'TipoImpositivo' => 21,
+            'CuotaRepercutida' => 210.00
+        ]);
+        $invoice->setDesglose($desglose);
+
+
+$destinatarios = [];
+$destinatario = new PersonaFisicaJuridica();
+
+$destinatario
+    ->setNif('A39200020')
+    ->setNombreRazon('Empresa Ejemplo SL VV');
+
+$destinatarios[] = $destinatario;
+
+$invoice->setDestinatarios($destinatarios);
+
+        // Add information system
+        $sistema = new SistemaInformatico();
+        $sistema
+            ->setNombreRazon('Sistema de Facturación')
+            ->setNif('A39200019')
+            ->setNombreSistemaInformatico('SistemaFacturacion')
+            ->setIdSistemaInformatico('01')
+            ->setVersion('1.0')
+            ->setNumeroInstalacion('INST-001');
+        $invoice->setSistemaInformatico($sistema);
+
+        // Add chain
+        $encadenamiento = new Encadenamiento();
+        $encadenamiento->setPrimerRegistro('S');
+        $invoice->setEncadenamiento($encadenamiento);
+
+        $soapXml = $invoice->toSoapEnvelope();
+
+        $this->assertNotNull($soapXml);
+
+     nlog($soapXml);
+    }
+
     //@todo - need to confirm that building the xml and sending works.
     public function test_generated_invoice_xml_can_send_to_web_service()
     {
@@ -65,23 +143,15 @@ class WSTest extends TestCase
             ->setTipoHuella('01')
             ->setHuella('PLACEHOLDER_HUELLA');
 
-
-
-// <sum:Cabecera>
-//                 <!-- ObligadoEmision: The computer system submitting on behalf of the invoice issuer -->
-//                 <sum1:ObligadoEmision>
-//                     <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
-//                     <sum1:NIF>99999910G</sum1:NIF>
-//                 </sum1:ObligadoEmision>
-//             </sum:Cabecera>
-
-
         // Add emitter
         $emisor = new PersonaFisicaJuridica();
         $emisor
             ->setNif('A39200019')
             ->setRazonSocial('Empresa Ejemplo SL');
         $invoice->setTercero($emisor);
+
+
+
 
         // Add breakdown
         $desglose = new Desglose();

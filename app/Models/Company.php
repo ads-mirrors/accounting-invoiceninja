@@ -430,7 +430,7 @@ class Company extends BaseModel
 
     public function verifactu_logs(): HasMany
     {
-        return $this->hasMany(VerifactuLog::class);
+        return $this->hasMany(VerifactuLog::class)->orderBy('id', 'DESC');
     }
 
     public function task_schedulers(): HasMany

@@ -11,15 +11,17 @@
 
 namespace App\Services\EDocument\Standards;
 
-use App\DataMapper\Tax\BaseRule;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Helpers\Invoice\Taxer;
+use App\DataMapper\Tax\BaseRule;
 use App\Services\AbstractService;
 use App\Helpers\Invoice\InvoiceSum;
 use App\Utils\Traits\NumberFormatter;
 use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
+use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
 
 class Verifactu extends AbstractService
@@ -98,7 +100,7 @@ class Verifactu extends AbstractService
         $this->v_invoice
             ->setIdVersion('1.0')
             ->setIdFactura($this->invoice->number) //invoice number
-            ->setNombreRazonEmisor($this->company->present()->name())) //company name
+            ->setNombreRazonEmisor($this->company->present()->name()) //company name
             ->setTipoFactura($this->calculateInvoiceType()) //invoice type
             ->setDescripcionOperacion('')// Not manadatory - max chars 500
             ->setCuotaTotal($this->invoice->total_taxes) //total taxes
@@ -130,14 +132,14 @@ class Verifactu extends AbstractService
         $desglose = new Desglose();
 
         //Combine the line taxes with invoice taxes here to get a total tax amount
-        $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
+        $taxes = $calc->getTaxMap();
 
         $desglose_iva = [];
 
         foreach ($taxes as $tax) {
 
             $desglose_iva[] = [
-                'Impuesto' => '01' //tax type
+                'Impuesto' => $this->calculateTaxType($tax['name']), //tax type
                 'ClaveRegimen' => '01', //tax regime classification code
                 'CalificacionOperacion' => 'S1', //operation classification code
                 'BaseImponibleOimporteNoSujeto' => $tax['base_amount'] ?? $this->calc->getNetSubtotal(), // taxable base amount
@@ -148,9 +150,73 @@ class Verifactu extends AbstractService
         };
 
         $desglose->setDesgloseIVA($desglose_iva);
-        $invoice->setDesglose($desglose);
+
+        $this->v_invoice->setDesglose($desglose);
+
+        // Encadenamiento
+        $encadenamiento = new Encadenamiento();
+
+        // Get the previous invoice log
+        $v_log = $this->company->verifactu_logs()->first();
+
+        // We chain the previous hash to the current invoice to ensure consistency
+        if($v_log){
+
+            $registro_anterior = new RegistroAnterior();
+            $registro_anterior->setIDEmisorFactura($v_log->nif);
+            $registro_anterior->setNumSerieFactura($v_log->invoice_number);
+            $registro_anterior->setFechaExpedicionFactura($v_log->date->format('d-m-Y'));
+            $registro_anterior->setHuella($v_log->hash);
+
+            $encadenamiento->setRegistroAnterior($registro_anterior);
+            
+        }
+        else {
+
+            $encadenamiento->setPrimerRegistro('S');
+            
+        }
+
+        $this->v_invoice->setEncadenamiento($encadenamiento);
+
+        //Sending system information - We automatically generate the obligado emision from this later
+        $sistema = new SistemaInformatico();
+        $sistema
+            ->setNombreRazon('Invoice Ninja')
+            ->setNif(config('services.verifactu.sender_nif'))
+            ->setNombreSistemaInformatico('Invoice Ninja')
+            ->setIdSistemaInformatico('01')
+            ->setVersion('1.0')
+            ->setNumeroInstalacion('01')
+            ->setTipoUsoPosibleSoloVerifactu('S')
+            ->setTipoUsoPosibleMultiOT('S')
+            ->setIndicadorMultiplesOT('S');
+
+        $this->v_invoice->setSistemaInformatico($sistema);
 
 
+        return $this;
+    }
+
+    private function calculateTaxType(string $tax_name): string
+    {
+        if(stripos($tax_name, 'iva') !== false) {
+            return '01';
+        }
+
+        if(stripos($tax_name, 'igic') !== false) {
+            return '03';
+        }
+
+        if(stripos($tax_name, 'ipsi') !== false) {
+            return '02';
+        }
+
+        if(stripos($tax_name, 'otros') !== false) {
+            return '05';
+        }
+
+        return '01';
     }
 
     private function calculateInvoiceType(): string
