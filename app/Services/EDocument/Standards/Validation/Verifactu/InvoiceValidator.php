@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\EDocument\Standards\Verifactu\Validation;
+namespace App\Services\EDocument\Standards\Validation\Verifactu;
 
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
 use InvalidArgumentException;

@@ -80,6 +80,7 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
  * @property int|null $updated_at
  * @property int|null $deleted_at
  * @property string|null $id_number
+ * @property string|null $classification
  * @property-read mixed $hashed_id
  * @property-read \App\Models\User|null $assigned_user
  * @property-read \App\Models\User $user
