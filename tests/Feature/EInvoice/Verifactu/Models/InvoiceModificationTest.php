@@ -192,7 +192,7 @@ class InvoiceModificationTest extends TestCase
             nlog($errors);
         }
         
-        // For now, don't fail the test on validation errors since we're still working on the structure
+        // Now that validation is working correctly, we can assert no errors
         $this->assertCount(0, $errors);
     }
 

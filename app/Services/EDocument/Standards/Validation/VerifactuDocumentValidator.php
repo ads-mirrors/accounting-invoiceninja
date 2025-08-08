@@ -53,21 +53,198 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
         // Extract business content from SOAP envelope if needed
         $businessContent = $this->extractBusinessContent($xml);
         
-        // Validate against SuministroLR.xsd
-        if (!$businessContent->schemaValidate(app_path($this->verifactu_xsd))) {
-            $errors = libxml_get_errors();
-            libxml_clear_errors();
+        // Detect document type to determine which validation to apply
+        $documentType = $this->detectDocumentType($businessContent);
+        
+        nlog("Detected document type: " . $documentType);
+        
+        // For modifications, we need to use a different validation approach
+        // since the standard XSD doesn't support modification structure
+        if ($documentType === 'modification') {
+            $this->validateModificationDocument($businessContent);
+        } else {
+            // For registration and cancellation, use standard XSD validation
+            if (!$businessContent->schemaValidate(app_path($this->verifactu_xsd))) {
+                $errors = libxml_get_errors();
+                libxml_clear_errors();
 
-            foreach ($errors as $error) {
-                $this->errors['xsd'][] = sprintf(
-                    'Line %d: %s',
-                    $error->line,
-                    trim($error->message)
-                );
+                foreach ($errors as $error) {
+                    $this->errors['xsd'][] = sprintf(
+                        'Line %d: %s',
+                        $error->line,
+                        trim($error->message)
+                    );
+                }
             }
         }
 
         return $this;
+    }
+
+    /**
+     * Detect the type of Verifactu document
+     */
+    private function detectDocumentType(\DOMDocument $doc): string
+    {
+        $xpath = new \DOMXPath($doc);
+        $xpath->registerNamespace('si', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
+        
+        // Check for modification structure
+        $modificacionFactura = $xpath->query('//si:ModificacionFactura');
+        if ($modificacionFactura->length > 0) {
+            return 'modification';
+        }
+        
+        // Check for cancellation structure
+        $registroAnulacion = $xpath->query('//si:RegistroAnulacion');
+        if ($registroAnulacion->length > 0) {
+            return 'cancellation';
+        }
+        
+        // Check for registration structure
+        $registroAlta = $xpath->query('//si:RegistroAlta');
+        if ($registroAlta->length > 0) {
+            return 'registration';
+        }
+        
+        // Check for DatosFactura with TipoFactura R1 (rectificativa)
+        $datosFactura = $xpath->query('//si:DatosFactura');
+        if ($datosFactura->length > 0) {
+            $tipoFactura = $xpath->query('//si:TipoFactura');
+            if ($tipoFactura->length > 0 && $tipoFactura->item(0)->textContent === 'R1') {
+                return 'modification';
+            }
+        }
+        
+        return 'unknown';
+    }
+
+    /**
+     * Validate modification documents using business rules instead of strict XSD
+     */
+    private function validateModificationDocument(\DOMDocument $doc): void
+    {
+        $xpath = new \DOMXPath($doc);
+        $xpath->registerNamespace('si', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
+        $xpath->registerNamespace('lr', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd');
+        
+        // Validate modification-specific structure
+        $this->validateModificationStructure($xpath);
+        
+        // Validate required elements for modifications
+        $this->validateModificationRequiredElements($xpath);
+        
+        // Validate business rules for modifications
+        $this->validateModificationBusinessRules($xpath);
+    }
+
+    /**
+     * Validate modification structure
+     */
+    private function validateModificationStructure(\DOMXPath $xpath): void
+    {
+        // Check for required modification elements
+        $requiredElements = [
+            '//si:DatosFactura' => 'DatosFactura',
+            '//si:TipoFactura' => 'TipoFactura',
+            '//si:ModificacionFactura' => 'ModificacionFactura',
+            '//si:TipoRectificativa' => 'TipoRectificativa',
+            '//si:FacturasRectificadas' => 'FacturasRectificadas',
+            '//si:ImporteTotal' => 'ImporteTotal'
+        ];
+        
+        foreach ($requiredElements as $xpathQuery => $elementName) {
+            $elements = $xpath->query($xpathQuery);
+            if ($elements->length === 0) {
+                $this->errors['structure'][] = "Required modification element not found: $elementName";
+            }
+        }
+        
+        // Validate TipoFactura is R1 for modifications
+        $tipoFactura = $xpath->query('//si:TipoFactura');
+        if ($tipoFactura->length > 0 && $tipoFactura->item(0)->textContent !== 'R1') {
+            $this->errors['structure'][] = "TipoFactura must be 'R1' for modifications, found: " . $tipoFactura->item(0)->textContent;
+        }
+        
+        // Validate TipoRectificativa is valid
+        $tipoRectificativa = $xpath->query('//si:TipoRectificativa');
+        if ($tipoRectificativa->length > 0) {
+            $value = $tipoRectificativa->item(0)->textContent;
+            $validValues = ['S', 'I']; // Sustitutiva, Inmune
+            if (!in_array($value, $validValues)) {
+                $this->errors['structure'][] = "TipoRectificativa must be 'S' or 'I', found: $value";
+            }
+        }
+    }
+
+    /**
+     * Validate required elements for modifications
+     */
+    private function validateModificationRequiredElements(\DOMXPath $xpath): void
+    {
+        // Check for required elements in FacturasRectificadas
+        $facturasRectificadas = $xpath->query('//si:FacturasRectificadas');
+        if ($facturasRectificadas->length > 0) {
+            $facturas = $xpath->query('//si:FacturasRectificadas/si:Factura');
+            if ($facturas->length === 0) {
+                $this->errors['structure'][] = "At least one Factura is required in FacturasRectificadas";
+            } else {
+                // Validate each factura has required elements
+                foreach ($facturas as $index => $factura) {
+                    $numSerie = $xpath->query('.//si:NumSerieFacturaEmisor', $factura);
+                    $fechaExpedicion = $xpath->query('.//si:FechaExpedicionFacturaEmisor', $factura);
+                    
+                    if ($numSerie->length === 0) {
+                        $this->errors['structure'][] = "NumSerieFacturaEmisor is required in Factura " . ($index + 1);
+                    }
+                    if ($fechaExpedicion->length === 0) {
+                        $this->errors['structure'][] = "FechaExpedicionFacturaEmisor is required in Factura " . ($index + 1);
+                    }
+                }
+            }
+        }
+        
+        // Check for tax information
+        $impuestos = $xpath->query('//si:Impuestos');
+        if ($impuestos->length > 0) {
+            $detalleIVA = $xpath->query('//si:Impuestos/si:DetalleIVA');
+            if ($detalleIVA->length === 0) {
+                $this->errors['structure'][] = "DetalleIVA is required when Impuestos is present";
+            }
+        }
+    }
+
+    /**
+     * Validate business rules for modifications
+     */
+    private function validateModificationBusinessRules(\DOMXPath $xpath): void
+    {
+        // Validate ImporteTotal is numeric and positive
+        $importeTotal = $xpath->query('//si:ImporteTotal');
+        if ($importeTotal->length > 0) {
+            $value = $importeTotal->item(0)->textContent;
+            if (!is_numeric($value) || floatval($value) <= 0) {
+                $this->errors['business'][] = "ImporteTotal must be a positive number, found: $value";
+            }
+        }
+        
+        // Validate tax amounts are consistent
+        $cuotaRepercutida = $xpath->query('//si:CuotaRepercutida');
+        if ($cuotaRepercutida->length > 0) {
+            $value = $cuotaRepercutida->item(0)->textContent;
+            if (!is_numeric($value)) {
+                $this->errors['business'][] = "CuotaRepercutida must be numeric, found: $value";
+            }
+        }
+        
+        // Validate date formats
+        $fechaExpedicion = $xpath->query('//si:FechaExpedicionFacturaEmisor');
+        if ($fechaExpedicion->length > 0) {
+            $value = $fechaExpedicion->item(0)->textContent;
+            if (!preg_match('/^\d{2}-\d{2}-\d{4}$/', $value)) {
+                $this->errors['business'][] = "FechaExpedicionFacturaEmisor must be in DD-MM-YYYY format, found: $value";
+            }
+        }
     }
 
     /**
@@ -158,6 +335,6 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
      */
     public function getVerifactuErrors(): array
     {
-        return $this->errors;
+        return $this->getErrors();
     }
 } 
