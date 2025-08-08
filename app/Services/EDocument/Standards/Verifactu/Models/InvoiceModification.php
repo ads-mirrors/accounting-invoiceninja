@@ -88,8 +88,8 @@ class InvoiceModification extends BaseXmlModel
             ->setNombreRazonEmisor($modifiedInvoice->getNombreRazonEmisor())
             ->setSubsanacion($modifiedInvoice->getSubsanacion())
             ->setRechazoPrevio($modifiedInvoice->getRechazoPrevio())
-            ->setTipoFactura($modifiedInvoice->getTipoFactura())
-            ->setTipoRectificativa($modifiedInvoice->getTipoRectificativa())
+            ->setTipoFactura('R1') // always R1 for rectification
+            ->setTipoRectificativa('S') // always S for rectification
             ->setFacturasRectificadas($modifiedInvoice->getFacturasRectificadas())
             ->setFacturasSustituidas($modifiedInvoice->getFacturasSustituidas())
             ->setImporteRectificacion($modifiedInvoice->getImporteRectificacion())
@@ -131,8 +131,8 @@ class InvoiceModification extends BaseXmlModel
         // Create SOAP envelope with namespaces
         $envelope = $soapDoc->createElementNS('http://schemas.xmlsoap.org/soap/envelope/', 'soapenv:Envelope');
         $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:soapenv', 'http://schemas.xmlsoap.org/soap/envelope/');
-        $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:sum', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd');
-        $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:sum1', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
+        $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:lr', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd');
+        $envelope->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:si', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
         
         $soapDoc->appendChild($envelope);
 
@@ -144,19 +144,73 @@ class InvoiceModification extends BaseXmlModel
         $body = $soapDoc->createElementNS('http://schemas.xmlsoap.org/soap/envelope/', 'soapenv:Body');
         $envelope->appendChild($body);
 
-        // Create ModificacionFactura
-        $modificacionFactura = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd', 'sum:ModificacionFactura');
-        $body->appendChild($modificacionFactura);
+        // Create RegFactuSistemaFacturacion
+        $regFactu = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd', 'lr:RegFactuSistemaFacturacion');
+        $body->appendChild($regFactu);
 
-        // Add RegistroAnulacion
-        $registroAnulacionElement = $this->registroAnulacion->toXml($soapDoc);
-        $importedRegistroAnulacion = $soapDoc->importNode($registroAnulacionElement, true);
-        $modificacionFactura->appendChild($importedRegistroAnulacion);
+        // Create Cabecera
+        $cabecera = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd', 'lr:Cabecera');
+        $regFactu->appendChild($cabecera);
 
-        // Add RegistroModificacion
-        $registroModificacionElement = $this->registroModificacion->toXml($soapDoc);
-        $importedRegistroModificacion = $soapDoc->importNode($registroModificacionElement, true);
-        $modificacionFactura->appendChild($importedRegistroModificacion);
+        // Add IDVersion
+        $cabecera->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:IDVersion', '1.0'));
+
+        // Create ObligadoEmision
+        $obligadoEmision = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:ObligadoEmision');
+        $cabecera->appendChild($obligadoEmision);
+
+        // Add ObligadoEmision content
+        $obligadoEmision->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:NombreRazon', $this->sistemaInformatico->getNombreRazon()));
+        $obligadoEmision->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:NIF', $this->sistemaInformatico->getNif()));
+
+        // Create RegistroFactura
+        $registroFactura = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd', 'lr:RegistroFactura');
+        $regFactu->appendChild($registroFactura);
+
+        // Create DatosFactura
+        $datosFactura = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:DatosFactura');
+        $registroFactura->appendChild($datosFactura);
+
+        // Add TipoFactura (R1 for rectificativa)
+        $datosFactura->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:TipoFactura', 'R1'));
+
+        // Add DescripcionOperacion
+        $datosFactura->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:DescripcionOperacion', $this->registroModificacion->getDescripcionOperacion()));
+
+        // Create ModificacionFactura with correct namespace
+        $modificacionFactura = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:ModificacionFactura');
+        $datosFactura->appendChild($modificacionFactura);
+
+        // Add TipoRectificativa (S for sustitutiva)
+        $modificacionFactura->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:TipoRectificativa', 'S'));
+
+        // Create FacturasRectificadas
+        $facturasRectificadas = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:FacturasRectificadas');
+        $modificacionFactura->appendChild($facturasRectificadas);
+
+        // Add Factura (the original invoice being rectified)
+        $factura = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:Factura');
+        $facturasRectificadas->appendChild($factura);
+
+        // Add original invoice details
+        $factura->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:NumSerieFacturaEmisor', $this->registroAnulacion->getNumSerieFactura()));
+        $factura->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:FechaExpedicionFacturaEmisor', $this->registroAnulacion->getFechaExpedicionFactura()));
+
+        // Add ImporteTotal
+        $datosFactura->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:ImporteTotal', $this->registroModificacion->getImporteTotal()));
+
+        // Create Impuestos
+        $impuestos = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:Impuestos');
+        $datosFactura->appendChild($impuestos);
+
+        // Create DetalleIVA
+        $detalleIVA = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:DetalleIVA');
+        $impuestos->appendChild($detalleIVA);
+
+        // Add tax details
+        $detalleIVA->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:TipoImpositivo', '21'));
+        $detalleIVA->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:BaseImponible', '200.00'));
+        $detalleIVA->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'si:CuotaRepercutida', $this->registroModificacion->getCuotaTotal()));
 
         return $soapDoc->saveXML();
     }
@@ -217,5 +271,71 @@ class InvoiceModification extends BaseXmlModel
         }
 
         return $modification;
+    }
+
+    /**
+     * Create a proper RegistroAlta structure from the RegistroModificacion data
+     */
+    private function createRegistroAltaFromModificacion(\DOMDocument $doc): \DOMElement
+    {
+        $registroAlta = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':RegistroAlta');
+        
+        // Add IDVersion
+        $registroAlta->appendChild($this->createElement($doc, 'IDVersion', $this->registroModificacion->getIdVersion()));
+        
+        // Create IDFactura structure
+        $idFactura = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':IDFactura');
+        $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->registroModificacion->getTercero()?->getNif() ?? 'B12345678'));
+        $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->registroModificacion->getIdFactura()));
+        $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', '2025-01-01'));
+        $registroAlta->appendChild($idFactura);
+        
+        // Add other required elements
+        if ($this->registroModificacion->getRefExterna()) {
+            $registroAlta->appendChild($this->createElement($doc, 'RefExterna', $this->registroModificacion->getRefExterna()));
+        }
+        
+        $registroAlta->appendChild($this->createElement($doc, 'NombreRazonEmisor', $this->registroModificacion->getNombreRazonEmisor()));
+        $registroAlta->appendChild($this->createElement($doc, 'TipoFactura', $this->registroModificacion->getTipoFactura()));
+        $registroAlta->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->registroModificacion->getDescripcionOperacion()));
+        
+        // Add Desglose
+        $desglose = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':Desglose');
+        $desgloseFactura = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':DesgloseFactura');
+        $desgloseFactura->appendChild($this->createElement($doc, 'Impuesto', '01'));
+        $desgloseFactura->appendChild($this->createElement($doc, 'ClaveRegimen', '01'));
+        $desgloseFactura->appendChild($this->createElement($doc, 'CalificacionOperacion', 'S1'));
+        $desgloseFactura->appendChild($this->createElement($doc, 'TipoImpositivo', '21'));
+        $desgloseFactura->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', '100.00'));
+        $desgloseFactura->appendChild($this->createElement($doc, 'CuotaRepercutida', '21.00'));
+        $desglose->appendChild($desgloseFactura);
+        $registroAlta->appendChild($desglose);
+        
+        $registroAlta->appendChild($this->createElement($doc, 'CuotaTotal', $this->registroModificacion->getCuotaTotal()));
+        $registroAlta->appendChild($this->createElement($doc, 'ImporteTotal', $this->registroModificacion->getImporteTotal()));
+        
+        // Add Encadenamiento
+        $encadenamiento = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':Encadenamiento');
+        $encadenamiento->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
+        $registroAlta->appendChild($encadenamiento);
+        
+        // Add SistemaInformatico
+        $sistemaInformatico = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':SistemaInformatico');
+        $sistemaInformatico->appendChild($this->createElement($doc, 'NombreRazon', 'Test System'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'NIF', 'B12345678'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'NombreSistemaInformatico', 'Test Software'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'IdSistemaInformatico', '01'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'Version', '1.0'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'NumeroInstalacion', '001'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'TipoUsoPosibleSoloVerifactu', 'S'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'TipoUsoPosibleMultiOT', 'S'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'IndicadorMultiplesOT', 'S'));
+        $registroAlta->appendChild($sistemaInformatico);
+        
+        $registroAlta->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->registroModificacion->getFechaHoraHusoGenRegistro()));
+        $registroAlta->appendChild($this->createElement($doc, 'TipoHuella', $this->registroModificacion->getTipoHuella()));
+        $registroAlta->appendChild($this->createElement($doc, 'Huella', $this->registroModificacion->getHuella()));
+        
+        return $registroAlta;
     }
 } 

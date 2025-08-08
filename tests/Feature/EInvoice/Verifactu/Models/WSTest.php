@@ -10,7 +10,7 @@ use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
-use App\Services\EDocument\Standards\Verifactu\Response\ResponseProcessor;
+use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
 
@@ -246,7 +246,7 @@ $invoice->setDestinatarios($destinatarios);
         // Generate current timestamp in the correct format
         // $currentTimestamp = date('Y-m-d\TH:i:sP');
                 
-        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
+        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
         $invoice_number = 'TEST0033343443';
         $previous_invoice_number = 'TEST0033343442';
         $invoice_date = '02-07-2025';
@@ -399,7 +399,7 @@ $invoice->setDestinatarios($destinatarios);
     //@todo - Need to test that modifying an invoice works.
     public function test_cancel_and_modify_existing_invoice()
     {
-        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
+        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
         $invoice_number = 'TEST0033343436';
         $invoice_date = '02-07-2025';
         $nif = '99999910G';

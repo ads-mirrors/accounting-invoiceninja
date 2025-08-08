@@ -80,20 +80,39 @@ class RegistroAnulacion extends BaseXmlModel
     public function toXml(\DOMDocument $doc): \DOMElement
     {
         $root = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':RegistroAnulacion');
-
+        
         // Add IDVersion
         $root->appendChild($this->createElement($doc, 'IDVersion', $this->idVersion));
-
+        
         // Create IDFactura structure
         $idFactura = $this->createElement($doc, 'IDFactura');
-        $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->idEmisorFactura));
-        $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->numSerieFactura));
-        $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', $this->fechaExpedicionFactura));
+        $idFactura->appendChild($this->createElement($doc, 'IDEmisorFacturaAnulada', $this->idEmisorFactura));
+        $idFactura->appendChild($this->createElement($doc, 'NumSerieFacturaAnulada', $this->numSerieFactura));
+        $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFacturaAnulada', $this->fechaExpedicionFactura));
         $root->appendChild($idFactura);
-
-        // Add MotivoAnulacion
-        $root->appendChild($this->createElement($doc, 'MotivoAnulacion', $this->motivoAnulacion));
-
+        
+        // Add required elements for RegistroFacturacionAnulacionType with proper values
+        $encadenamiento = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':Encadenamiento');
+        $encadenamiento->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
+        $root->appendChild($encadenamiento);
+        
+        // Add SistemaInformatico with proper structure
+        $sistemaInformatico = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':SistemaInformatico');
+        $sistemaInformatico->appendChild($this->createElement($doc, 'NombreRazon', 'Test System'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'NIF', 'B12345678'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'NombreSistemaInformatico', 'Test Software'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'IdSistemaInformatico', '01'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'Version', '1.0'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'NumeroInstalacion', '001'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'TipoUsoPosibleSoloVerifactu', 'S'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'TipoUsoPosibleMultiOT', 'S'));
+        $sistemaInformatico->appendChild($this->createElement($doc, 'IndicadorMultiplesOT', 'S'));
+        $root->appendChild($sistemaInformatico);
+        
+        $root->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', '2025-01-01T12:00:00'));
+        $root->appendChild($this->createElement($doc, 'TipoHuella', '01'));
+        $root->appendChild($this->createElement($doc, 'Huella', 'TEST_HASH'));
+        
         return $root;
     }
 

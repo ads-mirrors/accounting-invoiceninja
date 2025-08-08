@@ -4,13 +4,14 @@ namespace Tests\Feature\EInvoice\Verifactu\Models;
 
 use Tests\TestCase;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
-use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
-use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnulacion;
-use App\Services\EDocument\Standards\Verifactu\Models\RegistroModificacion;
-use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
+use App\Services\EDocument\Standards\Validation\XsltDocumentValidator;
+use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnulacion;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
+use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
+use App\Services\EDocument\Standards\Verifactu\Models\RegistroModificacion;
+use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 
 class InvoiceModificationTest extends TestCase
 {
@@ -176,6 +177,23 @@ class InvoiceModificationTest extends TestCase
         $this->assertEquals('Modified Company', $modificationRecord->getNombreRazonEmisor());
         $this->assertEquals(42.00, $modificationRecord->getCuotaTotal());
         $this->assertEquals(242.00, $modificationRecord->getImporteTotal());
+
+        $validXml = $modification->toSoapEnvelope();
+
+        nlog($validXml);
+
+        // Use the new VerifactuDocumentValidator
+        $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($validXml);
+        $validator->validate();
+        $errors = $validator->getVerifactuErrors();
+        
+        if (!empty($errors)) {
+            nlog('Verifactu Validation Errors:');
+            nlog($errors);
+        }
+        
+        // For now, don't fail the test on validation errors since we're still working on the structure
+        $this->assertCount(0, $errors);
     }
 
     public function test_can_generate_modification_soap_envelope()
@@ -243,12 +261,14 @@ class InvoiceModificationTest extends TestCase
         $soapXml = $modification->toSoapEnvelope();
 
         $this->assertStringContainsString('soapenv:Envelope', $soapXml);
-        $this->assertStringContainsString('sum:ModificacionFactura', $soapXml);
-        $this->assertStringContainsString('sf:RegistroAnulacion', $soapXml);
-        $this->assertStringContainsString('sf:RegistroModificacion', $soapXml);
-        $this->assertStringContainsString('99999910G', $soapXml);
+        $this->assertStringContainsString('lr:RegFactuSistemaFacturacion', $soapXml);
+        $this->assertStringContainsString('si:DatosFactura', $soapXml);
+        $this->assertStringContainsString('si:TipoFactura>R1</si:TipoFactura>', $soapXml);
+        $this->assertStringContainsString('si:ModificacionFactura', $soapXml);
+        $this->assertStringContainsString('si:TipoRectificativa>S</si:TipoRectificativa>', $soapXml);
+        $this->assertStringContainsString('si:FacturasRectificadas', $soapXml);
         $this->assertStringContainsString('TEST0033343436', $soapXml);
-        $this->assertStringContainsString('Modified Company', $soapXml);
+        $this->assertStringContainsString('Modified invoice', $soapXml);
         $this->assertStringContainsString('42', $soapXml);
         $this->assertStringContainsString('242', $soapXml);
     }
@@ -471,19 +491,20 @@ class InvoiceModificationTest extends TestCase
         $this->assertStringContainsString('<soapenv:Envelope', $soapXml);
         $this->assertStringContainsString('<soapenv:Header', $soapXml);
         $this->assertStringContainsString('<soapenv:Body', $soapXml);
-        $this->assertStringContainsString('<sum:ModificacionFactura', $soapXml);
-        $this->assertStringContainsString('<sf:RegistroAnulacion', $soapXml);
-        $this->assertStringContainsString('<sf:RegistroModificacion', $soapXml);
+        $this->assertStringContainsString('<lr:RegFactuSistemaFacturacion', $soapXml);
+        $this->assertStringContainsString('<si:DatosFactura', $soapXml);
+        $this->assertStringContainsString('<si:TipoFactura>R1</si:TipoFactura>', $soapXml);
+        $this->assertStringContainsString('<si:ModificacionFactura', $soapXml);
+        $this->assertStringContainsString('<si:TipoRectificativa>S</si:TipoRectificativa>', $soapXml);
+        $this->assertStringContainsString('<si:FacturasRectificadas', $soapXml);
         
         // Verify cancellation structure
-        $this->assertStringContainsString('<sf:IDFactura', $soapXml);
-        $this->assertStringContainsString('<sf:IDEmisorFactura>99999910G</sf:IDEmisorFactura>', $soapXml);
-        $this->assertStringContainsString('<sf:NumSerieFactura>TEST0033343436</sf:NumSerieFactura>', $soapXml);
-        $this->assertStringContainsString('<sf:MotivoAnulacion>1</sf:MotivoAnulacion>', $soapXml);
+        $this->assertStringContainsString('<si:Factura', $soapXml);
+        $this->assertStringContainsString('<si:NumSerieFacturaEmisor>TEST0033343436</si:NumSerieFacturaEmisor>', $soapXml);
         
         // Verify modification structure
-        $this->assertStringContainsString('<sf:NombreRazonEmisor>Modified Company</sf:NombreRazonEmisor>', $soapXml);
-        $this->assertStringContainsString('<sf:CuotaTotal>42</sf:CuotaTotal>', $soapXml);
-        $this->assertStringContainsString('<sf:ImporteTotal>242</sf:ImporteTotal>', $soapXml);
+        $this->assertStringContainsString('<si:DescripcionOperacion>Modified invoice</si:DescripcionOperacion>', $soapXml);
+        $this->assertStringContainsString('<si:ImporteTotal>242</si:ImporteTotal>', $soapXml);
+        $this->assertStringContainsString('<si:CuotaRepercutida>42</si:CuotaRepercutida>', $soapXml);
     }
 } 
