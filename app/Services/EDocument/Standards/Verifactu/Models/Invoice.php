@@ -1,12 +1,22 @@
 <?php
 
+/**
+ * Invoice Ninja (https://invoiceninja.com).
+ *
+ * @link https://github.com/invoiceninja/invoiceninja source repository
+ *
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ *
+ * @license https://www.elastic.co/licensing/elastic-license
+ */
+
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
 use RobRichards\XMLSecLibs\XMLSecurityDSig;
 use RobRichards\XMLSecLibs\XMLSecurityKey;
 use Illuminate\Support\Facades\Log;
 
-class Invoice extends BaseXmlModel
+class Invoice extends BaseXmlModel implements XmlModelInterface
 {
     protected string $idVersion;
     protected string $idFactura;
@@ -1201,5 +1211,21 @@ class Invoice extends BaseXmlModel
             ->setHuella($this->getHuella());
 
         return $modificationRecord;
+    }
+
+    public function serialize()
+    {
+        return serialize($this);
+    }
+
+    public static function unserialize(string $data): self
+    {
+        $object = unserialize($data);
+        
+        if (!$object instanceof self) {
+            throw new \InvalidArgumentException('Invalid serialized data - not an Invoice object');
+        }
+        
+        return $object;
     }
 } 

@@ -8,7 +8,7 @@ namespace App\Services\EDocument\Standards\Verifactu\Models;
  * This class represents the complete modification structure required for Verifactu e-invoicing
  * modification operations. It contains both the cancellation record and the modification record.
  */
-class InvoiceModification extends BaseXmlModel
+class InvoiceModification extends BaseXmlModel implements XmlModelInterface
 {
     protected RegistroAnulacion $registroAnulacion;
     protected RegistroModificacion $registroModificacion;

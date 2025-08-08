@@ -301,20 +301,19 @@ class VerifactuModificationTest extends TestCase
         $this->assertStringContainsString('42', $soapXml);
         $this->assertStringContainsString('242', $soapXml);
 
+        $validXml = $modification->toSoapEnvelope();
 
-$validXml = $modification->toSoapEnvelope();
+        // Use the new VerifactuDocumentValidator
+        $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($validXml);
+        $validator->validate();
+        $errors = $validator->getVerifactuErrors();
 
-// Use the new VerifactuDocumentValidator
-$validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($validXml);
-$validator->validate();
-$errors = $validator->getVerifactuErrors();
+        if (!empty($errors)) {
 
-if (!empty($errors)) {
-
-    nlog('Verifactu Validation Errors:');
-    nlog($validXml);
-    nlog($errors);
-}
+            nlog('Verifactu Validation Errors:');
+            nlog($validXml);
+            nlog($errors);
+        }
 
     }
 

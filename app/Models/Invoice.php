@@ -402,7 +402,7 @@ class Invoice extends BaseModel
 
     public function verifactu_logs(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(VerifactuLog::class);
+        return $this->hasMany(VerifactuLog::class)->orderBy('id', 'desc');
     }
 
     public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany

@@ -26,6 +26,9 @@ class VerifactuFeatureTest extends TestCase
     private $client;
     private $faker;
 
+    private string $test_company_nif = 'A39200019';
+    private string $test_client_nif = 'A39200019';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -61,6 +64,7 @@ class VerifactuFeatureTest extends TestCase
             $settings->postal_code = '28001';
             $settings->vat_number = 'B12345678'; // Spanish VAT number format
             $settings->payment_terms = '10';
+            $settings->vat_number = $this->test_company_nif;
         }
 
         $this->company = Company::factory()->create([
@@ -102,7 +106,7 @@ class VerifactuFeatureTest extends TestCase
             'state' => 'Madrid',
             'postal_code' => '28001',
             'country_id' => 724,
-            'vat_number' => 'B12545678',
+            'vat_number' => $this->test_client_nif,
             'balance' => 0,
             'paid_to_date' => 0,
             'settings' => $client_settings,
@@ -145,7 +149,6 @@ class VerifactuFeatureTest extends TestCase
             'balance' => 10,
             'line_items' => $line_items,
         ]);
-
 
         $invoice = $invoice->calc()
                         ->getInvoice()

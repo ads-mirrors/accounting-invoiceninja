@@ -23,7 +23,8 @@ return new class extends Migration
             $table->string('previous_hash')->nullable();
             $table->string('status');
 
-            $table->json('response')->nullable();;
+            $table->json('response')->nullable();
+            $table->text('state')->nullable();
             $table->timestamps();
 
             $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade')->onUpdate('cascade');

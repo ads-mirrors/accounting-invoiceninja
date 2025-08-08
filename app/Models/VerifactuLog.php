@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
 
 /**
  * @property int $id
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $previous_hash
  * @property string $status
  * @property object|null $response
+ * @property string $state
  * @property \Carbon\Carbon $created_at
  * @property \Carbon\Carbon $updated_at
  * @property-read \App\Models\Company $company
@@ -37,5 +39,10 @@ class VerifactuLog extends Model
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function deserialize()
+    {
+        return Invoice::unserialize($this->state);
     }
 }
