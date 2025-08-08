@@ -33,7 +33,7 @@ class InvoiceCancellation extends BaseXmlModel implements XmlModelInterface
         $cancellation = new self();
         
         $cancellation->setNumSerieFacturaEmisor($invoice->number);
-        $cancellation->setFechaExpedicionFacturaEmisor($invoice->date);
+        $cancellation->setFechaExpedicionFacturaEmisor(\Carbon\Carbon::parse($invoice->date)->format('d-m-Y'));
         $cancellation->setNifEmisor($invoice->company->settings->vat_number ?? 'B12345678');
         $cancellation->setHuellaFactura($huella);
         

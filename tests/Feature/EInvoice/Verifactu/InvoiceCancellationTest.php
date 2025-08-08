@@ -149,11 +149,13 @@ class InvoiceCancellationTest extends TestCase
         
         $this->assertInstanceOf(InvoiceCancellation::class, $cancellation);
         $this->assertEquals('INV-2024-001', $cancellation->getNumSerieFacturaEmisor());
-        $this->assertEquals('2024-01-15', $cancellation->getFechaExpedicionFacturaEmisor());
+        $this->assertEquals('15-01-2024', $cancellation->getFechaExpedicionFacturaEmisor());
         $this->assertEquals($this->test_company_nif, $cancellation->getNifEmisor());
         $this->assertEquals($huella, $cancellation->getHuellaFactura());
         $this->assertEquals('02', $cancellation->getEstado());
         $this->assertEquals('Factura anulada por error', $cancellation->getDescripcionEstado());
+
+        nlog($cancellation->toXmlString());
     }
 
     public function testInvoiceCancellationXmlGeneration()
@@ -187,7 +189,7 @@ class InvoiceCancellationTest extends TestCase
         
         // Verify specific values
         $this->assertStringContainsString('INV-2024-001', $xmlString);
-        $this->assertStringContainsString('2024-01-15', $xmlString);
+        $this->assertStringContainsString('15-01-2024', $xmlString);
         $this->assertStringContainsString($this->test_company_nif, $xmlString);
         $this->assertStringContainsString($huella, $xmlString);
         $this->assertStringContainsString('02', $xmlString);
@@ -416,7 +418,7 @@ class InvoiceCancellationTest extends TestCase
             '<IDFactura>',
             '<IDEmisorFactura>',
             '<NumSerieFacturaEmisor>INV-2024-001</NumSerieFacturaEmisor>',
-            '<FechaExpedicionFacturaEmisor>2024-01-15</FechaExpedicionFacturaEmisor>',
+            '<FechaExpedicionFacturaEmisor>15-01-2024</FechaExpedicionFacturaEmisor>',
             '<NIFEmisor>A39200019</NIFEmisor>',
             '<HuellaFactura>ABCD1234EF5678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF12</HuellaFactura>',
             '</IDEmisorFactura>',
