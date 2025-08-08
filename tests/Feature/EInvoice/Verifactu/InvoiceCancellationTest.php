@@ -155,7 +155,6 @@ class InvoiceCancellationTest extends TestCase
         $this->assertEquals('02', $cancellation->getEstado());
         $this->assertEquals('Factura anulada por error', $cancellation->getDescripcionEstado());
 
-        nlog($cancellation->toXmlString());
     }
 
     public function testInvoiceCancellationXmlGeneration()

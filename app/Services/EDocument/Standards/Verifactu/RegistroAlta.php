@@ -103,7 +103,6 @@ class RegistroAlta
     {
 
         // Get the previous invoice log
-        /** @var ?VerifactuLog $v_log */
         $this->v_log = $this->company->verifactu_logs()->first();
 
         $this->current_timestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
@@ -171,10 +170,10 @@ class RegistroAlta
         if($this->v_log){
 
             $registro_anterior = new RegistroAnterior();
-            $registro_anterior->setIDEmisorFactura($v_log->nif);
-            $registro_anterior->setNumSerieFactura($v_log->invoice_number);
-            $registro_anterior->setFechaExpedicionFactura($v_log->date->format('d-m-Y'));
-            $registro_anterior->setHuella($v_log->hash);
+            $registro_anterior->setIDEmisorFactura($this->v_log->nif);
+            $registro_anterior->setNumSerieFactura($this->v_log->invoice_number);
+            $registro_anterior->setFechaExpedicionFactura($this->v_log->date->format('d-m-Y'));
+            $registro_anterior->setHuella($this->v_log->hash);
 
             $encadenamiento->setRegistroAnterior($registro_anterior);
             
@@ -204,6 +203,11 @@ class RegistroAlta
 
 
         return $this;
+    }
+
+    public function getInvoice(): VerifactuInvoice
+    {
+        return $this->v_invoice;
     }
 
     private function calculateTaxType(string $tax_name): string

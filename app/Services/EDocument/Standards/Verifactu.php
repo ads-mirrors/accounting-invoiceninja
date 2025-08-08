@@ -60,7 +60,7 @@ class Verifactu extends AbstractService
         if($v_logs->count() >= 1){
             $v_log = $v_logs->first();
             $huella = $v_log->hash;
-            $document = InvoiceModification::fromInvoice($this->invoice, $v_log->deserialize());    
+            $document = InvoiceModification::createFromInvoice($document->getInvoice(), $v_log->deserialize());    
         }
 
         //3. cancelled => RegistroAnulacion
@@ -69,6 +69,8 @@ class Verifactu extends AbstractService
         $document->setHuella($new_huella);
 
         $soapXml = $document->toSoapEnvelope();
+
+        return $this;
         
     }
         

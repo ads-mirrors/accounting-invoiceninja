@@ -74,14 +74,7 @@ class AeatClient
 
         nlog($parsedResponse);
 
-        if($parsedResponse['success']){
-
-            //write the success activity
-        }
-        else {
-            //handle the failure
-        }
-        
+        return $parsedResponse;
         
     }
 }

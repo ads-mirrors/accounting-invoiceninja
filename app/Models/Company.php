@@ -93,6 +93,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property bool $markdown_enabled
  * @property bool $use_comma_as_decimal_place
  * @property bool $report_include_drafts
+ * @property bool $invoice_task_project_header
  * @property array|null $client_registration_fields
  * @property bool $convert_rate_to_client
  * @property bool $markdown_email_enabled
@@ -129,11 +130,15 @@ use Laracasts\Presenter\PresentableTrait;
  * @property int|null $smtp_port
  * @property string|null $smtp_encryption
  * @property string|null $smtp_local_domain
+ * @property boolean $invoice_task_item_description
  * @property \App\DataMapper\QuickbooksSettings|null $quickbooks
  * @property boolean $smtp_verify_peer
+ * @property object|null $origin_tax_data
  * @property int|null $legal_entity_id
  * @property-read \App\Models\Account $account
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Location> $locations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VerifactuLog> $verifactu_logs
  * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $all_activities
  * @property-read int|null $all_activities_count

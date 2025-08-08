@@ -74,40 +74,10 @@ class InvoiceValidator
             $errors[] = "Invalid FechaHoraHusoGenRegistro format. Expected: YYYY-MM-DDTHH:MM:SS+HH:MM, Got: {$fechaHora}";
         }
 
-        // Validate FechaExpedicionFactura format (YYYY-MM-DD)
-        if ($invoice->getIdFactura() && method_exists($invoice->getIdFactura(), 'getFechaExpedicionFactura')) {
-            $fecha = $invoice->getIdFactura()->getFechaExpedicionFactura();
-            if ($fecha && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
-                $errors[] = "Invalid FechaExpedicionFactura format. Expected: YYYY-MM-DD, Got: {$fecha}";
-            }
-        }
 
         return $errors;
     }
 
-    /**
-     * Validate invoice numbers
-     */
-    private function validateInvoiceNumbers(Invoice $invoice): array
-    {
-        $errors = [];
-
-        if ($invoice->getIdFactura() && method_exists($invoice->getIdFactura(), 'getNumSerieFactura')) {
-            $numero = $invoice->getIdFactura()->getNumSerieFactura();
-            
-            // Check for common problematic patterns
-            if (str_contains($numero, 'TEST') && strlen($numero) < 10) {
-                $errors[] = "Test invoice numbers should be at least 10 characters long";
-            }
-
-            // Check for special characters that might cause issues
-            if (preg_match('/[^A-Za-z0-9\-_]/', $numero)) {
-                $errors[] = "Invoice number contains invalid characters. Only letters, numbers, hyphens and underscores allowed";
-            }
-        }
-
-        return $errors;
-    }
 
     /**
      * Validate amounts
@@ -145,18 +115,18 @@ class InvoiceValidator
         $errors = [];
 
         // Check if desglose exists and has valid tax rates
-        if ($invoice->getDesglose()) {
-            $desglose = $invoice->getDesglose();
+        // if ($invoice->getDesglose()) {
+        //     $desglose = $invoice->getDesglose();
             
-            // Validate tax rates are standard Spanish rates
-            $validRates = [0, 4, 10, 21];
+        //     // Validate tax rates are standard Spanish rates
+        //     $validRates = [0, 4, 10, 21];
             
-            // This would need to be implemented based on your Desglose structure
-            // $taxRate = $desglose->getTipoImpositivo();
-            // if (!in_array($taxRate, $validRates)) {
-            //     $errors[] = "Invalid tax rate: {$taxRate}. Valid rates are: " . implode(', ', $validRates);
-            // }
-        }
+        //     // This would need to be implemented based on your Desglose structure
+        //     // $taxRate = $desglose->getTipoImpositivo();
+        //     // if (!in_array($taxRate, $validRates)) {
+        //     //     $errors[] = "Invalid tax rate: {$taxRate}. Valid rates are: " . implode(', ', $validRates);
+        //     // }
+        // }
 
         return $errors;
     }

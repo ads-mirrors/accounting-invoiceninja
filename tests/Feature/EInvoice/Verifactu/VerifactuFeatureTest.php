@@ -127,7 +127,7 @@ class VerifactuFeatureTest extends TestCase
 
         $item = new InvoiceItem();
         $item->product_key = '1234567890';
-        $item->qty = 1;
+        $item->quantity = 1;
         $item->cost = 100;
         $item->notes = 'Test item';
         $item->tax_name1 = 'IVA';

@@ -1,9 +1,19 @@
 <?php
+/**
+ * Invoice Ninja (https://invoiceninja.com).
+ *
+ * @link https://github.com/invoiceninja/invoiceninja source repository
+ *
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ *
+ * @license https://www.elastic.co/licensing/elastic-license
+ */
 
 namespace App\Models;
 
+use App\Models\Company;
 use Illuminate\Database\Eloquent\Model;
-use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
+use App\Models\Invoice;
 
 /**
  * @property int $id
@@ -43,6 +53,6 @@ class VerifactuLog extends Model
 
     public function deserialize()
     {
-        return Invoice::unserialize($this->state);
+        return \App\Services\EDocument\Standards\Verifactu\Models\Invoice::unserialize($this->state);
     }
 }

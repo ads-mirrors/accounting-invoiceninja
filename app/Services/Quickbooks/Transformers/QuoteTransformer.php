@@ -130,25 +130,25 @@ class QuoteTransformer extends BaseTransformer
     }
 
 
-    private function getPayments(mixed $qb_data)
-    {
-        $payments = [];
+    // private function getPayments(mixed $qb_data)
+    // {
+    //     $payments = [];
 
-        $qb_payments = data_get($qb_data, 'LinkedTxn', false) ?? [];
+    //     $qb_payments = data_get($qb_data, 'LinkedTxn', false) ?? [];
 
-        if (!empty($qb_payments) && !isset($qb_payments[0])) {
-            $qb_payments = [$qb_payments];
-        }
+    //     if (!empty($qb_payments) && !isset($qb_payments[0])) {
+    //         $qb_payments = [$qb_payments];
+    //     }
 
-        foreach ($qb_payments as $payment) {
-            if (data_get($payment, 'TxnType', false) == 'Payment') {
-                $payments[] = data_get($payment, 'TxnId', false);
-            }
-        }
+    //     foreach ($qb_payments as $payment) {
+    //         if (data_get($payment, 'TxnType', false) == 'Payment') {
+    //             $payments[] = data_get($payment, 'TxnId', false);
+    //         }
+    //     }
 
-        return $payments;
+    //     return $payments;
 
-    }
+    // }
 
     private function getLineItems(mixed $qb_data, array $tax_array)
     {

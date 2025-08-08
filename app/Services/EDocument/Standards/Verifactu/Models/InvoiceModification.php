@@ -284,66 +284,66 @@ class InvoiceModification extends BaseXmlModel implements XmlModelInterface
     /**
      * Create a proper RegistroAlta structure from the RegistroModificacion data
      */
-    private function createRegistroAltaFromModificacion(\DOMDocument $doc): \DOMElement
-    {
-        $registroAlta = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':RegistroAlta');
+    // private function createRegistroAltaFromModificacion(\DOMDocument $doc): \DOMElement
+    // {
+    //     $registroAlta = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':RegistroAlta');
         
-        // Add IDVersion
-        $registroAlta->appendChild($this->createElement($doc, 'IDVersion', $this->registroModificacion->getIdVersion()));
+    //     // Add IDVersion
+    //     $registroAlta->appendChild($this->createElement($doc, 'IDVersion', $this->registroModificacion->getIdVersion()));
         
-        // Create IDFactura structure
-        $idFactura = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':IDFactura');
-        $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->registroModificacion->getTercero()?->getNif() ?? 'B12345678'));
-        $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->registroModificacion->getIdFactura()));
-        $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', '2025-01-01'));
-        $registroAlta->appendChild($idFactura);
+    //     // Create IDFactura structure
+    //     $idFactura = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':IDFactura');
+    //     $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->registroModificacion->getTercero()?->getNif() ?? 'B12345678'));
+    //     $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->registroModificacion->getIdFactura()));
+    //     $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', '2025-01-01'));
+    //     $registroAlta->appendChild($idFactura);
         
-        // Add other required elements
-        if ($this->registroModificacion->getRefExterna()) {
-            $registroAlta->appendChild($this->createElement($doc, 'RefExterna', $this->registroModificacion->getRefExterna()));
-        }
+    //     // Add other required elements
+    //     if ($this->registroModificacion->getRefExterna()) {
+    //         $registroAlta->appendChild($this->createElement($doc, 'RefExterna', $this->registroModificacion->getRefExterna()));
+    //     }
         
-        $registroAlta->appendChild($this->createElement($doc, 'NombreRazonEmisor', $this->registroModificacion->getNombreRazonEmisor()));
-        $registroAlta->appendChild($this->createElement($doc, 'TipoFactura', $this->registroModificacion->getTipoFactura()));
-        $registroAlta->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->registroModificacion->getDescripcionOperacion()));
+    //     $registroAlta->appendChild($this->createElement($doc, 'NombreRazonEmisor', $this->registroModificacion->getNombreRazonEmisor()));
+    //     $registroAlta->appendChild($this->createElement($doc, 'TipoFactura', $this->registroModificacion->getTipoFactura()));
+    //     $registroAlta->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->registroModificacion->getDescripcionOperacion()));
         
-        // Add Desglose
-        $desglose = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':Desglose');
-        $desgloseFactura = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':DesgloseFactura');
-        $desgloseFactura->appendChild($this->createElement($doc, 'Impuesto', '01'));
-        $desgloseFactura->appendChild($this->createElement($doc, 'ClaveRegimen', '01'));
-        $desgloseFactura->appendChild($this->createElement($doc, 'CalificacionOperacion', 'S1'));
-        $desgloseFactura->appendChild($this->createElement($doc, 'TipoImpositivo', '21'));
-        $desgloseFactura->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', '100.00'));
-        $desgloseFactura->appendChild($this->createElement($doc, 'CuotaRepercutida', '21.00'));
-        $desglose->appendChild($desgloseFactura);
-        $registroAlta->appendChild($desglose);
+    //     // Add Desglose
+    //     $desglose = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':Desglose');
+    //     $desgloseFactura = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':DesgloseFactura');
+    //     $desgloseFactura->appendChild($this->createElement($doc, 'Impuesto', '01'));
+    //     $desgloseFactura->appendChild($this->createElement($doc, 'ClaveRegimen', '01'));
+    //     $desgloseFactura->appendChild($this->createElement($doc, 'CalificacionOperacion', 'S1'));
+    //     $desgloseFactura->appendChild($this->createElement($doc, 'TipoImpositivo', '21'));
+    //     $desgloseFactura->appendChild($this->createElement($doc, 'BaseImponibleOimporteNoSujeto', '100.00'));
+    //     $desgloseFactura->appendChild($this->createElement($doc, 'CuotaRepercutida', '21.00'));
+    //     $desglose->appendChild($desgloseFactura);
+    //     $registroAlta->appendChild($desglose);
         
-        $registroAlta->appendChild($this->createElement($doc, 'CuotaTotal', $this->registroModificacion->getCuotaTotal()));
-        $registroAlta->appendChild($this->createElement($doc, 'ImporteTotal', $this->registroModificacion->getImporteTotal()));
+    //     $registroAlta->appendChild($this->createElement($doc, 'CuotaTotal', $this->registroModificacion->getCuotaTotal()));
+    //     $registroAlta->appendChild($this->createElement($doc, 'ImporteTotal', $this->registroModificacion->getImporteTotal()));
         
-        // Add Encadenamiento
-        $encadenamiento = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':Encadenamiento');
-        $encadenamiento->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
-        $registroAlta->appendChild($encadenamiento);
+    //     // Add Encadenamiento
+    //     $encadenamiento = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':Encadenamiento');
+    //     $encadenamiento->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
+    //     $registroAlta->appendChild($encadenamiento);
         
-        // Add SistemaInformatico
-        $sistemaInformatico = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':SistemaInformatico');
-        $sistemaInformatico->appendChild($this->createElement($doc, 'NombreRazon', 'Test System'));
-        $sistemaInformatico->appendChild($this->createElement($doc, 'NIF', 'B12345678'));
-        $sistemaInformatico->appendChild($this->createElement($doc, 'NombreSistemaInformatico', 'Test Software'));
-        $sistemaInformatico->appendChild($this->createElement($doc, 'IdSistemaInformatico', '01'));
-        $sistemaInformatico->appendChild($this->createElement($doc, 'Version', '1.0'));
-        $sistemaInformatico->appendChild($this->createElement($doc, 'NumeroInstalacion', '001'));
-        $sistemaInformatico->appendChild($this->createElement($doc, 'TipoUsoPosibleSoloVerifactu', 'S'));
-        $sistemaInformatico->appendChild($this->createElement($doc, 'TipoUsoPosibleMultiOT', 'S'));
-        $sistemaInformatico->appendChild($this->createElement($doc, 'IndicadorMultiplesOT', 'S'));
-        $registroAlta->appendChild($sistemaInformatico);
+    //     // Add SistemaInformatico
+    //     $sistemaInformatico = $doc->createElementNS(self::XML_NAMESPACE, self::XML_NAMESPACE_PREFIX . ':SistemaInformatico');
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'NombreRazon', 'Test System'));
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'NIF', 'B12345678'));
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'NombreSistemaInformatico', 'Test Software'));
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'IdSistemaInformatico', '01'));
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'Version', '1.0'));
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'NumeroInstalacion', '001'));
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'TipoUsoPosibleSoloVerifactu', 'S'));
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'TipoUsoPosibleMultiOT', 'S'));
+    //     $sistemaInformatico->appendChild($this->createElement($doc, 'IndicadorMultiplesOT', 'S'));
+    //     $registroAlta->appendChild($sistemaInformatico);
         
-        $registroAlta->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->registroModificacion->getFechaHoraHusoGenRegistro()));
-        $registroAlta->appendChild($this->createElement($doc, 'TipoHuella', $this->registroModificacion->getTipoHuella()));
-        $registroAlta->appendChild($this->createElement($doc, 'Huella', $this->registroModificacion->getHuella()));
+    //     $registroAlta->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->registroModificacion->getFechaHoraHusoGenRegistro()));
+    //     $registroAlta->appendChild($this->createElement($doc, 'TipoHuella', $this->registroModificacion->getTipoHuella()));
+    //     $registroAlta->appendChild($this->createElement($doc, 'Huella', $this->registroModificacion->getHuella()));
         
-        return $registroAlta;
-    }
+    //     return $registroAlta;
+    // }
 } 

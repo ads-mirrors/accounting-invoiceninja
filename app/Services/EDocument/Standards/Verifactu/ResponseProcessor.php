@@ -265,7 +265,8 @@ class ResponseProcessor
         $nodeList = $xpathObj->query($xpath);
         
         if ($nodeList && $nodeList->length > 0) {
-            return $nodeList->item(0);
+            $node = $nodeList->item(0);
+            return $node instanceof DOMElement ? $node : null;
         }
         
         return null;
