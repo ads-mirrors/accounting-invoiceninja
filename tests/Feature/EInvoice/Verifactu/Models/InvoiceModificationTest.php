@@ -40,6 +40,21 @@ class InvoiceModificationTest extends TestCase
         $this->assertStringContainsString('TEST0033343436', $xml);
         $this->assertStringContainsString('02-07-2025', $xml);
         $this->assertStringContainsString('1', $xml);
+
+        $validXml = $cancellation->toXmlString();
+
+        // Use the new VerifactuDocumentValidator
+        $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($validXml);
+        $validator->validate();
+        $errors = $validator->getVerifactuErrors();
+
+        if (!empty($errors)) {
+
+            nlog('Verifactu Validation Errors:');
+            nlog($validXml);
+            nlog($errors);
+        }
+
     }
 
     public function test_can_create_registro_modificacion()
@@ -99,6 +114,19 @@ class InvoiceModificationTest extends TestCase
         $this->assertStringContainsString('CERTIFICADO FISICA PRUEBAS', $xml);
         $this->assertStringContainsString('21', $xml);
         $this->assertStringContainsString('121', $xml);
+
+        // Use the new VerifactuDocumentValidator
+        $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($xml);
+        $validator->validate();
+        $errors = $validator->getVerifactuErrors();
+
+        if (!empty($errors)) {
+
+            nlog('Verifactu Validation Errors:');
+            nlog($validXml);
+            nlog($errors);
+        }
+
     }
 
     public function test_can_create_invoice_modification_from_invoices()
@@ -180,15 +208,15 @@ class InvoiceModificationTest extends TestCase
 
         $validXml = $modification->toSoapEnvelope();
 
-        nlog($validXml);
-
         // Use the new VerifactuDocumentValidator
         $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($validXml);
         $validator->validate();
         $errors = $validator->getVerifactuErrors();
         
         if (!empty($errors)) {
+
             nlog('Verifactu Validation Errors:');
+            nlog($validXml);
             nlog($errors);
         }
         
@@ -271,6 +299,22 @@ class InvoiceModificationTest extends TestCase
         $this->assertStringContainsString('Modified invoice', $soapXml);
         $this->assertStringContainsString('42', $soapXml);
         $this->assertStringContainsString('242', $soapXml);
+
+
+$validXml = $modification->toSoapEnvelope();
+
+// Use the new VerifactuDocumentValidator
+$validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($validXml);
+$validator->validate();
+$errors = $validator->getVerifactuErrors();
+
+if (!empty($errors)) {
+
+    nlog('Verifactu Validation Errors:');
+    nlog($validXml);
+    nlog($errors);
+}
+
     }
 
     public function test_invoice_can_create_modification()
@@ -347,6 +391,22 @@ class InvoiceModificationTest extends TestCase
         $this->assertEquals('Modified Company', $modificationRecord->getNombreRazonEmisor());
         $this->assertEquals(42.00, $modificationRecord->getCuotaTotal());
         $this->assertEquals(242.00, $modificationRecord->getImporteTotal());
+
+
+$validXml = $modification->toSoapEnvelope();
+
+// Use the new VerifactuDocumentValidator
+$validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($validXml);
+$validator->validate();
+$errors = $validator->getVerifactuErrors();
+
+if (!empty($errors)) {
+
+    nlog('Verifactu Validation Errors:');
+    nlog($validXml);
+    nlog($errors);
+}
+
     }
 
     public function test_invoice_can_create_cancellation()
@@ -506,5 +566,20 @@ class InvoiceModificationTest extends TestCase
         $this->assertStringContainsString('<si:DescripcionOperacion>Modified invoice</si:DescripcionOperacion>', $soapXml);
         $this->assertStringContainsString('<si:ImporteTotal>242</si:ImporteTotal>', $soapXml);
         $this->assertStringContainsString('<si:CuotaRepercutida>42</si:CuotaRepercutida>', $soapXml);
+
+        $validXml = $modification->toSoapEnvelope();
+
+        // Use the new VerifactuDocumentValidator
+        $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($validXml);
+        $validator->validate();
+        $errors = $validator->getVerifactuErrors();
+
+        if (!empty($errors)) {
+
+            nlog('Verifactu Validation Errors:');
+            nlog($validXml);
+            nlog($errors);
+        }
+
     }
 } 
