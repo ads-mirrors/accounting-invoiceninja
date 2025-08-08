@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\EInvoice\Verifactu\Models;
+namespace Tests\Feature\EInvoice\Verifactu;
 
 use Tests\TestCase;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
@@ -13,7 +13,7 @@ use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroModificacion;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 
-class InvoiceModificationTest extends TestCase
+class VerifactuModificationTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -93,6 +93,7 @@ class InvoiceModificationTest extends TestCase
             'BaseImponibleOimporteNoSujeto' => '100.00',
             'CuotaRepercutida' => '21.00'
         ]);
+        
         $modification->setDesglose($desglose);
 
         // Add encadenamiento

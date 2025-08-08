@@ -44,7 +44,7 @@ class AeatAuthority
         return $this;
     }
 
-    public function run(string $client_nif): bool
+    public function run(string $client_nif): array
     {
 
         $sender_nif = config('services.verifactu.sender_nif');
@@ -94,7 +94,7 @@ XML;
         nlog($response->body());
         nlog($parsedResponse);
 
-        return $parsedResponse['success'];
+        return $parsedResponse;
 
     }
 }

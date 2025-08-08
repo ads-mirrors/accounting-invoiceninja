@@ -43,46 +43,14 @@ class AeatClient
      *
      * @return self
      */
-    public function setTestMode(): self
+    public function setTestMode(?string $base_url = null): self
     {
-        $this->base_url = $this->sandbox_url;
+        $this->base_url = $base_url ?? $this->sandbox_url;
 
         return $this;
     }
-    
-    /**
-     * run
-     *
-     * @param  mixed $entity
-     * @return void
-     */
-    public function run($entity): void
-    {
-        // build the payload
 
-        // harvest any previous hashes
-
-        // send the payload to the AEAT
-
-        // await the response and insert new row into the verifactu_logs table
-
-        // write an activity (success or failure)
-
-        // on success, add a reference to invoice->backup->guid
-    }
-
-
-    private function buildPayload($entity): string
-    {
-        return '';
-    }
-
-    private function harvestPreviousHashes($entity): array
-    {
-        return [];
-    }
-
-    private function send($xml)
+    public function send($xml): array
     {
                         
         $response = Http::withHeaders([

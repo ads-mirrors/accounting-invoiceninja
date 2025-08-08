@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\EInvoice\Verifactu\Models;
+namespace Tests\Feature\EInvoice\Verifactu;
 
 use Tests\TestCase;
 use Illuminate\Support\Facades\Log;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\EInvoice\Verifactu\Models;
+namespace Tests\Feature\EInvoice\Verifactu;
 
 use App\Services\EDocument\Standards\Verifactu\Models\Cupon;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
@@ -13,7 +13,7 @@ use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
 use Tests\TestCase;
 
-class VerifactuInvoiceTest extends TestCase
+class VerifactuModelTest extends TestCase
 {
     public function testCreateAndSerializeCompleteInvoice(): void
     {
