@@ -20,9 +20,13 @@ use App\Services\AbstractService;
 use App\Helpers\Invoice\InvoiceSum;
 use App\Utils\Traits\NumberFormatter;
 use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
+use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
+use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
+use App\Models\VerifactuLog;
 
 class Verifactu extends AbstractService
 {
@@ -101,7 +105,7 @@ class Verifactu extends AbstractService
             ->setIdVersion('1.0')
             ->setIdFactura($this->invoice->number) //invoice number
             ->setNombreRazonEmisor($this->company->present()->name()) //company name
-            ->setTipoFactura($this->calculateInvoiceType()) //invoice type
+            ->setTipoFactura('F1') //invoice type
             ->setDescripcionOperacion('')// Not manadatory - max chars 500
             ->setCuotaTotal($this->invoice->total_taxes) //total taxes
             ->setImporteTotal($this->invoice->amount) //total invoice amount
@@ -132,7 +136,7 @@ class Verifactu extends AbstractService
         $desglose = new Desglose();
 
         //Combine the line taxes with invoice taxes here to get a total tax amount
-        $taxes = $calc->getTaxMap();
+        $taxes = $this->calc->getTaxMap();
 
         $desglose_iva = [];
 
@@ -157,6 +161,7 @@ class Verifactu extends AbstractService
         $encadenamiento = new Encadenamiento();
 
         // Get the previous invoice log
+        /** @var ?VerifactuLog $v_log */
         $v_log = $this->company->verifactu_logs()->first();
 
         // We chain the previous hash to the current invoice to ensure consistency
@@ -218,11 +223,5 @@ class Verifactu extends AbstractService
 
         return '01';
     }
-
-    private function calculateInvoiceType(): string
-    {
-        //tipofactua
-    }
-
     
 }

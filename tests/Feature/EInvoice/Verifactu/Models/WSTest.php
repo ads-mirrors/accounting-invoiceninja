@@ -12,6 +12,7 @@ use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Verifactu\Response\ResponseProcessor;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
+use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
 
 
 class WSTest extends TestCase
@@ -398,111 +399,113 @@ $invoice->setDestinatarios($destinatarios);
     //@todo - Need to test that modifying an invoice works.
     public function test_cancel_and_modify_existing_invoice()
     {
-
-
         $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
         $invoice_number = 'TEST0033343436';
         $invoice_date = '02-07-2025';
-        $calc_hash = 'A0B4D14E6F7769860C8A4EAFFA3EEBF52B7044685BD69D1DB5BBD68EA0E2BA21';
         $nif = '99999910G';
 
-                $soapXml = <<<XML
-        <?xml version="1.0" encoding="UTF-8"?>
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
-            <soapenv:Header>
-                <tik:ObligadoEmision xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd">
-                    <tik:NIF>A39200019</tik:NIF>
-                    <tik:NombreRazon>Sistema de Facturación</tik:NombreRazon>
-                </tik:ObligadoEmision>
-            </soapenv:Header>
+        // Create original invoice (the one to be cancelled)
+        $originalInvoice = new Invoice();
+        $originalInvoice
+            ->setIdVersion('1.0')
+            ->setIdFactura($invoice_number)
+            ->setNombreRazonEmisor('Original Company')
+            ->setTipoFactura('F1')
+            ->setDescripcionOperacion('Original invoice')
+            ->setCuotaTotal(21.00)
+            ->setImporteTotal(121.00)
+            ->setFechaHoraHusoGenRegistro($currentTimestamp)
+            ->setTipoHuella('01')
+            ->setHuella('ORIGINAL_HASH');
 
-            <soapenv:Body>
-        <sum:ModificacionFactura>
+        // Add emitter to original invoice
+        $emisor = new PersonaFisicaJuridica();
+        $emisor
+            ->setNif($nif)
+            ->setRazonSocial('Original Company');
+        $originalInvoice->setTercero($emisor);
 
-            <sum1:RegistroAnulacion>
-                <sum1:IDFactura>
-                    <sum1:IDEmisorFactura>99999910G</sum1:IDEmisorFactura>
-                    <sum1:NumSerieFactura>TEST0033343436</sum1:NumSerieFactura>
-                    <sum1:FechaExpedicionFactura>02-07-2025</sum1:FechaExpedicionFactura>
-                </sum1:IDFactura>
-                <sum1:MotivoAnulacion>1</sum1:MotivoAnulacion> <!-- 1 = Sustitución por otra factura -->
-            </sum1:RegistroAnulacion>
+        // Add sistema informatico to original invoice
+        $sistema = new SistemaInformatico();
+        $sistema
+            ->setNombreRazon('Sistema de Facturación')
+            ->setNif('A39200019')
+            ->setNombreSistemaInformatico('InvoiceNinja')
+            ->setIdSistemaInformatico('77')
+            ->setVersion('1.0.03')
+            ->setNumeroInstalacion('383');
+        $originalInvoice->setSistemaInformatico($sistema);
 
-            <sum1:RegistroModificacion>
-                
-                <sum1:IDVersion>1.0</sum1:IDVersion>
-                            <!-- IDFactura: The actual invoice issuer (using same test NIF) -->
-                            <sum1:IDFactura>
-                                <sum1:IDEmisorFactura>99999910G</sum1:IDEmisorFactura>
-                                <sum1:NumSerieFactura>{$invoice_number}</sum1:NumSerieFactura>
-                                <sum1:FechaExpedicionFactura>{$invoice_date}</sum1:FechaExpedicionFactura>
-                            </sum1:IDFactura>
-                            <!-- NombreRazonEmisor: The actual business that issued the invoice -->
-                            <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
-                            <sum1:TipoFactura>F1</sum1:TipoFactura>
-                            <sum1:DescripcionOperacion>Test invoice submitted by computer system on behalf of business</sum1:DescripcionOperacion>
-                            <sum1:Destinatarios>
-                                <sum1:IDDestinatario>
-                                    <sum1:NombreRazon>Test Recipient Company</sum1:NombreRazon>
-                                    <sum1:NIF>A39200019</sum1:NIF>
-                                </sum1:IDDestinatario>
-                            </sum1:Destinatarios>
-                            <sum1:Desglose>
-                                <sum1:DetalleDesglose>
-                                    <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
-                                    <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
-                                    <sum1:TipoImpositivo>21</sum1:TipoImpositivo>
-                                    <sum1:BaseImponibleOimporteNoSujeto>100.00</sum1:BaseImponibleOimporteNoSujeto>
-                                    <sum1:CuotaRepercutida>21.00</sum1:CuotaRepercutida>
-                                </sum1:DetalleDesglose>
-                            </sum1:Desglose>
-                            <sum1:CuotaTotal>21.00</sum1:CuotaTotal>
-                            <sum1:ImporteTotal>121.00</sum1:ImporteTotal>
-                            <!-- Encadenamiento: Required chaining information -->
-                            <sum1:Encadenamiento>
-                                <sum1:PrimerRegistro>N</sum1:PrimerRegistro>
-                            </sum1:Encadenamiento>
-                            <!-- SistemaInformatico: The computer system details (same as ObligadoEmision) -->
-                            <sum1:SistemaInformatico>
-                                <sum1:NombreRazon>Sistema de Facturación</sum1:NombreRazon>
-                                <sum1:NIF>A39200019</sum1:NIF>
-                                <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
-                                <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
-                                <sum1:Version>1.0.03</sum1:Version>
-                                <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
-                                <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
-                                <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
-                                <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
-                            </sum1:SistemaInformatico>
-                            <sum1:FechaHoraHusoGenRegistro>{$currentTimestamp}</sum1:FechaHoraHusoGenRegistro>
-                            <sum1:TipoHuella>01</sum1:TipoHuella>
-                            <sum1:Huella>PLACEHOLDER_HUELLA</sum1:Huella>
-                        
+        // Create modified invoice (the replacement)
+        $modifiedInvoice = new Invoice();
+        $modifiedInvoice
+            ->setIdVersion('1.0')
+            ->setIdFactura($invoice_number)
+            ->setNombreRazonEmisor('CERTIFICADO FISICA PRUEBAS')
+            ->setTipoFactura('F1')
+            ->setDescripcionOperacion('Test invoice submitted by computer system on behalf of business')
+            ->setCuotaTotal(21.00)
+            ->setImporteTotal(121.00)
+            ->setFechaHoraHusoGenRegistro($currentTimestamp)
+            ->setTipoHuella('01')
+            ->setHuella('PLACEHOLDER_HUELLA');
 
-            </sum1:RegistroModificacion>
+        // Add emitter to modified invoice
+        $emisorModificado = new PersonaFisicaJuridica();
+        $emisorModificado
+            ->setNif($nif)
+            ->setRazonSocial('CERTIFICADO FISICA PRUEBAS');
+        $modifiedInvoice->setTercero($emisorModificado);
 
-        </sum:ModificacionFactura>
-        </soapenv:Body>
-        </soapenv:Envelope>
-        XML;
+        // Add sistema informatico to modified invoice
+        $modifiedInvoice->setSistemaInformatico($sistema);
 
+        // Add destinatarios to modified invoice
+        $destinatario = new PersonaFisicaJuridica();
+        $destinatario
+            ->setNombreRazon('Test Recipient Company')
+            ->setNif('A39200019');
+        $modifiedInvoice->setDestinatarios([$destinatario]);
+
+        // Add desglose to modified invoice
+        $desglose = new Desglose();
+        $desglose->setDesgloseFactura([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '01',
+            'CalificacionOperacion' => 'S1',
+            'TipoImpositivo' => '21',
+            'BaseImponibleOimporteNoSujeto' => '100.00',
+            'CuotaRepercutida' => '21.00'
+        ]);
+        $modifiedInvoice->setDesglose($desglose);
+
+        // Add encadenamiento to modified invoice
+        $encadenamiento = new Encadenamiento();
+        $encadenamiento->setPrimerRegistro('S');
+        $modifiedInvoice->setEncadenamiento($encadenamiento);
+
+        // Create modification using the new models
+        $modification = InvoiceModification::createFromInvoice($originalInvoice, $modifiedInvoice);
 
         // Calculate the correct hash using AEAT's specified format
         $correctHash = $this->calculateVerifactuHash(
             $nif,           // IDEmisorFactura
             $invoice_number, // NumSerieFactura
-            $invoice_date,          // FechaExpedicionFactura
-            'F1',                  // TipoFactura
-            '21.00',               // CuotaTotal
-            '121.00',              // ImporteTotal
-            '',                    // Huella (empty for first calculation)
-            $currentTimestamp      // FechaHoraHusoGenRegistro (current time)
+            $invoice_date,   // FechaExpedicionFactura
+            'F1',           // TipoFactura
+            '21.00',        // CuotaTotal
+            '121.00',       // ImporteTotal
+            '',             // Huella (empty for first calculation)
+            $currentTimestamp // FechaHoraHusoGenRegistro (current time)
         );
 
-        // Replace the placeholder with the correct hash
-        $soapXml = str_replace('PLACEHOLDER_HUELLA', $correctHash, $soapXml);
+        // Update the modification record with the correct hash
+        $modification->getRegistroModificacion()->setHuella($correctHash);
 
         nlog('Calculated hash for XML: ' . $correctHash);
+
+        // Generate SOAP envelope
+        $soapXml = $modification->toSoapEnvelope();
 
         // Sign the XML before sending
         $certPath = storage_path('aeat-cert5.pem');
@@ -538,14 +541,12 @@ $invoice->setDestinatarios($destinatarios);
 
         $this->assertTrue($response->successful());
 
-
         $responseProcessor = new ResponseProcessor();
         $responseProcessor->processResponse($response->body());
 
         nlog($responseProcessor->getSummary());
 
         $this->assertTrue($responseProcessor->getSummary()['success']);
-
     }
 
 

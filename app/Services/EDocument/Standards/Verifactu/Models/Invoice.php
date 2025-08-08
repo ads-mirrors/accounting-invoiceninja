@@ -1138,4 +1138,68 @@ class Invoice extends BaseXmlModel
         $node = $element->getElementsByTagNameNS(self::XML_NAMESPACE, $tagName)->item(0);
         return $node ? $node->nodeValue : null;
     }
+
+    /**
+     * Create a modification from this invoice
+     */
+    public function createModification(Invoice $modifiedInvoice): InvoiceModification
+    {
+        return InvoiceModification::createFromInvoice($this, $modifiedInvoice);
+    }
+
+    /**
+     * Create a cancellation record for this invoice
+     */
+    public function createCancellation(): RegistroAnulacion
+    {
+        $cancellation = new RegistroAnulacion();
+        $cancellation
+            ->setIdEmisorFactura($this->getTercero()?->getNif() ?? 'B12345678')
+            ->setNumSerieFactura($this->getIdFactura())
+            ->setFechaExpedicionFactura($this->getFechaExpedicionFactura())
+            ->setMotivoAnulacion('1'); // Sustitución por otra factura
+
+        return $cancellation;
+    }
+
+    /**
+     * Create a modification record from this invoice
+     */
+    public function createModificationRecord(): RegistroModificacion
+    {
+        $modificationRecord = new RegistroModificacion();
+        $modificationRecord
+            ->setIdVersion($this->getIdVersion())
+            ->setIdFactura($this->getIdFactura())
+            ->setRefExterna($this->getRefExterna())
+            ->setNombreRazonEmisor($this->getNombreRazonEmisor())
+            ->setSubsanacion($this->getSubsanacion())
+            ->setRechazoPrevio($this->getRechazoPrevio())
+            ->setTipoFactura($this->getTipoFactura())
+            ->setTipoRectificativa($this->getTipoRectificativa())
+            ->setFacturasRectificadas($this->getFacturasRectificadas())
+            ->setFacturasSustituidas($this->getFacturasSustituidas())
+            ->setImporteRectificacion($this->getImporteRectificacion())
+            ->setFechaOperacion($this->getFechaOperacion())
+            ->setDescripcionOperacion($this->getDescripcionOperacion())
+            ->setFacturaSimplificadaArt7273($this->getFacturaSimplificadaArt7273())
+            ->setFacturaSinIdentifDestinatarioArt61d($this->getFacturaSinIdentifDestinatarioArt61d())
+            ->setMacrodato($this->getMacrodato())
+            ->setEmitidaPorTerceroODestinatario($this->getEmitidaPorTerceroODestinatario())
+            ->setTercero($this->getTercero())
+            ->setDestinatarios($this->getDestinatarios())
+            ->setCupon($this->getCupon())
+            ->setDesglose($this->getDesglose())
+            ->setCuotaTotal($this->getCuotaTotal())
+            ->setImporteTotal($this->getImporteTotal())
+            ->setEncadenamiento($this->getEncadenamiento())
+            ->setSistemaInformatico($this->getSistemaInformatico())
+            ->setFechaHoraHusoGenRegistro($this->getFechaHoraHusoGenRegistro())
+            ->setNumRegistroAcuerdoFacturacion($this->getNumRegistroAcuerdoFacturacion())
+            ->setIdAcuerdoSistemaInformatico($this->getIdAcuerdoSistemaInformatico())
+            ->setTipoHuella($this->getTipoHuella())
+            ->setHuella($this->getHuella());
+
+        return $modificationRecord;
+    }
 } 

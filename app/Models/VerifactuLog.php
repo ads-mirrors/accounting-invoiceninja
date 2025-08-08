@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $company_id
  * @property int $invoice_id
  * @property string $nif
- * @property Carbon $date
+ * @property \Carbon\Carbon $date
  * @property string $invoice_number
  * @property string $hash
  * @property string $previous_hash

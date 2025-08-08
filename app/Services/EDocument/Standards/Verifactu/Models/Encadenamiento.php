@@ -2,6 +2,8 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
+use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
+
 class Encadenamiento extends BaseXmlModel
 {
     protected ?string $primerRegistro = null;
@@ -96,12 +98,12 @@ class Encadenamiento extends BaseXmlModel
         return $this;
     }
 
-    public function getRegistroAnterior(): ?EncadenamientoFacturaAnterior
+    public function getRegistroAnterior(): ?RegistroAnterior
     {
         return $this->registroAnterior;
     }
 
-    public function setRegistroAnterior(?EncadenamientoFacturaAnterior $registroAnterior): self
+    public function setRegistroAnterior(?RegistroAnterior $registroAnterior): self
     {
         $this->registroAnterior = $registroAnterior;
         return $this;
