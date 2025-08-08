@@ -124,7 +124,7 @@ class VerifactuModificationTest extends TestCase
         if (!empty($errors)) {
 
             nlog('Verifactu Validation Errors:');
-            nlog($validXml);
+            nlog($xml);
             nlog($errors);
         }
 
