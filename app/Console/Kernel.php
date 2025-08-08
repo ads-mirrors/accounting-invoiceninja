@@ -85,10 +85,10 @@ class Kernel extends ConsoleKernel
                 
                 // Run for 26 hours starting from UTC 10:00 on last day of month
                 // This covers the transition period when timezones move to next month
-                if ($now->isLastOfMonth()) {
+                if ($now->isSameDay($now->copy()->endOfMonth())) {
                     // Start at UTC 10:00 (when UTC+14 moves to next day)
                     return $hour >= 10;
-                } elseif ($now->isFirstOfMonth()) {
+                } elseif ($now->isSameDay($now->copy()->startOfMonth())) {
                     // Continue until UTC 12:00 (when UTC-12 moves to next day)
                     return $hour <= 12;
                 }
