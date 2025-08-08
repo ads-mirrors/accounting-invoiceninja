@@ -166,4 +166,54 @@ class VerifactuFeatureTest extends TestCase
 
         $this->assertNotNull($invoice);
     }
+
+    public function testInvoiceCancellation()
+    {
+        // Create a sample invoice
+        $invoice = $this->buildData();
+        
+        // Create cancellation from invoice
+        $cancellation = \App\Services\EDocument\Standards\Verifactu\Models\InvoiceCancellation::fromInvoice(
+            $invoice, 
+            'ABCD1234EF5678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF12'
+        );
+        
+        // Set custom cancellation details
+        $cancellation->setEstado('02') // 02 = Invoice cancelled
+                    ->setDescripcionEstado('Factura anulada por error');
+        
+        // Generate XML
+        $xmlString = $cancellation->toXmlString();
+        
+        // Verify XML structure
+        $this->assertNotEmpty($xmlString);
+        $this->assertStringContainsString('SuministroLRFacturas', $xmlString);
+        $this->assertStringContainsString('LRFacturaEntrada', $xmlString);
+        $this->assertStringContainsString('IDFactura', $xmlString);
+        $this->assertStringContainsString('EstadoFactura', $xmlString);
+        $this->assertStringContainsString('Estado', $xmlString);
+        $this->assertStringContainsString('02', $xmlString); // Cancelled status
+        
+        // Generate SOAP envelope
+        $soapEnvelope = $cancellation->toSoapEnvelope();
+        
+        // Verify SOAP structure
+        $this->assertNotEmpty($soapEnvelope);
+        $this->assertStringContainsString('soapenv:Envelope', $soapEnvelope);
+        $this->assertStringContainsString('RegFactuSistemaFacturacion', $soapEnvelope);
+        
+        // Test serialization
+        $serialized = $cancellation->serialize();
+        $this->assertNotEmpty($serialized);
+        
+        // Test deserialization
+        $deserialized = \App\Services\EDocument\Standards\Verifactu\Models\InvoiceCancellation::unserialize($serialized);
+        $this->assertEquals($cancellation->getNumSerieFacturaEmisor(), $deserialized->getNumSerieFacturaEmisor());
+        $this->assertEquals($cancellation->getEstado(), $deserialized->getEstado());
+        
+        // Test from XML
+        $fromXml = \App\Services\EDocument\Standards\Verifactu\Models\InvoiceCancellation::fromXml($xmlString);
+        $this->assertEquals($cancellation->getNumSerieFacturaEmisor(), $fromXml->getNumSerieFacturaEmisor());
+        $this->assertEquals($cancellation->getEstado(), $fromXml->getEstado());
+    }
 }

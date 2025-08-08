@@ -62,11 +62,19 @@ class InvoiceModification extends BaseXmlModel implements XmlModelInterface
         return $this;
     }
 
+    public function setHuella(string $huella): self
+    {
+        $this->getRegistroModificacion()->setHuella($huella);
+        return $this;
+    }
+
     /**
      * Create a modification from an existing invoice
      */
     public static function createFromInvoice(Invoice $originalInvoice, Invoice $modifiedInvoice): self
     {
+        $currentTimestamp = now()->format('Y-m-d\TH:i:s');
+        
         $modification = new self();
 
         // Set up cancellation record
@@ -107,11 +115,11 @@ class InvoiceModification extends BaseXmlModel implements XmlModelInterface
             ->setImporteTotal($modifiedInvoice->getImporteTotal())
             ->setEncadenamiento($modifiedInvoice->getEncadenamiento())
             ->setSistemaInformatico($modifiedInvoice->getSistemaInformatico())
-            ->setFechaHoraHusoGenRegistro($modifiedInvoice->getFechaHoraHusoGenRegistro())
+            ->setFechaHoraHusoGenRegistro($currentTimestamp)
             ->setNumRegistroAcuerdoFacturacion($modifiedInvoice->getNumRegistroAcuerdoFacturacion())
             ->setIdAcuerdoSistemaInformatico($modifiedInvoice->getIdAcuerdoSistemaInformatico())
             ->setTipoHuella($modifiedInvoice->getTipoHuella())
-            ->setHuella($modifiedInvoice->getHuella());
+            ->setHuella('PLACEHOLDER_HUELLA');
 
         $modification->setRegistroModificacion($modificationRecord);
 
