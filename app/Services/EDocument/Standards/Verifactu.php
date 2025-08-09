@@ -35,6 +35,8 @@ class Verifactu extends AbstractService
 {
 
     private AeatClient $aeat_client;
+
+    private string $soapXml;
     
     public function __construct(public Invoice $invoice)
     {  
@@ -52,15 +54,16 @@ class Verifactu extends AbstractService
         $v_logs = $this->invoice->verifactu_logs;
 
         //determine the current status of the invoice.
-        $document = new RegistroAlta($this->invoice);
+        $document = (new RegistroAlta($this->invoice))->run()->getInvoice();
 
         $huella = '';
 
+        nlog($v_logs->count());
         //1. new => RegistraAlta
         if($v_logs->count() >= 1){
             $v_log = $v_logs->first();
             $huella = $v_log->hash;
-            $document = InvoiceModification::createFromInvoice($document->getInvoice(), $v_log->deserialize());    
+            $document = InvoiceModification::createFromInvoice($document, $v_log->deserialize());    
         }
 
         //3. cancelled => RegistroAnulacion
@@ -68,12 +71,24 @@ class Verifactu extends AbstractService
         $new_huella = $this->calculateHash($document, $huella); // careful with this! we'll need to reference this later
         $document->setHuella($new_huella);
 
-        $soapXml = $document->toSoapEnvelope();
+        $this->setEnvelope($document->toSoapEnvelope());
+
 
         return $this;
         
     }
         
+    public function getEnvelope(): string
+    {
+        return $this->soapXml;
+    }
+
+    private function setEnvelope(string $soapXml): self
+    {
+        $this->soapXml = $soapXml;
+        return $this;
+    }
+
     /**
      * calculateHash
      *
@@ -83,8 +98,9 @@ class Verifactu extends AbstractService
      */
     public function calculateHash($document, string $huella): string
     {
+        nlog($document->toXmlString());
         $idEmisorFactura = $document->getIdEmisorFactura();
-        $numSerieFactura = $document->getNumSerieFactura();
+        $numSerieFactura = $document->getIdFactura();
         $fechaExpedicionFactura = $document->getFechaExpedicionFactura();
         $tipoFactura = $document->getTipoFactura();
         $cuotaTotal = $document->getCuotaTotal();

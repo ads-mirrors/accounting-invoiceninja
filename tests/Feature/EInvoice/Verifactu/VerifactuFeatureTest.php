@@ -15,6 +15,7 @@ use App\DataMapper\InvoiceItem;
 use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
+use App\Services\EDocument\Standards\Verifactu;
 
 class VerifactuFeatureTest extends TestCase
 {
@@ -161,10 +162,24 @@ class VerifactuFeatureTest extends TestCase
 
     public function test_construction_and_validation()
     {
+// - current previous hash - 10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C
+// - current previous invoice number - TEST0033343443
 
         $invoice = $this->buildData();
 
+        $invoice->number = 'TEST0033343444';
+        $invoice->save();
+
         $this->assertNotNull($invoice);
+
+        $verifactu = new Verifactu($invoice);
+        $verifactu->run();
+
+        $envelope = $verifactu->getEnvelope();
+
+        $this->assertNotEmpty($envelope);
+
+        nlog($envelope);
     }
 
     public function testInvoiceCancellation()

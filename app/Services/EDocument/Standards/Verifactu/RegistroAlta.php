@@ -201,7 +201,6 @@ class RegistroAlta
 
         $this->v_invoice->setSistemaInformatico($sistema);
 
-
         return $this;
     }
 

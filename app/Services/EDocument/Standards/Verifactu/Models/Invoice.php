@@ -284,6 +284,11 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         return $this;
     }
 
+    public function getIdEmisorFactura(): string
+    {
+        return $this->tercero->getNif();
+    }
+
     public function getDestinatarios(): ?array
     {
         return $this->destinatarios;
