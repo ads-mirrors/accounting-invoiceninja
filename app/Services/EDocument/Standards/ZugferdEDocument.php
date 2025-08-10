@@ -279,7 +279,7 @@ class ZugferdEDocument extends AbstractService
             $this->exemption_reason_code = "VATEX-EU-IC";
         } else {
             $this->tax_code = ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX;
-            $this->exemption_reason_code = "VATNOTREG";
+            $this->exemption_reason_code = "VATEX-EU-O";
         }
 
         return $this;
