@@ -12,6 +12,7 @@
 namespace App\Http\Requests\Invoice;
 
 use App\Http\Requests\Request;
+use App\Http\ValidationRules\Invoice\RestoreDisabledRule;
 use App\Utils\Traits\Invoice\ActionsInvoice;
 use App\Utils\Traits\MakesHash;
 
@@ -37,7 +38,7 @@ class ActionInvoiceRequest extends Request
     public function rules()
     {
         return [
-            'action' => 'required',
+            'action' => ['required', new RestoreDisabledRule()],
         ];
     }
 
