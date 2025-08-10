@@ -167,7 +167,8 @@ class CreateCompany
             $settings->e_invoice_type = 'Facturae_3.2.2'; //change this to verifactu
             $settings->currency_id = '3';
             $settings->timezone_id = '42';
-
+            $settings->lock_invoices = 'when_sent';
+            
             $company->settings = $settings;
 
             $company->save();
