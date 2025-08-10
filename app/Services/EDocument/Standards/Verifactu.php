@@ -24,11 +24,9 @@ use App\Helpers\Invoice\InvoiceSumInclusive;
 use App\Services\EDocument\Standards\Verifactu\AeatClient;
 use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
-use App\Services\EDocument\Standards\Verifactu\RegistroModificacion;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
-use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
 
@@ -62,8 +60,14 @@ class Verifactu extends AbstractService
 
         $v_logs = $this->invoice->company->verifactu_logs;
 
-        //determine the current status of the invoice.
-        $document = (new RegistroAlta($this->invoice))->run()->getInvoice();
+        $i_logs = $this->invoice->verifactu_logs;
+
+        if($i_logs->count() >= 1){
+            $document = (new RegistroAlta($this->invoice))->run()->setRectification()->getInvoice();
+        }
+        else{
+            $document = (new RegistroAlta($this->invoice))->run()->getInvoice();
+        }
 
         //keep this state for logging later on successful send
         $this->_document = $document;
@@ -74,7 +78,6 @@ class Verifactu extends AbstractService
         if($v_logs->count() >= 1){
             $v_log = $v_logs->first();
             $this->_previous_huella = $v_log->hash;
-            // $document = InvoiceModification::createFromInvoice($document, $v_log->deserialize());    
         }
 
         //3. cancelled => RegistroAnulacion

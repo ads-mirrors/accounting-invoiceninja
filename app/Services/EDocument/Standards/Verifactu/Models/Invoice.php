@@ -21,6 +21,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     // Constants for invoice types
     public const TIPO_FACTURA_NORMAL = 'F1';
     public const TIPO_FACTURA_RECTIFICATIVA = 'R1';
+    public const TIPO_FACTURA_SUSTITUIDA = 'F3';
     
     // Constants for rectification types
     public const TIPO_RECTIFICATIVA_COMPLETA = 'I';      // Rectificación por diferencias (Complete rectification)
@@ -36,7 +37,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     protected ?string $tipoRectificativa = null;
     protected ?array $facturasRectificadas = null;
     protected ?array $facturasSustituidas = null;
-    protected ?float $importeRectificacion = null;
+    protected ?array $importeRectificacion = null;
     protected ?string $fechaOperacion = null;
     protected string $descripcionOperacion;
     protected ?string $facturaSimplificadaArt7273 = null;
@@ -233,21 +234,17 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         return $this->importeRectificacion;
     }
 
-    public function setImporteRectificacion(?float $importeRectificacion): self
+    public function setImporteRectificacion(?array $importeRectificacion): self
     {
-        if ($importeRectificacion !== null) {
-            // Validate that the amount is within reasonable bounds
-            if (abs($importeRectificacion) > 999999999.99) {
-                throw new \InvalidArgumentException('ImporteRectificacion must be between -999999999.99 and 999999999.99');
-            }
-        }
         
         $this->importeRectificacion = $importeRectificacion;
+      
         return $this;
     }
 
     public function setRectificationAmounts(array $amounts): self
     {
+        
         $this->importeRectificacion = $amounts;
         return $this;
     }
@@ -565,11 +562,11 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
      * Helper method to create a rectificative invoice with ImporteRectificacion
      * 
      * @param string $tipoRectificativa The type of rectification ('I' for complete, 'S' for substitutive)
-     * @param float $importeRectificacion The rectification amount
+     * @param array $importeRectificacion The rectification amount
      * @param string $descripcionOperacion Description of the rectification operation
      * @return self
      */
-    public function makeRectificativeWithAmount(string $tipoRectificativa, float $importeRectificacion, string $descripcionOperacion = 'Rectificación de factura'): self
+    public function makeRectificativeWithAmount(string $tipoRectificativa, array $importeRectificacion, string $descripcionOperacion = 'Rectificación de factura'): self
     {
         $this->setTipoFactura(self::TIPO_FACTURA_RECTIFICATIVA)
              ->setTipoRectificativa($tipoRectificativa)
@@ -947,10 +944,10 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $root->appendChild($this->createElement($doc, 'TipoFactura', $this->tipoFactura));
 
         // 5. TipoRectificativa (only for R1 invoices)
-        if ($this->tipoFactura === self::TIPO_FACTURA_RECTIFICATIVA && $this->tipoRectificativa !== null) {
+        if (in_array($this->tipoFactura, [self::TIPO_FACTURA_SUSTITUIDA, self::TIPO_FACTURA_RECTIFICATIVA]) && $this->tipoRectificativa !== null) {
             $root->appendChild($this->createElement($doc, 'TipoRectificativa', $this->tipoRectificativa));
         }
-
+        
         // 6. FacturasRectificadas (only for R1 invoices)
         if ($this->tipoFactura === self::TIPO_FACTURA_RECTIFICATIVA && $this->facturasRectificadas !== null) {
             $facturasRectificadasElement = $this->createElement($doc, 'FacturasRectificadas');
@@ -973,8 +970,32 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             $root->appendChild($facturasRectificadasElement);
         }
 
+
+        if ($this->tipoFactura === self::TIPO_FACTURA_SUSTITUIDA && $this->facturasSustituidas !== null) {
+            $facturasSustituidasElement = $this->createElement($doc, 'FacturasSustituidas');
+
+            foreach ($this->facturasSustituidas as $facturaSustituidas) {
+                $idFacturaSustituidasElement = $this->createElement($doc, 'IDFacturaSustituida');
+
+                // Add IDEmisorFactura
+                $idFacturaSustituidasElement->appendChild($this->createElement($doc, 'IDEmisorFactura', $facturaSustituidas['IDEmisorFactura']));
+
+                // Add NumSerieFactura
+                $idFacturaSustituidasElement->appendChild($this->createElement($doc, 'NumSerieFactura', $facturaSustituidas['NumSerieFactura']));
+
+                // Add FechaExpedicionFactura
+                $idFacturaSustituidasElement->appendChild($this->createElement($doc, 'FechaExpedicionFactura', $facturaSustituidas['FechaExpedicionFactura']));
+
+                $facturasSustituidasElement->appendChild($idFacturaSustituidasElement);
+            }
+
+            $root->appendChild($facturasSustituidasElement);
+        }
+
+
+
         // 7. ImporteRectificacion (only for R1 invoices with proper structure)
-        if ($this->tipoFactura === self::TIPO_FACTURA_RECTIFICATIVA && $this->importeRectificacion !== null) {
+        if (in_array($this->tipoFactura, [self::TIPO_FACTURA_RECTIFICATIVA, self::TIPO_FACTURA_SUSTITUIDA]) && $this->importeRectificacion !== null) {
             $importeRectificacionElement = $this->createElement($doc, 'ImporteRectificacion');
             
             // Add BaseRectificada
@@ -1443,14 +1464,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     }
 
     /**
-     * Create a modification from this invoice
-     */
-    public function createModification(Invoice $modifiedInvoice): InvoiceModification
-    {
-        return InvoiceModification::createFromInvoice($this, $modifiedInvoice);
-    }
-
-    /**
      * Create a cancellation record for this invoice
      */
     public function createCancellation(): RegistroAnulacion
@@ -1466,47 +1479,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             ->setMotivoAnulacion('1'); // Sustitución por otra factura
 
         return $cancellation;
-    }
-
-    /**
-     * Create a modification record from this invoice
-     */
-    public function createModificationRecord(): RegistroModificacion
-    {
-        $modificationRecord = new RegistroModificacion();
-        $modificationRecord
-            ->setIdVersion($this->getIdVersion())
-            ->setIdFactura($this->getIdFactura())
-            ->setRefExterna($this->getRefExterna())
-            ->setNombreRazonEmisor($this->getNombreRazonEmisor())
-            ->setSubsanacion($this->getSubsanacion())
-            ->setRechazoPrevio($this->getRechazoPrevio())
-            ->setTipoFactura($this->getTipoFactura())
-            ->setTipoRectificativa($this->getTipoRectificativa())
-            ->setFacturasRectificadas($this->getFacturasRectificadas())
-            ->setFacturasSustituidas($this->getFacturasSustituidas())
-            ->setImporteRectificacion($this->getImporteRectificacion())
-            ->setFechaOperacion($this->getFechaOperacion())
-            ->setDescripcionOperacion($this->getDescripcionOperacion())
-            ->setFacturaSimplificadaArt7273($this->getFacturaSimplificadaArt7273())
-            ->setFacturaSinIdentifDestinatarioArt61d($this->getFacturaSinIdentifDestinatarioArt61d())
-            ->setMacrodato($this->getMacrodato())
-            ->setEmitidaPorTerceroODestinatario($this->getEmitidaPorTerceroODestinatario())
-            ->setTercero($this->getTercero())
-            ->setDestinatarios($this->getDestinatarios())
-            ->setCupon($this->getCupon())
-            ->setDesglose($this->getDesglose())
-            ->setCuotaTotal($this->getCuotaTotal())
-            ->setImporteTotal($this->getImporteTotal())
-            ->setEncadenamiento($this->getEncadenamiento())
-            ->setSistemaInformatico($this->getSistemaInformatico())
-            ->setFechaHoraHusoGenRegistro($this->getFechaHoraHusoGenRegistro())
-            ->setNumRegistroAcuerdoFacturacion($this->getNumRegistroAcuerdoFacturacion())
-            ->setIdAcuerdoSistemaInformatico($this->getIdAcuerdoSistemaInformatico())
-            ->setTipoHuella($this->getTipoHuella())
-            ->setHuella($this->getHuella());
-
-        return $modificationRecord;
     }
 
     public function serialize()

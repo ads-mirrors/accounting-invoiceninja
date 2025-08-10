@@ -24,7 +24,6 @@ use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
 use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
-use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
 use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
 use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
@@ -195,7 +194,7 @@ class VerifactuFeatureTest extends TestCase
 
         $invoice = $this->buildData();
 
-        $invoice->number = 'TEST0033343459';
+        $invoice->number = 'TEST0033343460';
         $invoice->save();
 
         $this->assertNotNull($invoice);
@@ -212,17 +211,17 @@ class VerifactuFeatureTest extends TestCase
         $xx = VerifactuLog::create([
             'invoice_id' => $_inv->id,
             'company_id' => $invoice->company_id,
-            'invoice_number' => 'TEST0033343458',
+            'invoice_number' => 'TEST0033343459',
             'date' => '2025-08-10',
-            'hash' => '71E0DB528B7D83CE44A1D9055FE814371D77A9291EB24B74043ACE639175CC3C',
+            'hash' => 'E5A23515881D696FCD1CA8EE4902632BFC6D892BA8EB79CB656A5F84963079D3',
             'nif' => 'A39200019',
-            'previous_hash' => '71E0DB528B7D83CE44A1D9055FE814371D77A9291EB24B74043ACE639175CC3C',
+            'previous_hash' => 'E5A23515881D696FCD1CA8EE4902632BFC6D892BA8EB79CB656A5F84963079D3',
         ]);
 
         $verifactu = new Verifactu($invoice);
         $verifactu->run();
         $verifactu->setTestMode()
-                ->setPreviousHash('71E0DB528B7D83CE44A1D9055FE814371D77A9291EB24B74043ACE639175CC3C');
+                ->setPreviousHash('E5A23515881D696FCD1CA8EE4902632BFC6D892BA8EB79CB656A5F84963079D3');
 
         $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($verifactu->getEnvelope());
         $validator->validate();
@@ -262,291 +261,245 @@ class VerifactuFeatureTest extends TestCase
         $xx->forceDelete();
     }
 
+    public function testBuildInvoiceCancellation()
+    {
+        $invoice = $this->buildData();
+
+        $invoice->number = 'TEST0033343459';
+        $invoice->save();
+
+        $_inv = Invoice::factory()->create([
+            'user_id' => $invoice->user_id,
+            'company_id' => $invoice->company_id,
+            'client_id' => $invoice->client_id,
+            'date' => '2025-08-10',
+            'status_id' => Invoice::STATUS_SENT,
+            'uses_inclusive_taxes' => false,
+        ]);
+
+        $xx = VerifactuLog::create([
+            'invoice_id' => $_inv->id,
+            'company_id' => $invoice->company_id,
+            'invoice_number' => 'TEST0033343459',
+            'date' => '2025-08-10',
+            'hash' => 'CEF610A3C24D4106ABE4A836C48B0F5251600F44EEE05A90EBD7185FA753553F',
+            'nif' => 'A39200019',
+            'previous_hash' => 'CEF610A3C24D4106ABE4A836C48B0F5251600F44EEE05A90EBD7185FA753553F',
+        ]);
+
+        $verifactu = new Verifactu($invoice);
+        $document = (new RegistroAlta($invoice))->run()->getInvoice();
+        $huella = $this->cancellationHash($document, $xx->hash);
+
+        $cancellation = $document->createCancellation();
+        // $cancellation->setFechaHoraHusoGenRegistro('2025-08-09T23:57:25+00:00');
+        $cancellation->setHuella($huella);
+
+        $soapXml = $cancellation->toSoapEnvelope();
+
+        $response = Http::withHeaders([
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '',
+                ])
+                ->withOptions([
+                    'cert' => storage_path('aeat-cert5.pem'),
+                    'ssl_key' => storage_path('aeat-key5.pem'),
+                    'verify' => false,
+                    'timeout' => 30,
+                ])
+                ->withBody($soapXml, 'text/xml')
+                ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+
+        nlog('Request with AEAT official test data:');
+        nlog($soapXml);
+        nlog('Response with AEAT official test data:');
+        nlog('Response Status: ' . $response->status());
+        nlog('Response Headers: ' . json_encode($response->headers()));
+        nlog('Response Body: ' . $response->body());
+
+        $r = new ResponseProcessor();
+        $rx = $r->processResponse($response->body());
+        $this->assertTrue($rx['success']);
+
+        $xx->forceDelete();
+
+
+    }
+
+    private function cancellationHash($document, $huella)
+    {
+
+    $idEmisorFacturaAnulada = $document->getIdFactura()->getIdEmisorFactura();
+    $numSerieFacturaAnulada = $document->getIdFactura()->getNumSerieFactura();
+    $fechaExpedicionFacturaAnulada = $document->getIdFactura()->getFechaExpedicionFactura();
+    $fechaHoraHusoGenRegistro = $document->getFechaHoraHusoGenRegistro();
+
+    $hashInput = "IDEmisorFacturaAnulada={$idEmisorFacturaAnulada}&" .
+        "NumSerieFacturaAnulada={$numSerieFacturaAnulada}&" .
+        "FechaExpedicionFacturaAnulada={$fechaExpedicionFacturaAnulada}&" .
+        "Huella={$huella}&" .
+        "FechaHoraHusoGenRegistro={$fechaHoraHusoGenRegistro}";
+
+        nlog("Cancellation Huella: " . $hashInput);
+
+    return strtoupper(hash('sha256', $hashInput));
 
 
 
-public function testBuildInvoiceCancellation()
-{
-    $invoice = $this->buildData();
-
-    $invoice->number = 'TEST0033343459';
-    $invoice->save();
-
-    $_inv = Invoice::factory()->create([
-        'user_id' => $invoice->user_id,
-        'company_id' => $invoice->company_id,
-        'client_id' => $invoice->client_id,
-        'date' => '2025-08-10',
-        'status_id' => Invoice::STATUS_SENT,
-        'uses_inclusive_taxes' => false,
-    ]);
-
-    $xx = VerifactuLog::create([
-        'invoice_id' => $_inv->id,
-        'company_id' => $invoice->company_id,
-        'invoice_number' => 'TEST0033343459',
-        'date' => '2025-08-10',
-        'hash' => 'CEF610A3C24D4106ABE4A836C48B0F5251600F44EEE05A90EBD7185FA753553F',
-        'nif' => 'A39200019',
-        'previous_hash' => 'CEF610A3C24D4106ABE4A836C48B0F5251600F44EEE05A90EBD7185FA753553F',
-    ]);
-
-    $verifactu = new Verifactu($invoice);
-    $document = (new RegistroAlta($invoice))->run()->getInvoice();
-    $huella = $this->cancellationHash($document, $xx->hash);
-
-    $cancellation = $document->createCancellation();
-    // $cancellation->setFechaHoraHusoGenRegistro('2025-08-09T23:57:25+00:00');
-    $cancellation->setHuella($huella);
-
-    $soapXml = $cancellation->toSoapEnvelope();
-
-    $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-                'SOAPAction' => '',
-            ])
-            ->withOptions([
-                'cert' => storage_path('aeat-cert5.pem'),
-                'ssl_key' => storage_path('aeat-key5.pem'),
-                'verify' => false,
-                'timeout' => 30,
-            ])
-            ->withBody($soapXml, 'text/xml')
-            ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
-
-    nlog('Request with AEAT official test data:');
-    nlog($soapXml);
-    nlog('Response with AEAT official test data:');
-    nlog('Response Status: ' . $response->status());
-    nlog('Response Headers: ' . json_encode($response->headers()));
-    nlog('Response Body: ' . $response->body());
-
-    $r = new ResponseProcessor();
-    $rx = $r->processResponse($response->body());
-    $this->assertTrue($rx['success']);
-
-    $xx->forceDelete();
-
-
-}
-
-private function cancellationHash($document, $huella)
-{
-
-$idEmisorFacturaAnulada = $document->getIdFactura()->getIdEmisorFactura();
-$numSerieFacturaAnulada = $document->getIdFactura()->getNumSerieFactura();
-$fechaExpedicionFacturaAnulada = $document->getIdFactura()->getFechaExpedicionFactura();
-$fechaHoraHusoGenRegistro = $document->getFechaHoraHusoGenRegistro();
-
-$hashInput = "IDEmisorFacturaAnulada={$idEmisorFacturaAnulada}&" .
-    "NumSerieFacturaAnulada={$numSerieFacturaAnulada}&" .
-    "FechaExpedicionFacturaAnulada={$fechaExpedicionFacturaAnulada}&" .
-    "Huella={$huella}&" .
-    "FechaHoraHusoGenRegistro={$fechaHoraHusoGenRegistro}";
-
-    nlog("Cancellation Huella: " . $hashInput);
-
-return strtoupper(hash('sha256', $hashInput));
-
-
-// $hashInput = "IDEmisorFacturaAnulada={$document->getIdFactura()->getIdEmisorFactura()}&" .
-//     "NumSerieFacturaAnulada={$document->getIdFactura()->getNumSerieFactura()}&" .
-//     "FechaExpedicionFacturaAnulada={$document->getIdFactura()->getFechaExpedicionFactura()}&" .
-//     "Huella={$blank_huella}&" .
-//     "FechaHoraHusoGenRegistro={$document->getFechaHoraHusoGenRegistro()}";
-
-// return strtoupper(hash('sha256', $hashInput));
-
-}
+    }
 
 
     public function test_invoice_invoice_modification()
     {
         $invoice = $this->buildData();
-        $invoice->number = 'TEST0033343444';
+        $invoice->number = 'TEST0033343460-R2';
         $invoice->save();
 
-        $previous_huella = 'C9D10B1EE60CEE114B67CDF07F23487239B2A04A697BE2C4F67AC934B0553CF5';
+        $previous_huella = '1FB6B4EF72DD2A07CC23B3F9D74EE5749C8E86B34B9B1DFFFC8C3E46ACA87E21';
+
+        $xx = VerifactuLog::create([
+            'invoice_id' => $invoice->id,
+            'company_id' => $invoice->company_id,
+            'invoice_number' => 'TEST0033343459',
+            'date' => '2025-08-10',
+            'hash' => $previous_huella,
+            'nif' => 'A39200019',
+            'previous_hash' => $previous_huella,
+        ]);
 
         $verifactu = new Verifactu($invoice);
-        $old_document = $verifactu->setTestMode()
+        $document = $verifactu->setTestMode()
                 ->setPreviousHash($previous_huella)
                 ->run()
                 ->getInvoice();
 
+        nlog($document->toSoapEnvelope());
 
-        $_verifactu = (new Verifactu($invoice))->setTestMode()->run();
-        $new_document = $_verifactu->getInvoice();
-        $new_document->setTipoFactura('R1');
-        $new_document->setTipoRectificativa('S');
-        // For substitutive rectifications (S), ImporteRectificacion is mandatory
-        $new_document->setImporteRectificacion(100.00);
-        // Set a proper description for the rectification operation
-        $new_document->setDescripcionOperacion('Rectificación por error en factura anterior');
-        
-        // Debug: Log the description to ensure it's set
-        \Log::info('DescripcionOperacion set to: ' . $new_document->getDescripcionOperacion());
-        
-        // Set up the rectified invoice information with proper amounts
-        // For R1 invoices, we need BaseRectificada and CuotaRectificada
-        $new_document->setRectifiedInvoice(
-            'A39200019',           // NIF of rectified invoice
-            'TEST0033343443',      // Series number of rectified invoice
-            '09-08-2025'           // Date of rectified invoice
-        );
-        
-        // Set the rectified amounts (BaseRectificada and CuotaRectificada)
-        // These represent the amounts from the original invoice that are being rectified
-        $new_document->setRectifiedAmounts(
-            200.00,  // BaseRectificada - base amount from original invoice
-            42.00    // CuotaRectificada - tax amount from original invoice
-        );
-
-        $response = $_verifactu->send($new_document->toSoapEnvelope());
-        // $_document = InvoiceModification::createFromInvoice($old_document, $new_document);
-
-        // $response = $_verifactu->send($_document->toSoapEnvelope());
-
-        // Debug: Log the XML being sent
-        $xmlString = $new_document->toXmlString();
-        \Log::info('Generated XML for R1 invoice:', ['xml' => $xmlString]);
-        
-        // Debug: Log the SOAP envelope being sent
-        $soapEnvelope = $new_document->toSoapEnvelope();
-        \Log::info('Generated SOAP envelope for R1 invoice:', ['soap' => $soapEnvelope]);
-        
-        // Debug: Log the response to see what's happening
-        \Log::info('Verifactu R1 invoice test response:', $response);
-
+        $response = $verifactu->send($document->toSoapEnvelope());
+       
         $this->assertNotNull($response);
         $this->assertArrayHasKey('success', $response);
         $this->assertTrue($response['success']);
     }
 
-public function test_raw()
-{
-$soapXml = <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope 
-  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
-  xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" 
-  xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
-  <soapenv:Header/>
-  <soapenv:Body>
-    <sum:RegFactuSistemaFacturacion>
-      <sum:Cabecera>
-        <sum1:ObligadoEmision>
-          <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
-          <sum1:NIF>A39200019</sum1:NIF>
-        </sum1:ObligadoEmision>
-      </sum:Cabecera>
-      <sum:RegistroFactura>
-        <sum1:RegistroAlta>
-          <sum1:IDVersion>1.0</sum1:IDVersion>
-          <sum1:IDFactura>
-            <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
-            <sum1:NumSerieFactura>TEST0033343444</sum1:NumSerieFactura>
-            <sum1:FechaExpedicionFactura>09-08-2025</sum1:FechaExpedicionFactura>
-          </sum1:IDFactura>
-          <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
-          <sum1:TipoFactura>R1</sum1:TipoFactura>
-          <sum1:TipoRectificativa>S</sum1:TipoRectificativa>
-          <sum1:FacturasRectificadas>
-            <sum1:IDFacturaRectificada>
-              <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
-              <sum1:NumSerieFactura>TEST0033343443</sum1:NumSerieFactura>
-              <sum1:FechaExpedicionFactura>09-08-2025</sum1:FechaExpedicionFactura>
-            </sum1:IDFacturaRectificada>
-          </sum1:FacturasRectificadas>
-          <sum1:ImporteRectificacion>
-            <sum1:BaseRectificada>100.00</sum1:BaseRectificada>
-            <sum1:CuotaRectificada>21.00</sum1:CuotaRectificada>
-            <sum1:CuotaRecargoRectificado>0.00</sum1:CuotaRecargoRectificado>
-          </sum1:ImporteRectificacion>
-        <sum1:DescripcionOperacion>Rectificación por error en factura anterior</sum1:DescripcionOperacion>
-        <sum1:Destinatarios>
-            <sum1:IDDestinatario>
-                <sum1:NombreRazon>Test Recipient Company</sum1:NombreRazon>
-                <sum1:NIF>A39200019</sum1:NIF>
-            </sum1:IDDestinatario>
-        </sum1:Destinatarios>
-          <sum1:Desglose>
-            <sum1:DetalleDesglose>
-              <sum1:Impuesto>01</sum1:Impuesto>
-              <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
-              <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
-              <sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>
-              <sum1:BaseImponibleOimporteNoSujeto>97.00</sum1:BaseImponibleOimporteNoSujeto>
-              <sum1:CuotaRepercutida>20.37</sum1:CuotaRepercutida>
-            </sum1:DetalleDesglose>
-          </sum1:Desglose>
-          <sum1:CuotaTotal>47.05</sum1:CuotaTotal>
-          <sum1:ImporteTotal>144.05</sum1:ImporteTotal>
-          <sum1:Encadenamiento>
-            <sum1:PrimerRegistro>S</sum1:PrimerRegistro>
-          </sum1:Encadenamiento>
-          <sum1:SistemaInformatico>
-            <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
-            <sum1:NIF>A39200019</sum1:NIF>
-            <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
-            <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
-            <sum1:Version>1.0.03</sum1:Version>
-            <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
-            <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
-            <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
-            <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
-          </sum1:SistemaInformatico>
-          <sum1:FechaHoraHusoGenRegistro>2025-08-09T23:18:44+02:00</sum1:FechaHoraHusoGenRegistro>
-          <sum1:TipoHuella>01</sum1:TipoHuella>
-          <sum1:Huella>E7558C33FE3496551F38FEB582F4879B1D9F6C073489628A8DC275E12298941F</sum1:Huella>
-        </sum1:RegistroAlta>
-      </sum:RegistroFactura>
-    </sum:RegFactuSistemaFacturacion>
-  </soapenv:Body>
-</soapenv:Envelope>
-XML;
+        public function test_rectification_invoice()
+        {
+        $soapXml = <<<XML
+                    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+                    <soapenv:Header/>
+                    <soapenv:Body>
+                        <sum:RegFactuSistemaFacturacion>
+                        <sum:Cabecera>
+                            <sum1:ObligadoEmision>
+                            <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+                            <sum1:NIF>A39200019</sum1:NIF>
+                            </sum1:ObligadoEmision>
+                        </sum:Cabecera>
+                        <sum:RegistroFactura>
+                            <sum1:RegistroAlta>
+                    <sum1:IDVersion>1.0</sum1:IDVersion>
+                    <sum1:IDFactura>
+                        <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
+                        <sum1:NumSerieFactura>TEST0033343460-R1</sum1:NumSerieFactura>
+                        <sum1:FechaExpedicionFactura>10-08-2025</sum1:FechaExpedicionFactura>
+                    </sum1:IDFactura>
+                    <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
+                    <sum1:TipoFactura>F3</sum1:TipoFactura>
+                    <sum1:FacturasSustituidas>
+                        <sum1:IDFacturaSustituida>
+                        <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
+                        <sum1:NumSerieFactura>TEST0033343460</sum1:NumSerieFactura>
+                        <sum1:FechaExpedicionFactura>10-08-2025</sum1:FechaExpedicionFactura>
+                        </sum1:IDFacturaSustituida>
+                    </sum1:FacturasSustituidas>
+                    <sum1:DescripcionOperacion>Alta</sum1:DescripcionOperacion>
+                    <sum1:Destinatarios>
+                        <sum1:IDDestinatario>
+                        <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+                        <sum1:NIF>A39200019</sum1:NIF>
+                        </sum1:IDDestinatario>
+                    </sum1:Destinatarios>
+                    <sum1:Desglose>
+                        <sum1:DetalleDesglose>
+                        <sum1:Impuesto>01</sum1:Impuesto>
+                        <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+                        <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+                        <sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>
+                        <sum1:BaseImponibleOimporteNoSujeto>100.00</sum1:BaseImponibleOimporteNoSujeto>
+                        <sum1:CuotaRepercutida>21.00</sum1:CuotaRepercutida>
+                        </sum1:DetalleDesglose>
+                    </sum1:Desglose>
+                    <sum1:CuotaTotal>21</sum1:CuotaTotal>
+                    <sum1:ImporteTotal>121</sum1:ImporteTotal>
+                    <sum1:Encadenamiento>
+                        <sum1:RegistroAnterior>
+                        <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
+                        <sum1:NumSerieFactura>TEST0033343459</sum1:NumSerieFactura>
+                        <sum1:FechaExpedicionFactura>10-08-2025</sum1:FechaExpedicionFactura>
+                        <sum1:Huella>1FB6B4EF72DD2A07CC23B3F9D74EE5749C8E86B34B9B1DFFFC8C3E46ACA87E21</sum1:Huella>
+                        </sum1:RegistroAnterior>
+                    </sum1:Encadenamiento>
+                    <sum1:SistemaInformatico>
+                        <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+                        <sum1:NIF>A39200019</sum1:NIF>
+                        <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
+                        <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
+                        <sum1:Version>1.0.03</sum1:Version>
+                        <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
+                        <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
+                        <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
+                        <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
+                    </sum1:SistemaInformatico>
+                    <sum1:FechaHoraHusoGenRegistro>2025-08-10T05:02:18+00:00</sum1:FechaHoraHusoGenRegistro>
+                    <sum1:TipoHuella>01</sum1:TipoHuella>
+                    <sum1:Huella>BC61C7CB7CB09917C076CAE7D066B3E2CF521A3B8B501D0C83250B5EB4A4B40D</sum1:Huella>
+                    </sum1:RegistroAlta>
+                        </sum:RegistroFactura>
+                        </sum:RegFactuSistemaFacturacion>
+                    </soapenv:Body>
+                    </soapenv:Envelope>
+
+        XML;
 
 
-$xslt = new VerifactuDocumentValidator($soapXml);
-$xslt->validate();
-$errors = $xslt->getVerifactuErrors();
+        $xslt = new VerifactuDocumentValidator($soapXml);
+        $xslt->validate();
+        $errors = $xslt->getVerifactuErrors();
 
-if(count($errors) > 0) {
-    nlog('Errors:');
-    nlog($errors);
-    nlog('Errors:');
-}
+        if(count($errors) > 0) {
+            nlog('Errors:');
+            nlog($errors);
+            nlog('Errors:');
+        }
 
-$this->assertCount(0, $errors);
+        $this->assertCount(0, $errors);
 
-$response = Http::withHeaders([
-               'Content-Type' => 'text/xml; charset=utf-8',
-               'SOAPAction' => '',
-           ])
-           ->withOptions([
-               'cert' => storage_path('aeat-cert5.pem'),
-               'ssl_key' => storage_path('aeat-key5.pem'),
-               'verify' => false,
-               'timeout' => 30,
-           ])
-           ->withBody($soapXml, 'text/xml')
-           ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+        $response = Http::withHeaders([
+                    'Content-Type' => 'text/xml; charset=utf-8',
+                    'SOAPAction' => '',
+                ])
+                ->withOptions([
+                    'cert' => storage_path('aeat-cert5.pem'),
+                    'ssl_key' => storage_path('aeat-key5.pem'),
+                    'verify' => false,
+                    'timeout' => 30,
+                ])
+                ->withBody($soapXml, 'text/xml')
+                ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
 
-nlog('Request with AEAT official test data:');
-nlog($soapXml);
-nlog('Response with AEAT official test data:');
-nlog('Response Status: ' . $response->status());
-nlog('Response Headers: ' . json_encode($response->headers()));
-nlog('Response Body: ' . $response->body());
+        nlog('Request with AEAT official test data:');
+        nlog($soapXml);
+        nlog('Response with AEAT official test data:');
+        nlog('Response Status: ' . $response->status());
+        nlog('Response Headers: ' . json_encode($response->headers()));
+        nlog('Response Body: ' . $response->body());
 
-$r = new ResponseProcessor();
-$rx = $r->processResponse($response->body());
+        $r = new ResponseProcessor();
+        $rx = $r->processResponse($response->body());
 
-nlog($rx);
+        nlog($rx);
 
-
-
-}
+        }
 
 
     public function testInvoiceCancellation()
@@ -654,7 +607,15 @@ nlog($rx);
 
         // Set up rectification details exactly as in the expected XML
         $invoice->setRectifiedInvoice('A39200019', 'TEST0033343443', '09-08-2025');
-        $invoice->setRectificationAmounts(100.00, 21.00, 0.00);
+
+        
+        $importeRectificacion = [
+            'BaseRectificada' => 100.00,
+            'CuotaRectificada' => 21.00,
+            'CuotaRecargoRectificado' => 0.00
+        ];
+
+        $invoice->setRectificationAmounts($importeRectificacion);
 
         // Set up desglose exactly as in the expected XML
         $desglose = new Desglose();

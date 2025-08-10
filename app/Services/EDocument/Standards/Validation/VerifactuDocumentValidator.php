@@ -104,16 +104,11 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
         $registroAlta = $xpath->query('//si:RegistroAlta | //sum1:RegistroAlta');
         if ($registroAlta->length > 0) {
             $tipoFactura = $xpath->query('.//si:TipoFactura | .//sum1:TipoFactura', $registroAlta->item(0));
-            if ($tipoFactura->length > 0 && $tipoFactura->item(0)->textContent === 'R1') {
+            if ($tipoFactura->length > 0 && in_array($tipoFactura->item(0)->textContent,['R1','F3'])) {
                 return 'modification';
             }
         }
         
-        // Check for RegistroModificacion structure (legacy)
-        $registroModificacion = $xpath->query('//si:RegistroModificacion | //sum1:RegistroModificacion');
-        if ($registroModificacion->length > 0) {
-            return 'modification';
-        }
         
         // Check for cancellation structure
         $registroAnulacion = $xpath->query('//si:RegistroAnulacion | //sum1:RegistroAnulacion');
@@ -192,7 +187,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
         if ($tipoFactura === false || $tipoFactura->length === 0) {
             $tipoFactura = $xpath->query('.//sum1:TipoFactura', $registroAlta->item(0));
         }
-        if ($tipoFactura !== false && $tipoFactura->length > 0 && $tipoFactura->item(0)->textContent !== 'R1') {
+        if ($tipoFactura !== false && $tipoFactura->length > 0 && !in_array($tipoFactura->item(0)->textContent, ['R1','F3'])) {
             $this->errors['structure'][] = "TipoFactura must be 'R1' for modifications, found: " . $tipoFactura->item(0)->textContent;
         }
     }
