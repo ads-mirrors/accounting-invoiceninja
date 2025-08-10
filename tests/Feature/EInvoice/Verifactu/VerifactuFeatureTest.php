@@ -43,6 +43,7 @@ class VerifactuFeatureTest extends TestCase
     private string $nombre_razon = 'CERTIFICADO FISICA PRUEBAS'; //must match the cert name
 
     private string $test_company_nif = 'A39200019';
+
     private string $test_client_nif = 'A39200019';
 
     protected function setUp(): void
@@ -189,12 +190,12 @@ class VerifactuFeatureTest extends TestCase
     public function test_construction_and_validation()
     {
 // - current previous hash - 10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C
-//E8AA16FB793620F00B5A729D5ED6C262BF779457FB0780199BC8D468124C9225
+//BE95547AA8B973A3D6A860B36833FBDE3C8AB853F4B8F05872574A5DA7314A23
 // - current previous invoice number - TEST0033343443
 
         $invoice = $this->buildData();
 
-        $invoice->number = 'TEST0033343451';
+        $invoice->number = 'TEST0033343459';
         $invoice->save();
 
         $this->assertNotNull($invoice);
@@ -208,20 +209,20 @@ class VerifactuFeatureTest extends TestCase
             'uses_inclusive_taxes' => false,
         ]);
 
-        VerifactuLog::create([
+        $xx = VerifactuLog::create([
             'invoice_id' => $_inv->id,
             'company_id' => $invoice->company_id,
-            'invoice_number' => 'TEST0033343450',
+            'invoice_number' => 'TEST0033343458',
             'date' => '2025-08-10',
-            'hash' => '3D70FE22F3E4FC60EB6412D8D9703160C818DF8E16AC952D57E97EF0668999D0',
+            'hash' => '71E0DB528B7D83CE44A1D9055FE814371D77A9291EB24B74043ACE639175CC3C',
             'nif' => 'A39200019',
-            'previous_hash' => '3D70FE22F3E4FC60EB6412D8D9703160C818DF8E16AC952D57E97EF0668999D0',
+            'previous_hash' => '71E0DB528B7D83CE44A1D9055FE814371D77A9291EB24B74043ACE639175CC3C',
         ]);
 
         $verifactu = new Verifactu($invoice);
         $verifactu->run();
         $verifactu->setTestMode()
-                ->setPreviousHash('3D70FE22F3E4FC60EB6412D8D9703160C818DF8E16AC952D57E97EF0668999D0');
+                ->setPreviousHash('71E0DB528B7D83CE44A1D9055FE814371D77A9291EB24B74043ACE639175CC3C');
 
         $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($verifactu->getEnvelope());
         $validator->validate();
@@ -257,7 +258,107 @@ class VerifactuFeatureTest extends TestCase
         $this->assertArrayHasKey('success', $response);
         $this->assertTrue($response['success']);
         // In test mode, the response might not be successful, but the structure should be correct
+
+        $xx->forceDelete();
     }
+
+
+
+
+public function testBuildInvoiceCancellation()
+{
+    $invoice = $this->buildData();
+
+    $invoice->number = 'TEST0033343459';
+    $invoice->save();
+
+    $_inv = Invoice::factory()->create([
+        'user_id' => $invoice->user_id,
+        'company_id' => $invoice->company_id,
+        'client_id' => $invoice->client_id,
+        'date' => '2025-08-10',
+        'status_id' => Invoice::STATUS_SENT,
+        'uses_inclusive_taxes' => false,
+    ]);
+
+    $xx = VerifactuLog::create([
+        'invoice_id' => $_inv->id,
+        'company_id' => $invoice->company_id,
+        'invoice_number' => 'TEST0033343459',
+        'date' => '2025-08-10',
+        'hash' => 'CEF610A3C24D4106ABE4A836C48B0F5251600F44EEE05A90EBD7185FA753553F',
+        'nif' => 'A39200019',
+        'previous_hash' => 'CEF610A3C24D4106ABE4A836C48B0F5251600F44EEE05A90EBD7185FA753553F',
+    ]);
+
+    $verifactu = new Verifactu($invoice);
+    $document = (new RegistroAlta($invoice))->run()->getInvoice();
+    $huella = $this->cancellationHash($document, $xx->hash);
+
+    $cancellation = $document->createCancellation();
+    // $cancellation->setFechaHoraHusoGenRegistro('2025-08-09T23:57:25+00:00');
+    $cancellation->setHuella($huella);
+
+    $soapXml = $cancellation->toSoapEnvelope();
+
+    $response = Http::withHeaders([
+                'Content-Type' => 'text/xml; charset=utf-8',
+                'SOAPAction' => '',
+            ])
+            ->withOptions([
+                'cert' => storage_path('aeat-cert5.pem'),
+                'ssl_key' => storage_path('aeat-key5.pem'),
+                'verify' => false,
+                'timeout' => 30,
+            ])
+            ->withBody($soapXml, 'text/xml')
+            ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+
+    nlog('Request with AEAT official test data:');
+    nlog($soapXml);
+    nlog('Response with AEAT official test data:');
+    nlog('Response Status: ' . $response->status());
+    nlog('Response Headers: ' . json_encode($response->headers()));
+    nlog('Response Body: ' . $response->body());
+
+    $r = new ResponseProcessor();
+    $rx = $r->processResponse($response->body());
+    $this->assertTrue($rx['success']);
+
+    $xx->forceDelete();
+
+
+}
+
+private function cancellationHash($document, $huella)
+{
+
+$idEmisorFacturaAnulada = $document->getIdFactura()->getIdEmisorFactura();
+$numSerieFacturaAnulada = $document->getIdFactura()->getNumSerieFactura();
+$fechaExpedicionFacturaAnulada = $document->getIdFactura()->getFechaExpedicionFactura();
+$fechaHoraHusoGenRegistro = $document->getFechaHoraHusoGenRegistro();
+
+$hashInput = "IDEmisorFacturaAnulada={$idEmisorFacturaAnulada}&" .
+    "NumSerieFacturaAnulada={$numSerieFacturaAnulada}&" .
+    "FechaExpedicionFacturaAnulada={$fechaExpedicionFacturaAnulada}&" .
+    "Huella={$huella}&" .
+    "FechaHoraHusoGenRegistro={$fechaHoraHusoGenRegistro}";
+
+    nlog("Cancellation Huella: " . $hashInput);
+
+return strtoupper(hash('sha256', $hashInput));
+
+
+// $hashInput = "IDEmisorFacturaAnulada={$document->getIdFactura()->getIdEmisorFactura()}&" .
+//     "NumSerieFacturaAnulada={$document->getIdFactura()->getNumSerieFactura()}&" .
+//     "FechaExpedicionFacturaAnulada={$document->getIdFactura()->getFechaExpedicionFactura()}&" .
+//     "Huella={$blank_huella}&" .
+//     "FechaHoraHusoGenRegistro={$document->getFechaHoraHusoGenRegistro()}";
+
+// return strtoupper(hash('sha256', $hashInput));
+
+}
+
 
     public function test_invoice_invoice_modification()
     {
@@ -447,54 +548,6 @@ nlog($rx);
 
 }
 
-
-public function testBuildInvoiceCancellation()
-{
-    $invoice = $this->buildData();
-
-    $invoice->number = 'TEST0033343444';
-    $invoice->save();
-
-    $verifactu = new Verifactu($invoice);
-    $document = (new RegistroAlta($invoice))->run()->getInvoice();
-    $huella = $verifactu->calculateHash($document, '10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C');
-
-    $cancellation = $document->createCancellation();
-    $cancellation->setFechaHoraHusoGenRegistro('2025-08-09T23:57:25+00:00');
-    $cancellation->setHuella('E8AA16FB793620F00B5A729D5ED6C262BF779457FB0780199BC8D468124C9225');
-
-    $soapXml = $cancellation->toSoapEnvelope();
-
-
-$response = Http::withHeaders([
-               'Content-Type' => 'text/xml; charset=utf-8',
-               'SOAPAction' => '',
-           ])
-           ->withOptions([
-               'cert' => storage_path('aeat-cert5.pem'),
-               'ssl_key' => storage_path('aeat-key5.pem'),
-               'verify' => false,
-               'timeout' => 30,
-           ])
-           ->withBody($soapXml, 'text/xml')
-           ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
-
-nlog('Request with AEAT official test data:');
-nlog($soapXml);
-nlog('Response with AEAT official test data:');
-nlog('Response Status: ' . $response->status());
-nlog('Response Headers: ' . json_encode($response->headers()));
-nlog('Response Body: ' . $response->body());
-
-$r = new ResponseProcessor();
-$rx = $r->processResponse($response->body());
-
-nlog($rx);
-
-
-
-
-}
 
     public function testInvoiceCancellation()
     {

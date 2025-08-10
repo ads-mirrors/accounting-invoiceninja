@@ -1458,10 +1458,11 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $cancellation = new RegistroAnulacion();
         $cancellation
             ->setSistemaInformatico($this->getSistemaInformatico())
-        ->setNombreRazonEmisor($this->getNombreRazonEmisor())
+            ->setNombreRazonEmisor($this->getNombreRazonEmisor())
             ->setIdEmisorFactura($this->getIdFactura()->getIdEmisorFactura())
             ->setNumSerieFactura($this->getIdFactura()->getNumSerieFactura())
             ->setFechaExpedicionFactura($this->getIdFactura()->getFechaExpedicionFactura())
+            ->setEncadenamiento($this->getEncadenamiento())
             ->setMotivoAnulacion('1'); // Sustitución por otra factura
 
         return $cancellation;

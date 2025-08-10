@@ -106,7 +106,7 @@ class RegistroAlta
         // Get the previous invoice log
         $this->v_log = $this->company->verifactu_logs()->first();
 
-        $this->current_timestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
+        $this->current_timestamp = now()->format('Y-m-d\TH:i:sP');
 
         // Determine if this is a rectification invoice
         $isRectification = $this->invoice->status_id === 5; // Assuming status_id 5 is for rectification
