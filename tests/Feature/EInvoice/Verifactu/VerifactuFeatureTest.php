@@ -10,12 +10,24 @@ use App\Models\Company;
 use App\Models\Invoice;
 use Faker\Factory as Faker;
 use App\Models\CompanyToken;
+use App\Models\VerifactuLog;
 use App\Models\ClientContact;
 use App\DataMapper\InvoiceItem;
 use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
+use Illuminate\Support\Facades\Http;
 use App\Services\EDocument\Standards\Verifactu;
+use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
+use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
+use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
+use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
+use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
+use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
+use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
+use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
+use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
+use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
 
 class VerifactuFeatureTest extends TestCase
 {
@@ -26,6 +38,9 @@ class VerifactuFeatureTest extends TestCase
     private $token;
     private $client;
     private $faker;
+
+    // private string $nombre_razon = 'CERTIFICADO ENTIDAD PRUEBAS'; //must match the cert name
+    private string $nombre_razon = 'CERTIFICADO FISICA PRUEBAS'; //must match the cert name
 
     private string $test_company_nif = 'A39200019';
     private string $test_client_nif = 'A39200019';
@@ -66,6 +81,7 @@ class VerifactuFeatureTest extends TestCase
             $settings->vat_number = 'B12345678'; // Spanish VAT number format
             $settings->payment_terms = '10';
             $settings->vat_number = $this->test_company_nif;
+            $settings->name = $this->nombre_razon;
         }
 
         $this->company = Company::factory()->create([
@@ -101,7 +117,7 @@ class VerifactuFeatureTest extends TestCase
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'is_deleted' => 0,
-            'name' => 'bob',
+            'name' => $this->nombre_razon,
             'address1' => 'Calle Mayor 123',
             'city' => 'Madrid',
             'state' => 'Madrid',
@@ -133,6 +149,7 @@ class VerifactuFeatureTest extends TestCase
         $item->notes = 'Test item';
         $item->tax_name1 = 'IVA';
         $item->tax_rate1 = 21;
+        $item->discount =0;
 
         $line_items[] = $item;
         
@@ -140,15 +157,24 @@ class VerifactuFeatureTest extends TestCase
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
-            'date' => now()->addSeconds($this->client->timezone_offset())->format('Y-m-d'),
+            'date' => now()->format('Y-m-d'),
             'next_send_date' => null,
-            'due_date' => now()->addSeconds($this->client->timezone_offset())->addDays(5)->format('Y-m-d'),
-            'last_sent_date' => now()->addSeconds($this->client->timezone_offset()),
+            'due_date' => now()->addDays(5)->format('Y-m-d'),
+            'last_sent_date' => now(),
             'reminder_last_sent' => null,
+            'uses_inclusive_taxes' => false,
+            'discount' => 0,
+            'is_amount_discount' => false,
             'status_id' => Invoice::STATUS_DRAFT,
             'amount' => 10,
             'balance' => 10,
             'line_items' => $line_items,
+            'tax_rate1' => 0,
+            'tax_rate2' => 0,
+            'tax_rate3' => 0,
+            'tax_name1' => '',
+            'tax_name2' => '',
+            'tax_name3' => '',
         ]);
 
         $invoice = $invoice->calc()
@@ -163,24 +189,312 @@ class VerifactuFeatureTest extends TestCase
     public function test_construction_and_validation()
     {
 // - current previous hash - 10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C
+//E8AA16FB793620F00B5A729D5ED6C262BF779457FB0780199BC8D468124C9225
 // - current previous invoice number - TEST0033343443
 
         $invoice = $this->buildData();
 
-        $invoice->number = 'TEST0033343444';
+        $invoice->number = 'TEST0033343451';
         $invoice->save();
 
         $this->assertNotNull($invoice);
 
+        $_inv = Invoice::factory()->create([
+            'user_id' => $invoice->user_id,
+            'company_id' => $invoice->company_id,
+            'client_id' => $invoice->client_id,
+            'date' => '2025-08-10',
+            'status_id' => Invoice::STATUS_SENT,
+            'uses_inclusive_taxes' => false,
+        ]);
+
+        VerifactuLog::create([
+            'invoice_id' => $_inv->id,
+            'company_id' => $invoice->company_id,
+            'invoice_number' => 'TEST0033343450',
+            'date' => '2025-08-10',
+            'hash' => '3D70FE22F3E4FC60EB6412D8D9703160C818DF8E16AC952D57E97EF0668999D0',
+            'nif' => 'A39200019',
+            'previous_hash' => '3D70FE22F3E4FC60EB6412D8D9703160C818DF8E16AC952D57E97EF0668999D0',
+        ]);
+
         $verifactu = new Verifactu($invoice);
         $verifactu->run();
+        $verifactu->setTestMode()
+                ->setPreviousHash('3D70FE22F3E4FC60EB6412D8D9703160C818DF8E16AC952D57E97EF0668999D0');
+
+        $validator = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($verifactu->getEnvelope());
+        $validator->validate();
+        $errors = $validator->getVerifactuErrors();
+
+
+        if (!empty($errors)) {
+
+            nlog('Verifactu Validation Errors:');
+            nlog($xml);
+            nlog($errors);
+        }
+
+        $this->assertCount(0, $errors);
+
+        $this->assertNotEmpty($verifactu->getEnvelope());
 
         $envelope = $verifactu->getEnvelope();
-
+        
         $this->assertNotEmpty($envelope);
 
-        nlog($envelope);
+        // In test mode, we don't actually send to the service
+        // The envelope generation and validation is what we're testing
+        $this->assertNotEmpty($envelope);
+        $this->assertStringContainsString('soapenv:Envelope', $envelope);
+        $this->assertStringContainsString('RegFactuSistemaFacturacion', $envelope);
+
+        // Test the send method (in test mode it should return a response structure)
+        $response = $verifactu->send($envelope);
+        nlog($response);
+
+        $this->assertNotNull($response);
+        $this->assertArrayHasKey('success', $response);
+        $this->assertTrue($response['success']);
+        // In test mode, the response might not be successful, but the structure should be correct
     }
+
+    public function test_invoice_invoice_modification()
+    {
+        $invoice = $this->buildData();
+        $invoice->number = 'TEST0033343444';
+        $invoice->save();
+
+        $previous_huella = 'C9D10B1EE60CEE114B67CDF07F23487239B2A04A697BE2C4F67AC934B0553CF5';
+
+        $verifactu = new Verifactu($invoice);
+        $old_document = $verifactu->setTestMode()
+                ->setPreviousHash($previous_huella)
+                ->run()
+                ->getInvoice();
+
+
+        $_verifactu = (new Verifactu($invoice))->setTestMode()->run();
+        $new_document = $_verifactu->getInvoice();
+        $new_document->setTipoFactura('R1');
+        $new_document->setTipoRectificativa('S');
+        // For substitutive rectifications (S), ImporteRectificacion is mandatory
+        $new_document->setImporteRectificacion(100.00);
+        // Set a proper description for the rectification operation
+        $new_document->setDescripcionOperacion('Rectificación por error en factura anterior');
+        
+        // Debug: Log the description to ensure it's set
+        \Log::info('DescripcionOperacion set to: ' . $new_document->getDescripcionOperacion());
+        
+        // Set up the rectified invoice information with proper amounts
+        // For R1 invoices, we need BaseRectificada and CuotaRectificada
+        $new_document->setRectifiedInvoice(
+            'A39200019',           // NIF of rectified invoice
+            'TEST0033343443',      // Series number of rectified invoice
+            '09-08-2025'           // Date of rectified invoice
+        );
+        
+        // Set the rectified amounts (BaseRectificada and CuotaRectificada)
+        // These represent the amounts from the original invoice that are being rectified
+        $new_document->setRectifiedAmounts(
+            200.00,  // BaseRectificada - base amount from original invoice
+            42.00    // CuotaRectificada - tax amount from original invoice
+        );
+
+        $response = $_verifactu->send($new_document->toSoapEnvelope());
+        // $_document = InvoiceModification::createFromInvoice($old_document, $new_document);
+
+        // $response = $_verifactu->send($_document->toSoapEnvelope());
+
+        // Debug: Log the XML being sent
+        $xmlString = $new_document->toXmlString();
+        \Log::info('Generated XML for R1 invoice:', ['xml' => $xmlString]);
+        
+        // Debug: Log the SOAP envelope being sent
+        $soapEnvelope = $new_document->toSoapEnvelope();
+        \Log::info('Generated SOAP envelope for R1 invoice:', ['soap' => $soapEnvelope]);
+        
+        // Debug: Log the response to see what's happening
+        \Log::info('Verifactu R1 invoice test response:', $response);
+
+        $this->assertNotNull($response);
+        $this->assertArrayHasKey('success', $response);
+        $this->assertTrue($response['success']);
+    }
+
+public function test_raw()
+{
+$soapXml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope 
+  xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+  xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" 
+  xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <sum:RegFactuSistemaFacturacion>
+      <sum:Cabecera>
+        <sum1:ObligadoEmision>
+          <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+          <sum1:NIF>A39200019</sum1:NIF>
+        </sum1:ObligadoEmision>
+      </sum:Cabecera>
+      <sum:RegistroFactura>
+        <sum1:RegistroAlta>
+          <sum1:IDVersion>1.0</sum1:IDVersion>
+          <sum1:IDFactura>
+            <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
+            <sum1:NumSerieFactura>TEST0033343444</sum1:NumSerieFactura>
+            <sum1:FechaExpedicionFactura>09-08-2025</sum1:FechaExpedicionFactura>
+          </sum1:IDFactura>
+          <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
+          <sum1:TipoFactura>R1</sum1:TipoFactura>
+          <sum1:TipoRectificativa>S</sum1:TipoRectificativa>
+          <sum1:FacturasRectificadas>
+            <sum1:IDFacturaRectificada>
+              <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
+              <sum1:NumSerieFactura>TEST0033343443</sum1:NumSerieFactura>
+              <sum1:FechaExpedicionFactura>09-08-2025</sum1:FechaExpedicionFactura>
+            </sum1:IDFacturaRectificada>
+          </sum1:FacturasRectificadas>
+          <sum1:ImporteRectificacion>
+            <sum1:BaseRectificada>100.00</sum1:BaseRectificada>
+            <sum1:CuotaRectificada>21.00</sum1:CuotaRectificada>
+            <sum1:CuotaRecargoRectificado>0.00</sum1:CuotaRecargoRectificado>
+          </sum1:ImporteRectificacion>
+        <sum1:DescripcionOperacion>Rectificación por error en factura anterior</sum1:DescripcionOperacion>
+        <sum1:Destinatarios>
+            <sum1:IDDestinatario>
+                <sum1:NombreRazon>Test Recipient Company</sum1:NombreRazon>
+                <sum1:NIF>A39200019</sum1:NIF>
+            </sum1:IDDestinatario>
+        </sum1:Destinatarios>
+          <sum1:Desglose>
+            <sum1:DetalleDesglose>
+              <sum1:Impuesto>01</sum1:Impuesto>
+              <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+              <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+              <sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>
+              <sum1:BaseImponibleOimporteNoSujeto>97.00</sum1:BaseImponibleOimporteNoSujeto>
+              <sum1:CuotaRepercutida>20.37</sum1:CuotaRepercutida>
+            </sum1:DetalleDesglose>
+          </sum1:Desglose>
+          <sum1:CuotaTotal>47.05</sum1:CuotaTotal>
+          <sum1:ImporteTotal>144.05</sum1:ImporteTotal>
+          <sum1:Encadenamiento>
+            <sum1:PrimerRegistro>S</sum1:PrimerRegistro>
+          </sum1:Encadenamiento>
+          <sum1:SistemaInformatico>
+            <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+            <sum1:NIF>A39200019</sum1:NIF>
+            <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
+            <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
+            <sum1:Version>1.0.03</sum1:Version>
+            <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
+            <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
+            <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
+            <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
+          </sum1:SistemaInformatico>
+          <sum1:FechaHoraHusoGenRegistro>2025-08-09T23:18:44+02:00</sum1:FechaHoraHusoGenRegistro>
+          <sum1:TipoHuella>01</sum1:TipoHuella>
+          <sum1:Huella>E7558C33FE3496551F38FEB582F4879B1D9F6C073489628A8DC275E12298941F</sum1:Huella>
+        </sum1:RegistroAlta>
+      </sum:RegistroFactura>
+    </sum:RegFactuSistemaFacturacion>
+  </soapenv:Body>
+</soapenv:Envelope>
+XML;
+
+
+$xslt = new VerifactuDocumentValidator($soapXml);
+$xslt->validate();
+$errors = $xslt->getVerifactuErrors();
+
+if(count($errors) > 0) {
+    nlog('Errors:');
+    nlog($errors);
+    nlog('Errors:');
+}
+
+$this->assertCount(0, $errors);
+
+$response = Http::withHeaders([
+               'Content-Type' => 'text/xml; charset=utf-8',
+               'SOAPAction' => '',
+           ])
+           ->withOptions([
+               'cert' => storage_path('aeat-cert5.pem'),
+               'ssl_key' => storage_path('aeat-key5.pem'),
+               'verify' => false,
+               'timeout' => 30,
+           ])
+           ->withBody($soapXml, 'text/xml')
+           ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+
+nlog('Request with AEAT official test data:');
+nlog($soapXml);
+nlog('Response with AEAT official test data:');
+nlog('Response Status: ' . $response->status());
+nlog('Response Headers: ' . json_encode($response->headers()));
+nlog('Response Body: ' . $response->body());
+
+$r = new ResponseProcessor();
+$rx = $r->processResponse($response->body());
+
+nlog($rx);
+
+
+
+}
+
+
+public function testBuildInvoiceCancellation()
+{
+    $invoice = $this->buildData();
+
+    $invoice->number = 'TEST0033343444';
+    $invoice->save();
+
+    $verifactu = new Verifactu($invoice);
+    $document = (new RegistroAlta($invoice))->run()->getInvoice();
+    $huella = $verifactu->calculateHash($document, '10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C');
+
+    $cancellation = $document->createCancellation();
+    $cancellation->setFechaHoraHusoGenRegistro('2025-08-09T23:57:25+00:00');
+    $cancellation->setHuella('E8AA16FB793620F00B5A729D5ED6C262BF779457FB0780199BC8D468124C9225');
+
+    $soapXml = $cancellation->toSoapEnvelope();
+
+
+$response = Http::withHeaders([
+               'Content-Type' => 'text/xml; charset=utf-8',
+               'SOAPAction' => '',
+           ])
+           ->withOptions([
+               'cert' => storage_path('aeat-cert5.pem'),
+               'ssl_key' => storage_path('aeat-key5.pem'),
+               'verify' => false,
+               'timeout' => 30,
+           ])
+           ->withBody($soapXml, 'text/xml')
+           ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+
+nlog('Request with AEAT official test data:');
+nlog($soapXml);
+nlog('Response with AEAT official test data:');
+nlog('Response Status: ' . $response->status());
+nlog('Response Headers: ' . json_encode($response->headers()));
+nlog('Response Body: ' . $response->body());
+
+$r = new ResponseProcessor();
+$rx = $r->processResponse($response->body());
+
+nlog($rx);
+
+
+
+
+}
 
     public function testInvoiceCancellation()
     {
@@ -230,5 +544,269 @@ class VerifactuFeatureTest extends TestCase
         $fromXml = \App\Services\EDocument\Standards\Verifactu\Models\InvoiceCancellation::fromXml($xmlString);
         $this->assertEquals($cancellation->getNumSerieFacturaEmisor(), $fromXml->getNumSerieFacturaEmisor());
         $this->assertEquals($cancellation->getEstado(), $fromXml->getEstado());
+
+        $response = Http::withHeaders([
+               'Content-Type' => 'text/xml; charset=utf-8',
+               'SOAPAction' => '',
+           ])
+           ->withOptions([
+               'cert' => storage_path('aeat-cert5.pem'),
+               'ssl_key' => storage_path('aeat-key5.pem'),
+               'verify' => false,
+               'timeout' => 30,
+           ])
+           ->withBody($soapEnvelope, 'text/xml')
+           ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
+
+        nlog('Request with AEAT official test data:');
+        nlog($soapEnvelope);
+        nlog('Response with AEAT official test data:');
+        nlog('Response Status: ' . $response->status());
+        nlog('Response Headers: ' . json_encode($response->headers()));
+        nlog('Response Body: ' . $response->body());
+
+        $r = new ResponseProcessor();
+        $rx = $r->processResponse($response->body());
+
+        nlog($rx);
+
+    }
+
+    /**
+     * Test that R1 invoice XML structure is exactly as expected with proper element order
+     */
+    public function test_r1_invoice_xml_structure_exact_match(): void
+    {
+        // Create a complete R1 invoice with all required elements matching the exact XML structure
+        $invoice = new VerifactuInvoice();
+        
+        // Set required properties using setter methods to match the expected XML exactly
+        $invoice->setIdVersion('1.0');
+        
+        $idFactura = new IDFactura();
+        $idFactura->setIdEmisorFactura('A39200019');
+        $idFactura->setNumSerieFactura('TEST0033343444');
+        $idFactura->setFechaExpedicionFactura('09-08-2025');
+        $invoice->setIdFactura($idFactura);
+        
+        $invoice->setNombreRazonEmisor('CERTIFICADO FISICA PRUEBAS');
+        $invoice->setTipoFactura(VerifactuInvoice::TIPO_FACTURA_RECTIFICATIVA);
+        $invoice->setTipoRectificativa('S');
+        $invoice->setDescripcionOperacion('Rectificación por error en factura anterior');
+        $invoice->setCuotaTotal(47.05);
+        $invoice->setImporteTotal(144.05);
+        $invoice->setFechaHoraHusoGenRegistro('2025-08-09T23:18:44+02:00');
+        $invoice->setTipoHuella('01');
+        $invoice->setHuella('E7558C33FE3496551F38FEB582F4879B1D9F6C073489628A8DC275E12298941F');
+
+        // Set up rectification details exactly as in the expected XML
+        $invoice->setRectifiedInvoice('A39200019', 'TEST0033343443', '09-08-2025');
+        $invoice->setRectificationAmounts(100.00, 21.00, 0.00);
+
+        // Set up desglose exactly as in the expected XML
+        $desglose = new Desglose();
+        $desglose->setDesgloseFactura([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '01',
+            'CalificacionOperacion' => 'S1',
+            'TipoImpositivo' => 21.00,
+            'BaseImponible' => 97.00,
+            'Cuota' => 20.37
+        ]);
+        $invoice->setDesglose($desglose);
+
+        // Generate SOAP envelope XML
+        $soapXml = $invoice->toSoapEnvelope();
+
+        // Verify the XML structure exactly matches the expected format
+        $this->assertStringContainsString('<?xml version="1.0" encoding="UTF-8"?>', $soapXml);
+        $this->assertStringContainsString('<soapenv:Envelope', $soapXml);
+        $this->assertStringContainsString('xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"', $soapXml);
+        $this->assertStringContainsString('xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd"', $soapXml);
+        $this->assertStringContainsString('xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd"', $soapXml);
+        
+        // Verify SOAP structure
+        $this->assertStringContainsString('<soapenv:Header/>', $soapXml);
+        $this->assertStringContainsString('<soapenv:Body>', $soapXml);
+        $this->assertStringContainsString('<sum:RegFactuSistemaFacturacion>', $soapXml);
+        $this->assertStringContainsString('<sum:Cabecera>', $soapXml);
+        $this->assertStringContainsString('<sum1:ObligadoEmision>', $soapXml);
+        $this->assertStringContainsString('<sum:RegistroFactura>', $soapXml);
+        $this->assertStringContainsString('<sum1:RegistroAlta>', $soapXml);
+        
+        // Verify elements are in exact order as per the expected XML
+        $expectedOrder = [
+            'IDVersion',
+            'IDFactura',
+            'NombreRazonEmisor',
+            'TipoFactura',
+            'TipoRectificativa',
+            'FacturasRectificadas',
+            'ImporteRectificacion',
+            'DescripcionOperacion',
+            'Destinatarios',
+            'Desglose',
+            'CuotaTotal',
+            'ImporteTotal',
+            'Encadenamiento',
+            'SistemaInformatico',
+            'FechaHoraHusoGenRegistro',
+            'TipoHuella',
+            'Huella'
+        ];
+
+        $xmlLines = explode("\n", $soapXml);
+        $currentIndex = 0;
+
+        foreach ($expectedOrder as $elementName) {
+            $found = false;
+            for ($i = $currentIndex; $i < count($xmlLines); $i++) {
+                if (strpos($xmlLines[$i], "<sum1:{$elementName}") !== false || strpos($xmlLines[$i], "</sum1:{$elementName}") !== false) {
+                    $currentIndex = $i;
+                    $found = true;
+                    break;
+                }
+            }
+            $this->assertTrue($found, "Element {$elementName} not found in expected order");
+        }
+
+        // Verify specific structure for FacturasRectificadas
+        $this->assertStringContainsString('<sum1:FacturasRectificadas>', $soapXml);
+        $this->assertStringContainsString('<sum1:IDFacturaRectificada>', $soapXml);
+        $this->assertStringContainsString('<sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>', $soapXml);
+        $this->assertStringContainsString('<sum1:NumSerieFactura>TEST0033343443</sum1:NumSerieFactura>', $soapXml);
+        $this->assertStringContainsString('<sum1:FechaExpedicionFactura>09-08-2025</sum1:FechaExpedicionFactura>', $soapXml);
+        $this->assertStringContainsString('</sum1:IDFacturaRectificada>', $soapXml);
+        $this->assertStringContainsString('</sum1:FacturasRectificadas>', $soapXml);
+
+        // Verify ImporteRectificacion structure
+        $this->assertStringContainsString('<sum1:ImporteRectificacion>', $soapXml);
+        $this->assertStringContainsString('<sum1:BaseRectificada>100.00</sum1:BaseRectificada>', $soapXml);
+        $this->assertStringContainsString('<sum1:CuotaRectificada>21.00</sum1:CuotaRectificada>', $soapXml);
+        $this->assertStringContainsString('<sum1:CuotaRecargoRectificado>0.00</sum1:CuotaRecargoRectificado>', $soapXml);
+        $this->assertStringContainsString('</sum1:ImporteRectificacion>', $soapXml);
+
+        // Verify Destinatarios structure
+        $this->assertStringContainsString('<sum1:Destinatarios>', $soapXml);
+        $this->assertStringContainsString('<sum1:IDDestinatario>', $soapXml);
+        $this->assertStringContainsString('<sum1:NombreRazon>Test Recipient Company</sum1:NombreRazon>', $soapXml);
+        $this->assertStringContainsString('<sum1:NIF>A39200019</sum1:NIF>', $soapXml);
+        $this->assertStringContainsString('</sum1:IDDestinatario>', $soapXml);
+        $this->assertStringContainsString('</sum1:Destinatarios>', $soapXml);
+
+        // Verify Desglose structure
+        $this->assertStringContainsString('<sum1:Desglose>', $soapXml);
+        $this->assertStringContainsString('<sum1:DetalleDesglose>', $soapXml);
+        $this->assertStringContainsString('<sum1:Impuesto>01</sum1:Impuesto>', $soapXml);
+        $this->assertStringContainsString('<sum1:ClaveRegimen>01</sum1:ClaveRegimen>', $soapXml);
+        $this->assertStringContainsString('<sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>', $soapXml);
+        $this->assertStringContainsString('<sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>', $soapXml);
+        $this->assertStringContainsString('<sum1:BaseImponibleOimporteNoSujeto>97.00</sum1:BaseImponibleOimporteNoSujeto>', $soapXml);
+        $this->assertStringContainsString('<sum1:CuotaRepercutida>20.37</sum1:CuotaRepercutida>', $soapXml);
+        $this->assertStringContainsString('</sum1:DetalleDesglose>', $soapXml);
+        $this->assertStringContainsString('</sum1:Desglose>', $soapXml);
+
+        // Verify Encadenamiento structure
+        $this->assertStringContainsString('<sum1:Encadenamiento>', $soapXml);
+        $this->assertStringContainsString('<sum1:PrimerRegistro>S</sum1:PrimerRegistro>', $soapXml);
+        $this->assertStringContainsString('</sum1:Encadenamiento>', $soapXml);
+
+        // Verify SistemaInformatico structure
+        $this->assertStringContainsString('<sum1:SistemaInformatico>', $soapXml);
+        $this->assertStringContainsString('<sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>', $soapXml);
+        $this->assertStringContainsString('<sum1:NIF>A39200019</sum1:NIF>', $soapXml);
+        $this->assertStringContainsString('<sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>', $soapXml);
+        $this->assertStringContainsString('<sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>', $soapXml);
+        $this->assertStringContainsString('<sum1:Version>1.0.03</sum1:Version>', $soapXml);
+        $this->assertStringContainsString('<sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>', $soapXml);
+        $this->assertStringContainsString('<sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>', $soapXml);
+        $this->assertStringContainsString('<sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>', $soapXml);
+        $this->assertStringContainsString('<sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>', $soapXml);
+        $this->assertStringContainsString('</sum1:SistemaInformatico>', $soapXml);
+
+        // Verify closing tags
+        $this->assertStringContainsString('</sum1:RegistroAlta>', $soapXml);
+        $this->assertStringContainsString('</sum:RegistroFactura>', $soapXml);
+        $this->assertStringContainsString('</sum:RegFactuSistemaFacturacion>', $soapXml);
+        $this->assertStringContainsString('</soapenv:Body>', $soapXml);
+        $this->assertStringContainsString('</soapenv:Envelope>', $soapXml);
     }
 }
+
+
+
+
+// $soapXml = <<<XML
+// <?xml version="1.0" encoding="UTF-8"?>
+// <soapenv:Envelope 
+//   xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+//   xmlns:sum="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd" 
+//   xmlns:sum1="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+//   <soapenv:Header/>
+//   <soapenv:Body>
+//     <sum:RegFactuSistemaFacturacion>
+//       <sum:Cabecera>
+//         <sum1:ObligadoEmision>
+//           <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+//           <sum1:NIF>A39200019</sum1:NIF>
+//         </sum1:ObligadoEmision>
+//       </sum:Cabecera>
+//       <sum:RegistroFactura>
+//         <sum1:RegistroAlta>
+//           <sum1:IDVersion>1.0</sum1:IDVersion>
+//           <sum1:IDFactura>
+//             <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
+//             <sum1:NumSerieFactura>TEST0033343444</sum1:NumSerieFactura>
+//             <sum1:FechaExpedicionFactura>09-08-2025</sum1:FechaExpedicionFactura>
+//           </sum1:IDFactura>
+//           <sum1:NombreRazonEmisor>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazonEmisor>
+//           <sum1:TipoFactura>F3</sum1:TipoFactura>
+//           <sum1:TipoRectificativa>S</sum1:TipoRectificativa>
+//           <sum1:FacturasSustituidas>
+//             <sum1:IDFacturaSustituida>
+//                 <sum1:IDEmisorFactura>A39200019</sum1:IDEmisorFactura>
+//                 <sum1:NumSerieFactura>TEST0033343443</sum1:NumSerieFactura>
+//                 <sum1:FechaExpedicionFactura>09-08-2025</sum1:FechaExpedicionFactura>
+//             </sum1:IDFacturaSustituida>
+//           </sum1:FacturasSustituidas>
+//           <sum1:ImporteRectificacion>
+//             <sum1:BaseRectificada>100.00</sum1:BaseRectificada>
+//             <sum1:CuotaRectificada>21.00</sum1:CuotaRectificada>
+//             <sum1:CuotaRecargoRectificado>0.00</sum1:CuotaRecargoRectificado>
+//           </sum1:ImporteRectificacion>
+//           <sum1:DescripcionOperacion>Rectificación por error en factura anterior</sum1:DescripcionOperacion>
+//           <sum1:Desglose>
+//             <sum1:DetalleDesglose>
+//               <sum1:Impuesto>01</sum1:Impuesto>
+//               <sum1:ClaveRegimen>01</sum1:ClaveRegimen>
+//               <sum1:CalificacionOperacion>S1</sum1:CalificacionOperacion>
+//               <sum1:TipoImpositivo>21.00</sum1:TipoImpositivo>
+//               <sum1:BaseImponibleOimporteNoSujeto>97.00</sum1:BaseImponibleOimporteNoSujeto>
+//               <sum1:CuotaRepercutida>20.37</sum1:CuotaRepercutida>
+//             </sum1:DetalleDesglose>
+//           </sum1:Desglose>
+//           <sum1:CuotaTotal>47.05</sum1:CuotaTotal>
+//           <sum1:ImporteTotal>144.05</sum1:ImporteTotal>
+//           <sum1:Encadenamiento>
+//             <sum1:PrimerRegistro>S</sum1:PrimerRegistro>
+//           </sum1:Encadenamiento>
+//           <sum1:SistemaInformatico>
+//             <sum1:NombreRazon>CERTIFICADO FISICA PRUEBAS</sum1:NombreRazon>
+//             <sum1:NIF>A39200019</sum1:NIF>
+//             <sum1:NombreSistemaInformatico>InvoiceNinja</sum1:NombreSistemaInformatico>
+//             <sum1:IdSistemaInformatico>77</sum1:IdSistemaInformatico>
+//             <sum1:Version>1.0.03</sum1:Version>
+//             <sum1:NumeroInstalacion>383</sum1:NumeroInstalacion>
+//             <sum1:TipoUsoPosibleSoloVerifactu>N</sum1:TipoUsoPosibleSoloVerifactu>
+//             <sum1:TipoUsoPosibleMultiOT>S</sum1:TipoUsoPosibleMultiOT>
+//             <sum1:IndicadorMultiplesOT>S</sum1:IndicadorMultiplesOT>
+//           </sum1:SistemaInformatico>
+//           <sum1:FechaHoraHusoGenRegistro>2025-08-09T23:18:44+02:00</sum1:FechaHoraHusoGenRegistro>
+//           <sum1:TipoHuella>01</sum1:TipoHuella>
+//           <sum1:Huella>E7558C33FE3496551F38FEB582F4879B1D9F6C073489628A8DC275E12298941F</sum1:Huella>
+//         </sum1:RegistroAlta>
+//       </sum:RegistroFactura>
+//     </sum:RegFactuSistemaFacturacion>
+//   </soapenv:Body>
+// </soapenv:Envelope>
+// XML;

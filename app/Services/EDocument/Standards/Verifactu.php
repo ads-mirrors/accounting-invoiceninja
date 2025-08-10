@@ -14,22 +14,23 @@ namespace App\Services\EDocument\Standards;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\VerifactuLog;
 use App\Helpers\Invoice\Taxer;
 use App\DataMapper\Tax\BaseRule;
 use App\Services\AbstractService;
 use App\Helpers\Invoice\InvoiceSum;
 use App\Utils\Traits\NumberFormatter;
 use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Services\EDocument\Standards\Verifactu\AeatClient;
+use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
+use App\Services\EDocument\Standards\Verifactu\RegistroModificacion;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
-use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
-use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
-use App\Services\EDocument\Standards\Verifactu\RegistroModificacion;
-use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
 use App\Services\EDocument\Standards\Verifactu\Models\InvoiceModification;
-use App\Services\EDocument\Standards\Verifactu\AeatClient;
+use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
+use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
 
 class Verifactu extends AbstractService
 {
@@ -37,6 +38,14 @@ class Verifactu extends AbstractService
     private AeatClient $aeat_client;
 
     private string $soapXml;
+    
+    //store the current document state
+    private VerifactuInvoice $_document;
+    
+    //store the current huella
+    private string $_huella;
+
+    private string $_previous_huella;
     
     public function __construct(public Invoice $invoice)
     {  
@@ -51,36 +60,66 @@ class Verifactu extends AbstractService
     public function run(): self
     {
 
-        $v_logs = $this->invoice->verifactu_logs;
+        $v_logs = $this->invoice->company->verifactu_logs;
 
         //determine the current status of the invoice.
         $document = (new RegistroAlta($this->invoice))->run()->getInvoice();
 
-        $huella = '';
+        //keep this state for logging later on successful send
+        $this->_document = $document;
 
-        nlog($v_logs->count());
+        $this->_previous_huella = '';
+
         //1. new => RegistraAlta
         if($v_logs->count() >= 1){
             $v_log = $v_logs->first();
-            $huella = $v_log->hash;
-            $document = InvoiceModification::createFromInvoice($document, $v_log->deserialize());    
+            $this->_previous_huella = $v_log->hash;
+            // $document = InvoiceModification::createFromInvoice($document, $v_log->deserialize());    
         }
 
         //3. cancelled => RegistroAnulacion
 
-        $new_huella = $this->calculateHash($document, $huella); // careful with this! we'll need to reference this later
-        $document->setHuella($new_huella);
+        $this->_huella = $this->calculateHash($document, $this->_previous_huella); // careful with this! we'll need to reference this later
+        $document->setHuella($this->_huella);
 
         $this->setEnvelope($document->toSoapEnvelope());
-
 
         return $this;
         
     }
         
+    public function getInvoice()
+    {
+        return $this->_document;
+    }
+
+    public function setInvoice(VerifactuInvoice $invoice): self
+    {
+        $this->_document = $invoice;
+        return $this;
+    }
+
     public function getEnvelope(): string
     {
         return $this->soapXml;
+    }
+    
+    public function setTestMode(): self
+    {
+        $this->aeat_client->setTestMode();
+        return $this;
+    }
+    /**
+     * setPreviousHash
+     *
+     * **only used for testing**
+     * @param  string $previous_hash
+     * @return self
+     */
+    public function setPreviousHash(string $previous_hash): self
+    {
+        $this->_previous_huella = $previous_hash;
+        return $this;
     }
 
     private function setEnvelope(string $soapXml): self
@@ -89,6 +128,20 @@ class Verifactu extends AbstractService
         return $this;
     }
 
+    public function writeLog(array $response)
+    {
+        VerifactuLog::create([
+            'invoice_id' => $this->invoice->id,
+            'company_id' => $this->invoice->company_id,
+            'invoice_number' => $this->invoice->number,
+            'date' => $this->invoice->date,
+            'hash' => $this->_huella,
+            'nif' => $this->_document->getIdFactura()->getIdEmisorFactura(),
+            'previous_hash' => $this->_previous_huella,
+            'state' => $this->_document->serialize(),
+            'response' => $response,
+        ]);
+    }
     /**
      * calculateHash
      *
@@ -98,10 +151,10 @@ class Verifactu extends AbstractService
      */
     public function calculateHash($document, string $huella): string
     {
-        nlog($document->toXmlString());
-        $idEmisorFactura = $document->getIdEmisorFactura();
-        $numSerieFactura = $document->getIdFactura();
-        $fechaExpedicionFactura = $document->getFechaExpedicionFactura();
+        
+        $idEmisorFactura = $document->getIdFactura()->getIdEmisorFactura();
+        $numSerieFactura = $document->getIdFactura()->getNumSerieFactura();
+        $fechaExpedicionFactura = $document->getIdFactura()->getFechaExpedicionFactura();
         $tipoFactura = $document->getTipoFactura();
         $cuotaTotal = $document->getCuotaTotal();
         $importeTotal = $document->getImporteTotal();
@@ -121,6 +174,14 @@ class Verifactu extends AbstractService
     
     public function send(string $soapXml): array
     {
-        return $this->aeat_client->send($soapXml);
+        nlog(["sending", $soapXml]);
+
+        $response =  $this->aeat_client->send($soapXml);
+
+        if($response['success']){
+            $this->writeLog($response);
+        }
+
+        return $response;
     }
 }

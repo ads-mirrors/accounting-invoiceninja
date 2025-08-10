@@ -14,12 +14,11 @@ class Encadenamiento extends BaseXmlModel
     {
         $root = $this->createElement($doc, 'Encadenamiento');
 
-        if ($this->primerRegistro !== null) {
-            $root->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
-        }
-
         if ($this->registroAnterior !== null) {
             $root->appendChild($this->registroAnterior->toXml($doc));
+        } else {
+            // Always include PrimerRegistro if no RegistroAnterior is set
+            $root->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
         }
 
         if ($this->registroPosterior !== null) {

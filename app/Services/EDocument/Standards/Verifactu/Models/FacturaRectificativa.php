@@ -2,7 +2,7 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
-class FacturaRectificativa
+class FacturaRectificativa extends BaseXmlModel
 {
     private string $tipoRectificativa;
     private float $baseRectificada;
@@ -57,23 +57,102 @@ class FacturaRectificativa
         return $this->facturasRectificadas;
     }
 
+    /**
+     * Set up a rectified invoice with the required information
+     * 
+     * @param string $nif The NIF of the rectified invoice
+     * @param string $numSerie The series number of the rectified invoice
+     * @param string $fecha The date of the rectified invoice
+     * @return self
+     */
+    public function setRectifiedInvoice(string $nif, string $numSerie, string $fecha): self
+    {
+        $this->facturasRectificadas = [];
+        $this->addFacturaRectificada($nif, $numSerie, $fecha);
+        return $this;
+    }
+
+    /**
+     * Set up a rectified invoice with the required information using an IDFactura object
+     * 
+     * @param IDFactura $idFactura The IDFactura object of the rectified invoice
+     * @return self
+     */
+    public function setRectifiedInvoiceFromIDFactura(IDFactura $idFactura): self
+    {
+        $this->facturasRectificadas = [];
+        $this->addFacturaRectificada(
+            $idFactura->getIdEmisorFactura(),
+            $idFactura->getNumSerieFactura(),
+            $idFactura->getFechaExpedicionFactura()
+        );
+        return $this;
+    }
+
     public function toXml(\DOMDocument $doc): \DOMElement
     {
-        $idFacturaRectificada = $doc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sf:IDFacturaRectificada');
+        $idFacturaRectificada = $this->createElement($doc, 'IDFacturaRectificada');
         
         // Add required elements in order with proper namespace
-        $idEmisorFactura = $doc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sf:IDEmisorFactura');
-        $idEmisorFactura->nodeValue = $this->facturasRectificadas[0]['nif'];
+        $idEmisorFactura = $this->createElement($doc, 'IDEmisorFactura', $this->facturasRectificadas[0]['nif']);
         $idFacturaRectificada->appendChild($idEmisorFactura);
         
-        $numSerieFactura = $doc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sf:NumSerieFactura');
-        $numSerieFactura->nodeValue = $this->facturasRectificadas[0]['numSerie'];
+        $numSerieFactura = $this->createElement($doc, 'NumSerieFactura', $this->facturasRectificadas[0]['numSerie']);
         $idFacturaRectificada->appendChild($numSerieFactura);
         
-        $fechaExpedicionFactura = $doc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sf:FechaExpedicionFactura');
-        $fechaExpedicionFactura->nodeValue = $this->facturasRectificadas[0]['fecha'];
+        $fechaExpedicionFactura = $this->createElement($doc, 'FechaExpedicionFactura', $this->facturasRectificadas[0]['fecha']);
         $idFacturaRectificada->appendChild($fechaExpedicionFactura);
 
+        // Add required fields for R1 invoices according to Verifactu standard
+        $baseRectificada = $this->createElement($doc, 'BaseRectificada', number_format($this->baseRectificada, 2, '.', ''));
+        $idFacturaRectificada->appendChild($baseRectificada);
+        
+        $cuotaRectificada = $this->createElement($doc, 'CuotaRectificada', number_format($this->cuotaRectificada, 2, '.', ''));
+        $idFacturaRectificada->appendChild($cuotaRectificada);
+        
+        // Add optional CuotaRecargoRectificado if set
+        if ($this->cuotaRecargoRectificado !== null) {
+            $cuotaRecargoRectificado = $this->createElement($doc, 'CuotaRecargoRectificado', number_format($this->cuotaRecargoRectificado, 2, '.', ''));
+            $idFacturaRectificada->appendChild($cuotaRecargoRectificado);
+        }
+
         return $idFacturaRectificada;
+    }
+
+    /**
+     * Create a FacturaRectificativa instance for a substitutive rectification
+     * 
+     * @param string $nif The NIF of the rectified invoice
+     * @param string $numSerie The series number of the rectified invoice
+     * @param string $fecha The date of the rectified invoice
+     * @return static
+     */
+    public static function createForSubstitutive(string $nif, string $numSerie, string $fecha): static
+    {
+        $instance = new static('S', 0.0, 0.0);
+        $instance->setRectifiedInvoice($nif, $numSerie, $fecha);
+        return $instance;
+    }
+
+    /**
+     * Create a FacturaRectificativa instance for a complete rectification
+     * 
+     * @param string $nif The NIF of the rectified invoice
+     * @param string $numSerie The series number of the rectified invoice
+     * @param string $fecha The date of the rectified invoice
+     * @return static
+     */
+    public static function createForComplete(string $nif, string $numSerie, string $fecha): static
+    {
+        $instance = new static('I', 0.0, 0.0);
+        $instance->setRectifiedInvoice($nif, $numSerie, $fecha);
+        return $instance;
+    }
+
+    public static function fromDOMElement(\DOMElement $element): self
+    {
+        // This method is required by BaseXmlModel but not used in this context
+        // Return a default instance
+        return new self('S', 0.0, 0.0);
     }
 } 

@@ -98,31 +98,34 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     {
         $xpath = new \DOMXPath($doc);
         $xpath->registerNamespace('si', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
+        $xpath->registerNamespace('sum1', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
         
-        // Check for modification structure
-        $modificacionFactura = $xpath->query('//si:ModificacionFactura');
-        if ($modificacionFactura->length > 0) {
+        // Check for modification structure - look for RegistroAlta with TipoFactura R1
+        $registroAlta = $xpath->query('//si:RegistroAlta | //sum1:RegistroAlta');
+        if ($registroAlta->length > 0) {
+            $tipoFactura = $xpath->query('.//si:TipoFactura | .//sum1:TipoFactura', $registroAlta->item(0));
+            if ($tipoFactura->length > 0 && $tipoFactura->item(0)->textContent === 'R1') {
+                return 'modification';
+            }
+        }
+        
+        // Check for RegistroModificacion structure (legacy)
+        $registroModificacion = $xpath->query('//si:RegistroModificacion | //sum1:RegistroModificacion');
+        if ($registroModificacion->length > 0) {
             return 'modification';
         }
         
         // Check for cancellation structure
-        $registroAnulacion = $xpath->query('//si:RegistroAnulacion');
+        $registroAnulacion = $xpath->query('//si:RegistroAnulacion | //sum1:RegistroAnulacion');
         if ($registroAnulacion->length > 0) {
             return 'cancellation';
         }
         
-        // Check for registration structure
-        $registroAlta = $xpath->query('//si:RegistroAlta');
+        // Check for registration structure (RegistroAlta with TipoFactura not R1)
         if ($registroAlta->length > 0) {
-            return 'registration';
-        }
-        
-        // Check for DatosFactura with TipoFactura R1 (rectificativa)
-        $datosFactura = $xpath->query('//si:DatosFactura');
-        if ($datosFactura->length > 0) {
-            $tipoFactura = $xpath->query('//si:TipoFactura');
-            if ($tipoFactura->length > 0 && $tipoFactura->item(0)->textContent === 'R1') {
-                return 'modification';
+            $tipoFactura = $xpath->query('.//si:TipoFactura | .//sum1:TipoFactura', $registroAlta->item(0));
+            if ($tipoFactura->length === 0 || $tipoFactura->item(0)->textContent !== 'R1') {
+                return 'registration';
             }
         }
         
@@ -136,6 +139,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     {
         $xpath = new \DOMXPath($doc);
         $xpath->registerNamespace('si', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
+        $xpath->registerNamespace('sum1', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd');
         $xpath->registerNamespace('lr', 'https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd');
         
         // Validate modification-specific structure
@@ -153,37 +157,43 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
      */
     private function validateModificationStructure(\DOMXPath $xpath): void
     {
-        // Check for required modification elements
+        // Check for RegistroAlta with TipoFactura R1
+        $registroAlta = $xpath->query('//si:RegistroAlta');
+        if ($registroAlta === false || $registroAlta->length === 0) {
+            // Try alternative namespace
+            $registroAlta = $xpath->query('//sum1:RegistroAlta');
+            if ($registroAlta === false || $registroAlta->length === 0) {
+                $this->errors['structure'][] = "RegistroAlta element not found for modification";
+                return;
+            }
+        }
+        
+        // Check for required modification elements within the RegistroAlta
         $requiredElements = [
-            '//si:DatosFactura' => 'DatosFactura',
-            '//si:TipoFactura' => 'TipoFactura',
-            '//si:ModificacionFactura' => 'ModificacionFactura',
-            '//si:TipoRectificativa' => 'TipoRectificativa',
-            '//si:FacturasRectificadas' => 'FacturasRectificadas',
-            '//si:ImporteTotal' => 'ImporteTotal'
+            './/si:TipoFactura' => 'TipoFactura',
+            './/si:DescripcionOperacion' => 'DescripcionOperacion',
+            './/si:ImporteTotal' => 'ImporteTotal'
         ];
         
         foreach ($requiredElements as $xpathQuery => $elementName) {
-            $elements = $xpath->query($xpathQuery);
-            if ($elements->length === 0) {
-                $this->errors['structure'][] = "Required modification element not found: $elementName";
+            $elements = $xpath->query($xpathQuery, $registroAlta->item(0));
+            if ($elements === false || $elements->length === 0) {
+                // Try alternative namespace
+                $altQuery = str_replace('si:', 'sum1:', $xpathQuery);
+                $elements = $xpath->query($altQuery, $registroAlta->item(0));
+                if ($elements === false || $elements->length === 0) {
+                    $this->errors['structure'][] = "Required modification element not found: $elementName";
+                }
             }
         }
         
         // Validate TipoFactura is R1 for modifications
-        $tipoFactura = $xpath->query('//si:TipoFactura');
-        if ($tipoFactura->length > 0 && $tipoFactura->item(0)->textContent !== 'R1') {
-            $this->errors['structure'][] = "TipoFactura must be 'R1' for modifications, found: " . $tipoFactura->item(0)->textContent;
+        $tipoFactura = $xpath->query('.//si:TipoFactura', $registroAlta->item(0));
+        if ($tipoFactura === false || $tipoFactura->length === 0) {
+            $tipoFactura = $xpath->query('.//sum1:TipoFactura', $registroAlta->item(0));
         }
-        
-        // Validate TipoRectificativa is valid
-        $tipoRectificativa = $xpath->query('//si:TipoRectificativa');
-        if ($tipoRectificativa->length > 0) {
-            $value = $tipoRectificativa->item(0)->textContent;
-            $validValues = ['S', 'I']; // Sustitutiva, Inmune
-            if (!in_array($value, $validValues)) {
-                $this->errors['structure'][] = "TipoRectificativa must be 'S' or 'I', found: $value";
-            }
+        if ($tipoFactura !== false && $tipoFactura->length > 0 && $tipoFactura->item(0)->textContent !== 'R1') {
+            $this->errors['structure'][] = "TipoFactura must be 'R1' for modifications, found: " . $tipoFactura->item(0)->textContent;
         }
     }
 
@@ -192,33 +202,37 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
      */
     private function validateModificationRequiredElements(\DOMXPath $xpath): void
     {
-        // Check for required elements in FacturasRectificadas
-        $facturasRectificadas = $xpath->query('//si:FacturasRectificadas');
-        if ($facturasRectificadas->length > 0) {
-            $facturas = $xpath->query('//si:FacturasRectificadas/si:Factura');
-            if ($facturas->length === 0) {
-                $this->errors['structure'][] = "At least one Factura is required in FacturasRectificadas";
+        // Check for required elements in FacturasRectificadas - look for both si: and sf: namespaces
+        $facturasRectificadas = $xpath->query('//si:FacturasRectificadas | //sf:FacturasRectificadas');
+        if ($facturasRectificadas !== false && $facturasRectificadas->length > 0) {
+            $idFacturasRectificadas = $xpath->query('//si:FacturasRectificadas/si:IDFacturaRectificada | //sf:FacturasRectificadas/sf:IDFacturaRectificada');
+            if ($idFacturasRectificadas === false || $idFacturasRectificadas->length === 0) {
+                $this->errors['structure'][] = "At least one IDFacturaRectificada is required in FacturasRectificadas";
             } else {
-                // Validate each factura has required elements
-                foreach ($facturas as $index => $factura) {
-                    $numSerie = $xpath->query('.//si:NumSerieFacturaEmisor', $factura);
-                    $fechaExpedicion = $xpath->query('.//si:FechaExpedicionFacturaEmisor', $factura);
+                // Validate each IDFacturaRectificada has required elements
+                foreach ($idFacturasRectificadas as $index => $idFacturaRectificada) {
+                    $idEmisorFactura = $xpath->query('.//si:IDEmisorFactura | .//sf:IDEmisorFactura', $idFacturaRectificada);
+                    $numSerieFactura = $xpath->query('.//si:NumSerieFactura | .//sf:NumSerieFactura', $idFacturaRectificada);
+                    $fechaExpedicionFactura = $xpath->query('.//si:FechaExpedicionFactura | .//sf:FechaExpedicionFactura', $idFacturaRectificada);
                     
-                    if ($numSerie->length === 0) {
-                        $this->errors['structure'][] = "NumSerieFacturaEmisor is required in Factura " . ($index + 1);
+                    if ($idEmisorFactura === false || $idEmisorFactura->length === 0) {
+                        $this->errors['structure'][] = "IDEmisorFactura is required in IDFacturaRectificada " . ($index + 1);
                     }
-                    if ($fechaExpedicion->length === 0) {
-                        $this->errors['structure'][] = "FechaExpedicionFacturaEmisor is required in Factura " . ($index + 1);
+                    if ($numSerieFactura === false || $numSerieFactura->length === 0) {
+                        $this->errors['structure'][] = "NumSerieFactura is required in IDFacturaRectificada " . ($index + 1);
+                    }
+                    if ($fechaExpedicionFactura === false || $fechaExpedicionFactura->length === 0) {
+                        $this->errors['structure'][] = "FechaExpedicionFactura is required in IDFacturaRectificada " . ($index + 1);
                     }
                 }
             }
         }
         
-        // Check for tax information
-        $impuestos = $xpath->query('//si:Impuestos');
-        if ($impuestos->length > 0) {
-            $detalleIVA = $xpath->query('//si:Impuestos/si:DetalleIVA');
-            if ($detalleIVA->length === 0) {
+        // Check for tax information - look for both si: and sf: namespaces
+        $impuestos = $xpath->query('//si:Impuestos | //sf:Impuestos');
+        if ($impuestos !== false && $impuestos->length > 0) {
+            $detalleIVA = $xpath->query('//si:Impuestos/si:DetalleIVA | //sf:Impuestos/sf:DetalleIVA');
+            if ($detalleIVA === false || $detalleIVA->length === 0) {
                 $this->errors['structure'][] = "DetalleIVA is required when Impuestos is present";
             }
         }

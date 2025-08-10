@@ -23,7 +23,7 @@ class WSTest extends TestCase
         parent::setUp();
 
         // if (config('ninja.is_travis')) {
-            $this->markTestSkipped('Deliberately skipping Verifactu tests - otherwise we will break the hash chain !!!');
+            // $this->markTestSkipped('Deliberately skipping Verifactu tests - otherwise we will break the hash chain !!!');
         // }
 
     }
@@ -246,7 +246,7 @@ $invoice->setDestinatarios($destinatarios);
         // Generate current timestamp in the correct format
         // $currentTimestamp = date('Y-m-d\TH:i:sP');
                 
-        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
+        $currentTimestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
         $invoice_number = 'TEST0033343443';
         $previous_invoice_number = 'TEST0033343442';
         $invoice_date = '02-07-2025';
@@ -352,6 +352,8 @@ $invoice->setDestinatarios($destinatarios);
         $signingService = new \App\Services\EDocument\Standards\Verifactu\Signing\SigningService($soapXml, file_get_contents($keyPath), file_get_contents($certPath));
         $soapXml = $signingService->sign();
 
+        nlog($soapXml);
+        
         // Try direct HTTP approach instead of SOAP client
         $response = Http::withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',

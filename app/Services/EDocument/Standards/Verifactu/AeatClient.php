@@ -16,7 +16,7 @@ use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
 
 class AeatClient
 {
-    private string $base_url;
+    private string $base_url = 'https://www1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP';
 
     private string $sandbox_url = 'https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP';
 
@@ -32,8 +32,8 @@ class AeatClient
      */
     private function init(): self
     {
-        $this->certificate = $this->certificate ?? file_get_contents(config('services.verifactu.certificate'));
-        $this->ssl_key = $this->ssl_key ?? file_get_contents(config('services.verifactu.ssl_key'));
+        $this->certificate = $this->certificate ?? config('services.verifactu.certificate');
+        $this->ssl_key = $this->ssl_key ?? config('services.verifactu.ssl_key');
 
         return $this;
     }

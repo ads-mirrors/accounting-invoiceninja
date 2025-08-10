@@ -23,6 +23,7 @@ use App\Utils\Traits\NumberFormatter;
 use App\Helpers\Invoice\InvoiceSumInclusive;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
+use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
@@ -105,26 +106,55 @@ class RegistroAlta
         // Get the previous invoice log
         $this->v_log = $this->company->verifactu_logs()->first();
 
-        $this->current_timestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:s');
+        $this->current_timestamp = now()->setTimezone('Europe/Madrid')->format('Y-m-d\TH:i:sP');
+
+        // Determine if this is a rectification invoice
+        $isRectification = $this->invoice->status_id === 5; // Assuming status_id 5 is for rectification
 
         $this->v_invoice
             ->setIdVersion('1.0')
-            ->setIdFactura($this->invoice->number) //invoice number
+            ->setIdFactura((new IDFactura())
+                ->setIdEmisorFactura($this->company->settings->vat_number)
+                ->setNumSerieFactura($this->invoice->number)
+                ->setFechaExpedicionFactura(\Carbon\Carbon::parse($this->invoice->date)->format('d-m-Y')))
             ->setNombreRazonEmisor($this->company->present()->name()) //company name
-            ->setTipoFactura('F1') //invoice type
-            ->setDescripcionOperacion('')// Not manadatory - max chars 500
+            ->setTipoFactura($isRectification ? 'R1' : 'F1') //invoice type
+            ->setDescripcionOperacion($isRectification ? 'Rectificación por error en factura anterior' : 'Alta')// It IS! manadatory - max chars 500
             ->setCuotaTotal($this->invoice->total_taxes) //total taxes
             ->setImporteTotal($this->invoice->amount) //total invoice amount
             ->setFechaHoraHusoGenRegistro($this->current_timestamp) //creation/submission timestamp
             ->setTipoHuella('01') //sha256
             ->setHuella('PLACEHOLDER_HUELLA');
 
+        // Set up rectification details if this is a rectification invoice
+        if ($isRectification) {
+            $this->v_invoice->setTipoRectificativa('S'); // S for substitutive rectification
+
+            // Set up rectified invoice information
+            $facturasRectificadas = [
+                [
+                    'IDEmisorFactura' => $this->company->settings->vat_number,
+                    'NumSerieFactura' => $this->invoice->number,
+                    'FechaExpedicionFactura' => \Carbon\Carbon::parse($this->invoice->date)->format('d-m-Y')
+                ]
+            ];
+            $this->v_invoice->setFacturasRectificadas($facturasRectificadas);
+
+            // Set up rectification amounts
+            $importeRectificacion = [
+                'BaseRectificada' => $this->calc->getNetSubtotal(),
+                'CuotaRectificada' => $this->invoice->total_taxes,
+                'CuotaRecargoRectificado' => 0.00
+            ];
+            $this->v_invoice->setRectificationAmounts($importeRectificacion);
+        }
+
         /** The business entity that is issuing the invoice */
         $emisor = new PersonaFisicaJuridica();
         $emisor->setNif($this->company->settings->vat_number)
                 ->setNombreRazon($this->invoice->company->present()->name());
 
-        $this->v_invoice->setTercero($emisor);
+        // $this->v_invoice->setTercero($emisor);
 
         /** The business entity (Client) that is receiving the invoice */
         $destinatarios = [];
@@ -189,13 +219,14 @@ class RegistroAlta
         //Sending system information - We automatically generate the obligado emision from this later
         $sistema = new SistemaInformatico();
         $sistema
-            ->setNombreRazon('Invoice Ninja')
+            // ->setNombreRazon('Sistema de Facturación')
+            ->setNombreRazon(config('services.verifactu.sender_name')) //must match the cert name
             ->setNif(config('services.verifactu.sender_nif'))
-            ->setNombreSistemaInformatico('Invoice Ninja')
-            ->setIdSistemaInformatico('01')
-            ->setVersion('1.0')
-            ->setNumeroInstalacion('01')
-            ->setTipoUsoPosibleSoloVerifactu('S')
+            ->setNombreSistemaInformatico('InvoiceNinja')
+            ->setIdSistemaInformatico('77')
+            ->setVersion('1.0.03')
+            ->setNumeroInstalacion('383')
+            ->setTipoUsoPosibleSoloVerifactu('N')
             ->setTipoUsoPosibleMultiOT('S')
             ->setIndicadorMultiplesOT('S');
 

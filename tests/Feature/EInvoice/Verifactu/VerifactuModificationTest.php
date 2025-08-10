@@ -62,7 +62,10 @@ class VerifactuModificationTest extends TestCase
         $modification = new RegistroModificacion();
         $modification
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('01-01-2025'))
             ->setNombreRazonEmisor('CERTIFICADO FISICA PRUEBAS')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Test invoice modification')
@@ -102,7 +105,7 @@ class VerifactuModificationTest extends TestCase
         $modification->setEncadenamiento($encadenamiento);
 
         $this->assertEquals('1.0', $modification->getIdVersion());
-        $this->assertEquals('TEST0033343436', $modification->getIdFactura());
+        $this->assertEquals('TEST0033343436', $modification->getIdFactura()->getNumSerieFactura());
         $this->assertEquals('CERTIFICADO FISICA PRUEBAS', $modification->getNombreRazonEmisor());
         $this->assertEquals('F1', $modification->getTipoFactura());
         $this->assertEquals(21.00, $modification->getCuotaTotal());
@@ -136,7 +139,10 @@ class VerifactuModificationTest extends TestCase
         $originalInvoice = new Invoice();
         $originalInvoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('01-01-2025'))
             ->setNombreRazonEmisor('Original Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Original invoice')
@@ -168,7 +174,10 @@ class VerifactuModificationTest extends TestCase
         $modifiedInvoice = new Invoice();
         $modifiedInvoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('02-01-2025'))
             ->setNombreRazonEmisor('Modified Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Modified invoice')
@@ -231,7 +240,10 @@ class VerifactuModificationTest extends TestCase
         $originalInvoice = new Invoice();
         $originalInvoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('01-01-2025'))
             ->setNombreRazonEmisor('Original Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Original invoice')
@@ -263,7 +275,10 @@ class VerifactuModificationTest extends TestCase
         $modifiedInvoice = new Invoice();
         $modifiedInvoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('02-01-2025'))
             ->setNombreRazonEmisor('Modified Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Modified invoice')
@@ -290,16 +305,17 @@ class VerifactuModificationTest extends TestCase
         $soapXml = $modification->toSoapEnvelope();
 
         $this->assertStringContainsString('soapenv:Envelope', $soapXml);
-        $this->assertStringContainsString('lr:RegFactuSistemaFacturacion', $soapXml);
-        $this->assertStringContainsString('si:DatosFactura', $soapXml);
-        $this->assertStringContainsString('si:TipoFactura>R1</si:TipoFactura>', $soapXml);
-        $this->assertStringContainsString('si:ModificacionFactura', $soapXml);
-        $this->assertStringContainsString('si:TipoRectificativa>S</si:TipoRectificativa>', $soapXml);
-        $this->assertStringContainsString('si:FacturasRectificadas', $soapXml);
+        $this->assertStringContainsString('sum:RegFactuSistemaFacturacion', $soapXml);
+        $this->assertStringContainsString('sum1:RegistroAlta', $soapXml);
+        $this->assertStringContainsString('sum1:TipoFactura>R1</sum1:TipoFactura>', $soapXml);
+        $this->assertStringContainsString('sum1:TipoRectificativa>S</sum1:TipoRectificativa>', $soapXml);
         $this->assertStringContainsString('TEST0033343436', $soapXml);
         $this->assertStringContainsString('Modified invoice', $soapXml);
         $this->assertStringContainsString('42', $soapXml);
         $this->assertStringContainsString('242', $soapXml);
+
+        // Verify that TipoRectificativa is present for R1 invoices
+        $this->assertStringContainsString('sum1:TipoRectificativa>S</sum1:TipoRectificativa>', $soapXml);
 
         $validXml = $modification->toSoapEnvelope();
 
@@ -317,13 +333,75 @@ class VerifactuModificationTest extends TestCase
 
     }
 
+    public function test_tipo_rectificativa_only_added_for_r1_invoices()
+    {
+        // Create original invoice
+        $originalInvoice = new Invoice();
+        $originalInvoice
+            ->setIdVersion('1.0')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('01-01-2025'))
+            ->setNombreRazonEmisor('Original Company')
+            ->setTipoFactura('F1')
+            ->setDescripcionOperacion('Original invoice')
+            ->setCuotaTotal(21.00)
+            ->setImporteTotal(121.00)
+            ->setFechaHoraHusoGenRegistro('2025-01-01T12:00:00')
+            ->setTipoHuella('01')
+            ->setHuella('ORIGINAL_HASH');
+
+        // Add emitter to original invoice
+        $emisor = new PersonaFisicaJuridica();
+        $emisor
+            ->setNif('99999910G')
+            ->setRazonSocial('Original Company');
+        $originalInvoice->setTercero($emisor);
+
+        // Create modified invoice with F1 type (not R1)
+        $modifiedInvoice = new Invoice();
+        $modifiedInvoice
+            ->setIdVersion('1.0')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('02-01-2025'))
+            ->setNombreRazonEmisor('Modified Company')
+            ->setTipoFactura('F1') // F1 instead of R1
+            ->setDescripcionOperacion('Modified invoice')
+            ->setCuotaTotal(42.00)
+            ->setImporteTotal(242.00)
+            ->setFechaHoraHusoGenRegistro('2025-01-02T12:00:00')
+            ->setTipoHuella('01')
+            ->setHuella('MODIFIED_HASH');
+
+        // Create modification
+        $modification = InvoiceModification::createFromInvoice($originalInvoice, $modifiedInvoice);
+
+        // Generate SOAP envelope
+        $soapXml = $modification->toSoapEnvelope();
+
+        // For InvoiceModification, TipoFactura is always R1 and TipoRectificativa is always S
+        // This is because InvoiceModification is specifically for rectifying invoices
+        $this->assertStringContainsString('sum1:TipoFactura>R1</sum1:TipoFactura>', $soapXml);
+        $this->assertStringContainsString('sum1:TipoRectificativa>S</sum1:TipoRectificativa>', $soapXml);
+        
+        // Verify that the original F1 type from modifiedInvoice is not used in the SOAP envelope
+        // because InvoiceModification always converts to R1
+        $this->assertStringNotContainsString('sum1:TipoFactura>F1</sum1:TipoFactura>', $soapXml);
+    }
+
     public function test_invoice_can_create_modification()
     {
         // Create original invoice
         $originalInvoice = new Invoice();
         $originalInvoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('01-01-2025'))
             ->setNombreRazonEmisor('Original Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Original invoice')
@@ -355,7 +433,10 @@ class VerifactuModificationTest extends TestCase
         $modifiedInvoice = new Invoice();
         $modifiedInvoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('02-01-2025'))
             ->setNombreRazonEmisor('Modified Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Modified invoice')
@@ -414,7 +495,10 @@ if (!empty($errors)) {
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('01-01-2025'))
             ->setNombreRazonEmisor('Test Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Test invoice')
@@ -444,7 +528,10 @@ if (!empty($errors)) {
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('01-01-2025'))
             ->setNombreRazonEmisor('Test Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Test invoice')
@@ -489,7 +576,10 @@ if (!empty($errors)) {
         $originalInvoice = new Invoice();
         $originalInvoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('01-01-2025'))
             ->setNombreRazonEmisor('Original Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Original invoice')
@@ -521,7 +611,10 @@ if (!empty($errors)) {
         $modifiedInvoice = new Invoice();
         $modifiedInvoice
             ->setIdVersion('1.0')
-            ->setIdFactura('TEST0033343436')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('99999910G')
+                ->setNumSerieFactura('TEST0033343436')
+                ->setFechaExpedicionFactura('02-01-2025'))
             ->setNombreRazonEmisor('Modified Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Modified invoice')
@@ -546,26 +639,19 @@ if (!empty($errors)) {
 
         // Generate SOAP envelope
         $soapXml = $modification->toSoapEnvelope();
-
+nlog($soapXml);
         // Verify the XML structure matches AEAT requirements
         $this->assertStringContainsString('<soapenv:Envelope', $soapXml);
         $this->assertStringContainsString('<soapenv:Header', $soapXml);
         $this->assertStringContainsString('<soapenv:Body', $soapXml);
         $this->assertStringContainsString('<lr:RegFactuSistemaFacturacion', $soapXml);
-        $this->assertStringContainsString('<si:DatosFactura', $soapXml);
+        $this->assertStringContainsString('<si:RegistroAlta', $soapXml);
         $this->assertStringContainsString('<si:TipoFactura>R1</si:TipoFactura>', $soapXml);
-        $this->assertStringContainsString('<si:ModificacionFactura', $soapXml);
-        $this->assertStringContainsString('<si:TipoRectificativa>S</si:TipoRectificativa>', $soapXml);
-        $this->assertStringContainsString('<si:FacturasRectificadas', $soapXml);
         
-        // Verify cancellation structure
-        $this->assertStringContainsString('<si:Factura', $soapXml);
-        $this->assertStringContainsString('<si:NumSerieFacturaEmisor>TEST0033343436</si:NumSerieFacturaEmisor>', $soapXml);
-        
-        // Verify modification structure
+        // Verify modification structure (no cancellation block needed)
         $this->assertStringContainsString('<si:DescripcionOperacion>Modified invoice</si:DescripcionOperacion>', $soapXml);
         $this->assertStringContainsString('<si:ImporteTotal>242</si:ImporteTotal>', $soapXml);
-        $this->assertStringContainsString('<si:CuotaRepercutida>42</si:CuotaRepercutida>', $soapXml);
+        $this->assertStringContainsString('<si:CuotaTotal>42</si:CuotaTotal>', $soapXml);
 
         $validXml = $modification->toSoapEnvelope();
 

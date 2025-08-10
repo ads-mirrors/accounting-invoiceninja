@@ -11,7 +11,7 @@ namespace App\Services\EDocument\Standards\Verifactu\Models;
 class RegistroModificacion extends BaseXmlModel
 {
     protected string $idVersion;
-    protected string $idFactura;
+    protected IDFactura $idFactura;
     protected ?string $refExterna = null;
     protected string $nombreRazonEmisor;
     protected ?string $subsanacion = null;
@@ -79,12 +79,12 @@ class RegistroModificacion extends BaseXmlModel
         return $this;
     }
 
-    public function getIdFactura(): string
+    public function getIdFactura(): IDFactura
     {
         return $this->idFactura;
     }
 
-    public function setIdFactura(string $idFactura): self
+    public function setIdFactura(IDFactura $idFactura): self
     {
         $this->idFactura = $idFactura;
         return $this;
@@ -359,9 +359,6 @@ class RegistroModificacion extends BaseXmlModel
 
     public function setFechaHoraHusoGenRegistro(string $fechaHoraHusoGenRegistro): self
     {
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $fechaHoraHusoGenRegistro)) {
-            throw new \InvalidArgumentException('Invalid date format for FechaHoraHusoGenRegistro. Expected format: YYYY-MM-DDThh:mm:ss');
-        }
         $this->fechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
         return $this;
     }
@@ -464,7 +461,7 @@ class RegistroModificacion extends BaseXmlModel
         // Create IDFactura structure
         $idFactura = $this->createElement($doc, 'IDFactura');
         $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->tercero?->getNif() ?? 'B12345678'));
-        $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->idFactura));
+        $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->idFactura->getNumSerieFactura()));
         $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', $this->getFechaExpedicionFactura()));
         $root->appendChild($idFactura);
         
@@ -482,46 +479,50 @@ class RegistroModificacion extends BaseXmlModel
             $root->appendChild($this->createElement($doc, 'RechazoPrevio', $this->rechazoPrevio));
         }
         
-        $root->appendChild($this->createElement($doc, 'TipoFactura', $this->tipoFactura));
+        // Create DatosFactura element
+        $datosFactura = $this->createElement($doc, 'DatosFactura');
+        
+        // Add TipoFactura to DatosFactura
+        $datosFactura->appendChild($this->createElement($doc, 'TipoFactura', $this->tipoFactura));
 
         if ($this->tipoFactura === 'R1' && $this->facturaRectificativa !== null) {
-            $root->appendChild($this->createElement($doc, 'TipoRectificativa', $this->facturaRectificativa->getTipoRectificativa()));
+            $datosFactura->appendChild($this->createElement($doc, 'TipoRectificativa', $this->facturaRectificativa->getTipoRectificativa()));
             $facturasRectificadas = $this->createElement($doc, 'FacturasRectificadas');
             $facturasRectificadas->appendChild($this->facturaRectificativa->toXml($doc));
-            $root->appendChild($facturasRectificadas);
+            $datosFactura->appendChild($facturasRectificadas);
             if ($this->importeRectificacion !== null) {
-                $root->appendChild($this->createElement($doc, 'ImporteRectificacion', (string)$this->importeRectificacion));
+                $datosFactura->appendChild($this->createElement($doc, 'ImporteRectificacion', (string)$this->importeRectificacion));
             }
         }
 
         if ($this->fechaOperacion) {
-            $root->appendChild($this->createElement($doc, 'FechaOperacion', date('d-m-Y', strtotime($this->fechaOperacion))));
+            $datosFactura->appendChild($this->createElement($doc, 'FechaOperacion', date('d-m-Y', strtotime($this->fechaOperacion))));
         }
 
-        $root->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->descripcionOperacion));
+        $datosFactura->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->descripcionOperacion));
 
         if ($this->cupon !== null) {
-            $root->appendChild($this->createElement($doc, 'Cupon', $this->cupon));
+            $datosFactura->appendChild($this->createElement($doc, 'Cupon', $this->cupon));
         }
 
         if ($this->facturaSimplificadaArt7273 !== null) {
-            $root->appendChild($this->createElement($doc, 'FacturaSimplificadaArt7273', $this->facturaSimplificadaArt7273));
+            $datosFactura->appendChild($this->createElement($doc, 'FacturaSimplificadaArt7273', $this->facturaSimplificadaArt7273));
         }
 
         if ($this->facturaSinIdentifDestinatarioArt61d !== null) {
-            $root->appendChild($this->createElement($doc, 'FacturaSinIdentifDestinatarioArt61d', $this->facturaSinIdentifDestinatarioArt61d));
+            $datosFactura->appendChild($this->createElement($doc, 'FacturaSinIdentifDestinatarioArt61d', $this->facturaSinIdentifDestinatarioArt61d));
         }
 
         if ($this->macrodato !== null) {
-            $root->appendChild($this->createElement($doc, 'Macrodato', $this->macrodato));
+            $datosFactura->appendChild($this->createElement($doc, 'Macrodato', $this->macrodato));
         }
 
         if ($this->emitidaPorTerceroODestinatario !== null) {
-            $root->appendChild($this->createElement($doc, 'EmitidaPorTerceroODestinatario', $this->emitidaPorTerceroODestinatario));
+            $datosFactura->appendChild($this->createElement($doc, 'EmitidaPorTerceroODestinatario', $this->emitidaPorTerceroODestinatario));
         }
 
         if ($this->tercero !== null) {
-            $root->appendChild($this->tercero->toXml($doc));
+            $datosFactura->appendChild($this->tercero->toXml($doc));
         }
 
         if ($this->destinatarios !== null && count($this->destinatarios) > 0) {
@@ -545,44 +546,47 @@ class RegistroModificacion extends BaseXmlModel
                 
                 $destinatariosElement->appendChild($idDestinatarioElement);
             }
-            $root->appendChild($destinatariosElement);
+            $datosFactura->appendChild($destinatariosElement);
         }
 
-        // Add Desglose
-        if ($this->desglose !== null) {
-            $root->appendChild($this->desglose->toXml($doc));
+        // Add Desglose to DatosFactura
+        if ($this->desglose) {
+            $desgloseElement = $this->desglose->toXml($doc);
+            $datosFactura->appendChild($desgloseElement);
         }
 
-        // Add CuotaTotal and ImporteTotal
-        $root->appendChild($this->createElement($doc, 'CuotaTotal', (string)$this->cuotaTotal));
-        $root->appendChild($this->createElement($doc, 'ImporteTotal', (string)$this->importeTotal));
+        // Add CuotaTotal to DatosFactura
+        $datosFactura->appendChild($this->createElement($doc, 'CuotaTotal', (string)$this->cuotaTotal));
 
-        // Add Encadenamiento
-        if ($this->encadenamiento !== null) {
-            $root->appendChild($this->encadenamiento->toXml($doc));
+        // Add ImporteTotal to DatosFactura
+        $datosFactura->appendChild($this->createElement($doc, 'ImporteTotal', (string)$this->importeTotal));
+
+        // Add Encadenamiento to DatosFactura
+        if ($this->encadenamiento) {
+            $encadenamientoElement = $this->encadenamiento->toXml($doc);
+            $datosFactura->appendChild($encadenamientoElement);
         }
 
-        // Add SistemaInformatico
-        if ($this->sistemaInformatico !== null) {
-            $root->appendChild($this->sistemaInformatico->toXml($doc));
+        // Add SistemaInformatico to DatosFactura
+        if ($this->sistemaInformatico) {
+            $sistemaInformaticoElement = $this->sistemaInformatico->toXml($doc);
+            $datosFactura->appendChild($sistemaInformaticoElement);
         }
 
-        // Add FechaHoraHusoGenRegistro
-        $root->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->fechaHoraHusoGenRegistro));
+        // Add FechaHoraHusoGenRegistro to DatosFactura
+        $datosFactura->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->fechaHoraHusoGenRegistro));
 
-        // Add NumRegistroAcuerdoFacturacion
-        if ($this->numRegistroAcuerdoFacturacion !== null) {
-            $root->appendChild($this->createElement($doc, 'NumRegistroAcuerdoFacturacion', $this->numRegistroAcuerdoFacturacion));
+        // Add TipoHuella and Huella to DatosFactura
+        $datosFactura->appendChild($this->createElement($doc, 'TipoHuella', $this->tipoHuella));
+        $datosFactura->appendChild($this->createElement($doc, 'Huella', $this->huella));
+
+        // Add DatosFactura to root
+        $root->appendChild($datosFactura);
+
+        // Add optional Signature
+        if ($this->signature !== null) {
+            $root->appendChild($this->createDsElement($doc, 'Signature', $this->signature));
         }
-
-        // Add IdAcuerdoSistemaInformatico
-        if ($this->idAcuerdoSistemaInformatico !== null) {
-            $root->appendChild($this->createElement($doc, 'IdAcuerdoSistemaInformatico', $this->idAcuerdoSistemaInformatico));
-        }
-
-        // Add TipoHuella and Huella
-        $root->appendChild($this->createElement($doc, 'TipoHuella', $this->tipoHuella));
-        $root->appendChild($this->createElement($doc, 'Huella', $this->huella));
 
         return $root;
     }

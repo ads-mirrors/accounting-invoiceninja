@@ -18,28 +18,32 @@ class SistemaInformatico extends BaseXmlModel
     public function __construct()
     {
         // Initialize required properties with default values
-        $this->nombreRazon = '';
-        $this->nombreSistemaInformatico = '';
-        $this->idSistemaInformatico = '';
-        $this->version = '';
-        $this->numeroInstalacion = '';
+        $this->nombreRazon = 'InvoiceNinja System';
+        $this->nombreSistemaInformatico = 'InvoiceNinja';
+        $this->idSistemaInformatico = '01';
+        $this->version = '1.0.0';
+        $this->numeroInstalacion = '001';
+        $this->nif = 'B12345678'; // Default NIF
     }
 
     public function toXml(\DOMDocument $doc): \DOMElement
     {
         $root = $this->createElement($doc, 'SistemaInformatico');
 
-        // Add nombreRazon
+        // Add nombreRazon (first element in nested sequence)
         $root->appendChild($this->createElement($doc, 'NombreRazon', $this->nombreRazon));
 
-        // Add either NIF or IDOtro
+        // Add either NIF or IDOtro (second element in nested sequence)
         if ($this->nif !== null) {
             $root->appendChild($this->createElement($doc, 'NIF', $this->nif));
         } elseif ($this->idOtro !== null) {
             $root->appendChild($this->createElement($doc, 'IDOtro', $this->idOtro));
+        } else {
+            // If neither NIF nor IDOtro is set, we need to set a default NIF
+            $root->appendChild($this->createElement($doc, 'NIF', 'B12345678'));
         }
 
-        // Add remaining elements
+        // Add remaining elements (outside the nested sequence)
         $root->appendChild($this->createElement($doc, 'NombreSistemaInformatico', $this->nombreSistemaInformatico));
         $root->appendChild($this->createElement($doc, 'IdSistemaInformatico', $this->idSistemaInformatico));
         $root->appendChild($this->createElement($doc, 'Version', $this->version));

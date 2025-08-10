@@ -41,6 +41,8 @@ class VerifactuLog extends Model
         'response' => 'object',
     ];
 
+    protected $guarded = ['id'];
+
     public function company()
     {
         return $this->belongsTo(Company::class);

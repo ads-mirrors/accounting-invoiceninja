@@ -18,8 +18,16 @@ use Illuminate\Support\Facades\Log;
 
 class Invoice extends BaseXmlModel implements XmlModelInterface
 {
+    // Constants for invoice types
+    public const TIPO_FACTURA_NORMAL = 'F1';
+    public const TIPO_FACTURA_RECTIFICATIVA = 'R1';
+    
+    // Constants for rectification types
+    public const TIPO_RECTIFICATIVA_COMPLETA = 'I';      // Rectificación por diferencias (Complete rectification)
+    public const TIPO_RECTIFICATIVA_SUSTITUTIVA = 'S';   // Rectificación sustitutiva (Substitutive rectification)
+    
     protected string $idVersion;
-    protected string $idFactura;
+    protected IDFactura $idFactura;
     protected ?string $refExterna = null;
     protected string $nombreRazonEmisor;
     protected ?string $subsanacion = null;
@@ -61,7 +69,8 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $this->desglose = new Desglose();
         $this->encadenamiento = new Encadenamiento();
         $this->sistemaInformatico = new SistemaInformatico();
-        $this->tipoFactura = 'F1'; // Default to normal invoice
+        $this->idFactura = new IDFactura();
+        $this->tipoFactura = self::TIPO_FACTURA_NORMAL; // Default to normal invoice
     }
 
     // Getters and setters for all properties
@@ -87,14 +96,37 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         return $this;
     }
 
-    public function getIdFactura(): string
+    public function getIdFactura(): IDFactura
     {
         return $this->idFactura;
     }
 
-    public function setIdFactura(string $idFactura): self
+    public function setIdFactura(IDFactura $idFactura): self
     {
         $this->idFactura = $idFactura;
+        return $this;
+    }
+
+    // Convenience methods for backward compatibility
+    public function getNumSerieFactura(): string
+    {
+        return $this->idFactura->getNumSerieFactura();
+    }
+
+    public function setNumSerieFactura(string $numSerieFactura): self
+    {
+        $this->idFactura->setNumSerieFactura($numSerieFactura);
+        return $this;
+    }
+
+    public function getIdEmisorFactura(): string
+    {
+        return $this->idFactura->getIdEmisorFactura();
+    }
+
+    public function setIdEmisorFactura(string $idEmisorFactura): self
+    {
+        $this->idFactura->setIdEmisorFactura($idEmisorFactura);
         return $this;
     }
 
@@ -196,14 +228,27 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         return $this;
     }
 
-    public function getImporteRectificacion(): ?float
+    public function getImporteRectificacion(): ?array
     {
         return $this->importeRectificacion;
     }
 
     public function setImporteRectificacion(?float $importeRectificacion): self
     {
+        if ($importeRectificacion !== null) {
+            // Validate that the amount is within reasonable bounds
+            if (abs($importeRectificacion) > 999999999.99) {
+                throw new \InvalidArgumentException('ImporteRectificacion must be between -999999999.99 and 999999999.99');
+            }
+        }
+        
         $this->importeRectificacion = $importeRectificacion;
+        return $this;
+    }
+
+    public function setRectificationAmounts(array $amounts): self
+    {
+        $this->importeRectificacion = $amounts;
         return $this;
     }
 
@@ -284,10 +329,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         return $this;
     }
 
-    public function getIdEmisorFactura(): string
-    {
-        return $this->tercero->getNif();
-    }
+
 
     public function getDestinatarios(): ?array
     {
@@ -398,9 +440,9 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
 
     public function setFechaHoraHusoGenRegistro(string $fechaHoraHusoGenRegistro): self
     {
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $fechaHoraHusoGenRegistro)) {
-            throw new \InvalidArgumentException('Invalid date format for FechaHoraHusoGenRegistro. Expected format: YYYY-MM-DDThh:mm:ss');
-        }
+        // if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $fechaHoraHusoGenRegistro)) {
+        //     throw new \InvalidArgumentException('Invalid date format for FechaHoraHusoGenRegistro. Expected format: YYYY-MM-DDThh:mm:ss');
+        // }
         $this->fechaHoraHusoGenRegistro = $fechaHoraHusoGenRegistro;
         return $this;
     }
@@ -468,6 +510,278 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     public function setFacturaRectificativa(FacturaRectificativa $facturaRectificativa): void
     {
         $this->facturaRectificativa = $facturaRectificativa;
+    }
+
+    /**
+     * Helper method to create a rectificative invoice with proper configuration
+     * 
+     * @param string $tipoRectificativa The type of rectification ('I' for complete, 'S' for substitutive)
+     * @param string $descripcionOperacion Description of the rectification operation
+     * @return self
+     */
+    public function makeRectificative(string $tipoRectificativa, string $descripcionOperacion = 'Rectificación de factura'): self
+    {
+        $this->setTipoFactura(self::TIPO_FACTURA_RECTIFICATIVA)
+             ->setTipoRectificativa($tipoRectificativa)
+             ->setDescripcionOperacion($descripcionOperacion);
+        
+        return $this;
+    }
+
+    /**
+     * Helper method to create a complete rectification invoice
+     * 
+     * @param string $descripcionOperacion Description of the rectification operation
+     * @return self
+     */
+    public function makeCompleteRectification(string $descripcionOperacion = 'Rectificación completa de factura'): self
+    {
+        return $this->makeRectificative(self::TIPO_RECTIFICATIVA_COMPLETA, $descripcionOperacion);
+    }
+
+    /**
+     * Helper method to create a substitutive rectification invoice
+     * 
+     * @param string $descripcionOperacion Description of the rectification operation
+     * @return self
+     */
+    public function makeSubstitutiveRectification(string $descripcionOperacion = 'Rectificación sustitutiva de factura'): self
+    {
+        // For substitutive rectifications, we need to ensure ImporteRectificacion is set
+        // This method will throw an error if ImporteRectificacion is not set
+        $this->setTipoFactura(self::TIPO_FACTURA_RECTIFICATIVA)
+             ->setTipoRectificativa(self::TIPO_RECTIFICATIVA_SUSTITUTIVA)
+             ->setDescripcionOperacion($descripcionOperacion);
+        
+        // Validate that ImporteRectificacion is set for substitutive rectifications
+        if ($this->importeRectificacion === null) {
+            throw new \InvalidArgumentException('ImporteRectificacion must be set for substitutive rectifications. Use makeSubstitutiveRectificationWithAmount() or setImporteRectificacion() before calling this method.');
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Helper method to create a rectificative invoice with ImporteRectificacion
+     * 
+     * @param string $tipoRectificativa The type of rectification ('I' for complete, 'S' for substitutive)
+     * @param float $importeRectificacion The rectification amount
+     * @param string $descripcionOperacion Description of the rectification operation
+     * @return self
+     */
+    public function makeRectificativeWithAmount(string $tipoRectificativa, float $importeRectificacion, string $descripcionOperacion = 'Rectificación de factura'): self
+    {
+        $this->setTipoFactura(self::TIPO_FACTURA_RECTIFICATIVA)
+             ->setTipoRectificativa($tipoRectificativa)
+             ->setImporteRectificacion($importeRectificacion)
+             ->setDescripcionOperacion($descripcionOperacion);
+        
+        return $this;
+    }
+
+    /**
+     * Helper method to create a complete rectification invoice with ImporteRectificacion
+     * 
+     * @param float $importeRectificacion The rectification amount
+     * @param string $descripcionOperacion Description of the rectification operation
+     * @return self
+     */
+    public function makeCompleteRectificationWithAmount(float $importeRectificacion, string $descripcionOperacion = 'Rectificación completa de factura'): self
+    {
+        return $this->makeRectificativeWithAmount(self::TIPO_RECTIFICATIVA_COMPLETA, $importeRectificacion, $descripcionOperacion);
+    }
+
+    /**
+     * Helper method to create a substitutive rectification invoice with ImporteRectificacion
+     * 
+     * @param float $importeRectificacion The rectification amount
+     * @param string $descripcionOperacion Description of the rectification operation
+     * @return self
+     */
+    public function makeSubstitutiveRectificationWithAmount(float $importeRectificacion, string $descripcionOperacion = 'Rectificación sustitutiva de factura'): self
+    {
+        return $this->makeRectificativeWithAmount(self::TIPO_RECTIFICATIVA_SUSTITUTIVA, $importeRectificacion, $descripcionOperacion);
+    }
+
+    /**
+     * Helper method to create a substitutive rectification invoice that automatically calculates ImporteRectificacion
+     * from the difference between the original and new amounts
+     * 
+     * @param float $originalAmount The original invoice amount
+     * @param float $newAmount The new invoice amount
+     * @param string $descripcionOperacion Description of the rectification operation
+     * @return self
+     */
+    public function makeSubstitutiveRectificationFromDifference(float $originalAmount, float $newAmount, string $descripcionOperacion = 'Rectificación sustitutiva de factura'): self
+    {
+        $importeRectificacion = $newAmount - $originalAmount;
+        
+        return $this->makeRectificativeWithAmount(self::TIPO_RECTIFICATIVA_SUSTITUTIVA, $importeRectificacion, $descripcionOperacion);
+    }
+
+    /**
+     * Calculate and set ImporteRectificacion based on the difference between amounts
+     * 
+     * @param float $originalAmount The original invoice amount
+     * @param float $newAmount The new invoice amount
+     * @return self
+     */
+    public function calculateImporteRectificacion(float $originalAmount, float $newAmount): self
+    {
+        $this->importeRectificacion = $newAmount - $originalAmount;
+        return $this;
+    }
+
+
+
+    /**
+     * Validate that the invoice is properly configured for its type
+     * 
+     * @return bool
+     * @throws \InvalidArgumentException
+     */
+    public function validate(): bool
+    {
+        // Basic validation for all invoice types
+        if (empty($this->idVersion)) {
+            throw new \InvalidArgumentException('IDVersion is required');
+        }
+        
+        if (empty($this->nombreRazonEmisor)) {
+            throw new \InvalidArgumentException('NombreRazonEmisor is required');
+        }
+        
+        if (empty($this->descripcionOperacion)) {
+            throw new \InvalidArgumentException('DescripcionOperacion is required');
+        }
+        
+        if ($this->cuotaTotal === null || $this->cuotaTotal < 0) {
+            throw new \InvalidArgumentException('CuotaTotal must be a positive number');
+        }
+        
+        if ($this->importeTotal === null || $this->importeTotal < 0) {
+            throw new \InvalidArgumentException('ImporteTotal must be a positive number');
+        }
+        
+        // Specific validation for R1 invoices
+        if ($this->tipoFactura === self::TIPO_FACTURA_RECTIFICATIVA) {
+            if ($this->tipoRectificativa === null) {
+                throw new \InvalidArgumentException('TipoRectificativa is required for R1 invoices');
+            }
+            
+            if (!in_array($this->tipoRectificativa, [self::TIPO_RECTIFICATIVA_COMPLETA, self::TIPO_RECTIFICATIVA_SUSTITUTIVA])) {
+                throw new \InvalidArgumentException('TipoRectificativa must be either "I" (complete) or "S" (substitutive)');
+            }
+            
+            // For substitutive rectifications, ImporteRectificacion is mandatory
+            if ($this->tipoRectificativa === self::TIPO_RECTIFICATIVA_SUSTITUTIVA && $this->importeRectificacion === null) {
+                throw new \InvalidArgumentException('ImporteRectificacion is mandatory for substitutive rectifications (TipoRectificativa = S)');
+            }
+        }
+        
+        return true;
+    }
+
+    /**
+     * Set up the rectified invoice information for R1 invoices
+     * 
+     * @param string $nif The NIF of the rectified invoice
+     * @param string $numSerie The series number of the rectified invoice
+     * @param string $fecha The date of the rectified invoice
+     * @return self
+     */
+    public function setRectifiedInvoice(string $nif, string $numSerie, string $fecha): self
+    {
+        if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA) {
+            throw new \InvalidArgumentException('This method can only be used for R1 invoices');
+        }
+        
+        if ($this->facturaRectificativa === null) {
+            // Create FacturaRectificativa with proper values for the rectified amounts
+            // For R1 invoices, we need to set the base and tax amounts that were rectified
+            $baseRectificada = $this->importeTotal ?? 0.0; // Use current invoice total as base
+            $cuotaRectificada = $this->cuotaTotal ?? 0.0;  // Use current invoice tax as tax
+            
+            $this->facturaRectificativa = new FacturaRectificativa(
+                $this->tipoRectificativa ?? 'S', // Default to substitutive if not set
+                $baseRectificada,
+                $cuotaRectificada
+            );
+        }
+        
+        $this->facturaRectificativa->setRectifiedInvoice($nif, $numSerie, $fecha);
+        return $this;
+    }
+
+    /**
+     * Set up the rectified invoice information for R1 invoices using an IDFactura object
+     * 
+     * @param IDFactura $idFactura The IDFactura object of the rectified invoice
+     * @return self
+     */
+    public function setRectifiedInvoiceFromIDFactura(IDFactura $idFactura): self
+    {
+        if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA) {
+            throw new \InvalidArgumentException('This method can only be used for R1 invoices');
+        }
+        
+        if ($this->facturaRectificativa === null) {
+            // Create FacturaRectificativa with proper values for the rectified amounts
+            // For R1 invoices, we need to set the base and tax amounts that were rectified
+            $baseRectificada = $this->importeTotal ?? 0.0; // Use current invoice total as base
+            $cuotaRectificada = $this->cuotaTotal ?? 0.0;  // Use current invoice tax as tax
+            
+            $this->facturaRectificativa = new FacturaRectificativa(
+                $this->tipoRectificativa ?? 'S', // Default to substitutive if not set
+                $baseRectificada,
+                $cuotaRectificada
+            );
+        }
+        
+        $this->facturaRectificativa->setRectifiedInvoiceFromIDFactura($idFactura);
+        return $this;
+    }
+
+    /**
+     * Set the rectified amounts for R1 invoices
+     * 
+     * @param float $baseRectificada The base amount that was rectified
+     * @param float $cuotaRectificada The tax amount that was rectified
+     * @param float|null $cuotaRecargoRectificado The surcharge amount that was rectified (optional)
+     * @return self
+     */
+    public function setRectifiedAmounts(float $baseRectificada, float $cuotaRectificada, ?float $cuotaRecargoRectificado = null): self
+    {
+        if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA) {
+            throw new \InvalidArgumentException('This method can only be used for R1 invoices');
+        }
+        
+        // Store the existing rectified invoice information if available
+        $existingRectifiedInvoice = null;
+        if ($this->facturaRectificativa !== null) {
+            $existingRectifiedInvoice = $this->facturaRectificativa->getFacturasRectificadas();
+        }
+        
+        // Create new FacturaRectificativa with the specified amounts
+        $this->facturaRectificativa = new FacturaRectificativa(
+            $this->tipoRectificativa ?? 'S',
+            $baseRectificada,
+            $cuotaRectificada,
+            $cuotaRecargoRectificado
+        );
+        
+        // Restore the rectified invoice information if it existed
+        if ($existingRectifiedInvoice !== null && !empty($existingRectifiedInvoice)) {
+            foreach ($existingRectifiedInvoice as $rectifiedInvoice) {
+                $this->facturaRectificativa->addFacturaRectificada(
+                    $rectifiedInvoice['nif'],
+                    $rectifiedInvoice['numSerie'],
+                    $rectifiedInvoice['fecha']
+                );
+            }
+        }
+        
+        return $this;
     }
 
     public function setPrivateKeyPath(string $path): self
@@ -618,77 +932,67 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $root->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' . parent::XML_NAMESPACE_PREFIX, parent::XML_NAMESPACE);
         $root->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:' . parent::XML_DS_NAMESPACE_PREFIX, parent::XML_DS_NAMESPACE);
 
-        // Add required elements in exact order according to schema
+        // Add required elements in EXACT order according to the expected XML structure for R1 invoices
+        
+        // 1. IDVersion
         $root->appendChild($this->createElement($doc, 'IDVersion', $this->idVersion));
 
-        // Create IDFactura structure
-        $idFactura = $this->createElement($doc, 'IDFactura');
-        $idFactura->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->tercero?->getNif() ?? 'B12345678'));
-        $idFactura->appendChild($this->createElement($doc, 'NumSerieFactura', $this->idFactura));
-        $idFactura->appendChild($this->createElement($doc, 'FechaExpedicionFactura', $this->getFechaExpedicionFactura()));
-        $root->appendChild($idFactura);
+        // 2. IDFactura using the complex object
+        $root->appendChild($this->idFactura->toXml($doc));
         
-        if ($this->refExterna !== null) {
-            $root->appendChild($this->createElement($doc, 'RefExterna', $this->refExterna));
-        }
-        
+        // 3. NombreRazonEmisor
         $root->appendChild($this->createElement($doc, 'NombreRazonEmisor', $this->nombreRazonEmisor));
         
-        if ($this->subsanacion !== null) {
-            $root->appendChild($this->createElement($doc, 'Subsanacion', $this->subsanacion));
-        }
-        
-        if ($this->rechazoPrevio !== null) {
-            $root->appendChild($this->createElement($doc, 'RechazoPrevio', $this->rechazoPrevio));
-        }
-        
+        // 4. TipoFactura
         $root->appendChild($this->createElement($doc, 'TipoFactura', $this->tipoFactura));
 
-        if ($this->tipoFactura === 'R1' && $this->facturaRectificativa !== null) {
-            $root->appendChild($this->createElement($doc, 'TipoRectificativa', $this->facturaRectificativa->getTipoRectificativa()));
-            $facturasRectificadas = $this->createElement($doc, 'FacturasRectificadas');
-            $facturasRectificadas->appendChild($this->facturaRectificativa->toXml($doc));
-            $root->appendChild($facturasRectificadas);
-            if ($this->importeRectificacion !== null) {
-                $root->appendChild($this->createElement($doc, 'ImporteRectificacion', (string)$this->importeRectificacion));
+        // 5. TipoRectificativa (only for R1 invoices)
+        if ($this->tipoFactura === self::TIPO_FACTURA_RECTIFICATIVA && $this->tipoRectificativa !== null) {
+            $root->appendChild($this->createElement($doc, 'TipoRectificativa', $this->tipoRectificativa));
+        }
+
+        // 6. FacturasRectificadas (only for R1 invoices)
+        if ($this->tipoFactura === self::TIPO_FACTURA_RECTIFICATIVA && $this->facturasRectificadas !== null) {
+            $facturasRectificadasElement = $this->createElement($doc, 'FacturasRectificadas');
+            
+            foreach ($this->facturasRectificadas as $facturaRectificada) {
+                $idFacturaRectificadaElement = $this->createElement($doc, 'IDFacturaRectificada');
+                
+                // Add IDEmisorFactura
+                $idFacturaRectificadaElement->appendChild($this->createElement($doc, 'IDEmisorFactura', $facturaRectificada['IDEmisorFactura']));
+                
+                // Add NumSerieFactura
+                $idFacturaRectificadaElement->appendChild($this->createElement($doc, 'NumSerieFactura', $facturaRectificada['NumSerieFactura']));
+                
+                // Add FechaExpedicionFactura
+                $idFacturaRectificadaElement->appendChild($this->createElement($doc, 'FechaExpedicionFactura', $facturaRectificada['FechaExpedicionFactura']));
+                
+                $facturasRectificadasElement->appendChild($idFacturaRectificadaElement);
             }
+            
+            $root->appendChild($facturasRectificadasElement);
         }
 
-        if ($this->fechaOperacion) {
-            $root->appendChild($this->createElement($doc, 'FechaOperacion', date('d-m-Y', strtotime($this->fechaOperacion))));
+        // 7. ImporteRectificacion (only for R1 invoices with proper structure)
+        if ($this->tipoFactura === self::TIPO_FACTURA_RECTIFICATIVA && $this->importeRectificacion !== null) {
+            $importeRectificacionElement = $this->createElement($doc, 'ImporteRectificacion');
+            
+            // Add BaseRectificada
+            $importeRectificacionElement->appendChild($this->createElement($doc, 'BaseRectificada', number_format($this->importeRectificacion['BaseRectificada'] ?? 0, 2, '.', '')));
+            
+            // Add CuotaRectificada
+            $importeRectificacionElement->appendChild($this->createElement($doc, 'CuotaRectificada', number_format($this->importeRectificacion['CuotaRectificada'] ?? 0, 2, '.', '')));
+            
+            // Add CuotaRecargoRectificado (always present for R1)
+            $importeRectificacionElement->appendChild($this->createElement($doc, 'CuotaRecargoRectificado', number_format($this->importeRectificacion['CuotaRecargoRectificado'] ?? 0, 2, '.', '')));
+            
+            $root->appendChild($importeRectificacionElement);
         }
 
+        // 8. DescripcionOperacion
         $root->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->descripcionOperacion));
 
-        if ($this->cupon !== null) {
-            $root->appendChild($this->createElement($doc, 'Cupon', $this->cupon));
-        }
-
-        if ($this->facturaSimplificadaArt7273 !== null) {
-            $root->appendChild($this->createElement($doc, 'FacturaSimplificadaArt7273', $this->facturaSimplificadaArt7273));
-        }
-
-        if ($this->facturaSinIdentifDestinatarioArt61d !== null) {
-            $root->appendChild($this->createElement($doc, 'FacturaSinIdentifDestinatarioArt61d', $this->facturaSinIdentifDestinatarioArt61d));
-        }
-
-        if ($this->macrodato !== null) {
-            $root->appendChild($this->createElement($doc, 'Macrodato', $this->macrodato));
-        }
-
-        if ($this->emitidaPorTerceroODestinatario !== null) {
-            $root->appendChild($this->createElement($doc, 'EmitidaPorTerceroODestinatario', $this->emitidaPorTerceroODestinatario));
-        }
-
-        // Add Tercero if set
-        if ($this->tercero !== null) {
-            $terceroElement = $this->createElement($doc, 'Tercero');
-            $terceroElement->appendChild($this->createElement($doc, 'NombreRazon', $this->tercero->getRazonSocial()));
-            $terceroElement->appendChild($this->createElement($doc, 'NIF', $this->tercero->getNif()));
-            $root->appendChild($terceroElement);
-        }
-
-        // Add Destinatarios if set
+        // 9. Destinatarios (if set)
         if ($this->destinatarios !== null && count($this->destinatarios) > 0) {
             $destinatariosElement = $this->createElement($doc, 'Destinatarios');
             foreach ($this->destinatarios as $destinatario) {
@@ -697,56 +1001,60 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
                 // Add NombreRazon
                 $idDestinatarioElement->appendChild($this->createElement($doc, 'NombreRazon', $destinatario->getNombreRazon()));
                 
-                // Add either NIF or IDOtro
-                if ($destinatario->getNif() !== null) {
-                    $idDestinatarioElement->appendChild($this->createElement($doc, 'NIF', $destinatario->getNif()));
-                } else {
-                    $idOtroElement = $this->createElement($doc, 'IDOtro');
-                    $idOtroElement->appendChild($this->createElement($doc, 'CodigoPais', $destinatario->getPais()));
-                    $idOtroElement->appendChild($this->createElement($doc, 'IDType', $destinatario->getTipoIdentificacion()));
-                    $idOtroElement->appendChild($this->createElement($doc, 'ID', $destinatario->getIdOtro()));
-                    $idDestinatarioElement->appendChild($idOtroElement);
-                }
+                // Add NIF
+                $idDestinatarioElement->appendChild($this->createElement($doc, 'NIF', $destinatario->getNif()));
                 
                 $destinatariosElement->appendChild($idDestinatarioElement);
             }
             $root->appendChild($destinatariosElement);
         }
 
-        // Add Desglose
+        // 10. Desglose
         if ($this->desglose !== null) {
             $root->appendChild($this->desglose->toXml($doc));
         }
 
-        // Add CuotaTotal and ImporteTotal
+        // 11. CuotaTotal
         $root->appendChild($this->createElement($doc, 'CuotaTotal', (string)$this->cuotaTotal));
+
+        // 12. ImporteTotal
         $root->appendChild($this->createElement($doc, 'ImporteTotal', (string)$this->importeTotal));
 
-        // Add Encadenamiento
+        // 13. Encadenamiento (always present for R1 invoices)
         if ($this->encadenamiento !== null) {
             $root->appendChild($this->encadenamiento->toXml($doc));
+        } else {
+            // Create default Encadenamiento if not set
+            $encadenamientoElement = $this->createElement($doc, 'Encadenamiento');
+            $encadenamientoElement->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
+            $root->appendChild($encadenamientoElement);
         }
 
-        // Add SistemaInformatico
+        // 14. SistemaInformatico (always present for R1 invoices)
         if ($this->sistemaInformatico !== null) {
             $root->appendChild($this->sistemaInformatico->toXml($doc));
+        } else {
+            // Create default SistemaInformatico if not set
+            $sistemaInformaticoElement = $this->createElement($doc, 'SistemaInformatico');
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'NombreRazon', $this->nombreRazonEmisor));
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'NIF', $this->idEmisorFactura));
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'NombreSistemaInformatico', 'InvoiceNinja'));
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'IdSistemaInformatico', '77'));
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'Version', '1.0.03'));
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'NumeroInstalacion', '383'));
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'TipoUsoPosibleSoloVerifactu', 'N'));
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'TipoUsoPosibleMultiOT', 'S'));
+            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'IndicadorMultiplesOT', 'S'));
+            $root->appendChild($sistemaInformaticoElement);
         }
 
-        // Add FechaHoraHusoGenRegistro
+        // 15. FechaHoraHusoGenRegistro
         $root->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->fechaHoraHusoGenRegistro));
 
-        // Add NumRegistroAcuerdoFacturacion
-        if ($this->numRegistroAcuerdoFacturacion !== null) {
-            $root->appendChild($this->createElement($doc, 'NumRegistroAcuerdoFacturacion', $this->numRegistroAcuerdoFacturacion));
-        }
-
-        // Add IdAcuerdoSistemaInformatico
-        if ($this->idAcuerdoSistemaInformatico !== null) {
-            $root->appendChild($this->createElement($doc, 'IdAcuerdoSistemaInformatico', $this->idAcuerdoSistemaInformatico));
-        }
-
-        // Add TipoHuella and Huella
+        // 16. TipoHuella
         $root->appendChild($this->createElement($doc, 'TipoHuella', $this->tipoHuella));
+
+        // 17. Huella
         $root->appendChild($this->createElement($doc, 'Huella', $this->huella));
 
         return $root;
@@ -754,25 +1062,8 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
 
     public function toXmlString(): string
     {
-        // Validate required fields first, outside of try-catch
-        $requiredFields = [
-            'idVersion' => 'IDVersion',
-            'idFactura' => 'NumSerieFactura',
-            'nombreRazonEmisor' => 'NombreRazonEmisor',
-            'tipoFactura' => 'TipoFactura',
-            'descripcionOperacion' => 'DescripcionOperacion',
-            'cuotaTotal' => 'CuotaTotal',
-            'importeTotal' => 'ImporteTotal',
-            'fechaHoraHusoGenRegistro' => 'FechaHoraHusoGenRegistro',
-            'tipoHuella' => 'TipoHuella',
-            'huella' => 'Huella'
-        ];
-
-        foreach ($requiredFields as $property => $fieldName) {
-            if (!isset($this->$property)) {
-                throw new \InvalidArgumentException("Missing required field: $fieldName");
-            }
-        }
+        // Validate the invoice configuration first
+        $this->validate();
 
         // Enable user error handling for XML operations
         $previousErrorSetting = libxml_use_internal_errors(true);
@@ -849,8 +1140,8 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $cabecera->appendChild($obligadoEmision);
 
         // Add ObligadoEmision content
-        $obligadoEmision->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sum1:NombreRazon', $this->sistemaInformatico->getNombreRazon()));
-        $obligadoEmision->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sum1:NIF', $this->sistemaInformatico->getNif()));
+        $obligadoEmision->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sum1:NombreRazon', $this->getNombreRazonEmisor()));
+        $obligadoEmision->appendChild($soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sum1:NIF', $this->getIdEmisorFactura()));
 
         // Create RegistroFactura
         $registroFactura = $soapDoc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroLR.xsd', 'sum:RegistroFactura');
@@ -941,10 +1232,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         // Parse IDFactura
         $idFacturaElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDFactura')->item(0);
         if ($idFacturaElement) {
-            $numSerieFacturaElement = $idFacturaElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'NumSerieFactura')->item(0);
-            if ($numSerieFacturaElement) {
-                $invoice->setIdFactura($numSerieFacturaElement->nodeValue);
-            }
+            $invoice->setIdFactura(IDFactura::fromDOMElement($idFacturaElement));
         }
 
         // Parse RefExterna
@@ -1169,9 +1457,11 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     {
         $cancellation = new RegistroAnulacion();
         $cancellation
-            ->setIdEmisorFactura($this->getTercero()?->getNif() ?? 'B12345678')
-            ->setNumSerieFactura($this->getIdFactura())
-            ->setFechaExpedicionFactura($this->getFechaExpedicionFactura())
+            ->setSistemaInformatico($this->getSistemaInformatico())
+        ->setNombreRazonEmisor($this->getNombreRazonEmisor())
+            ->setIdEmisorFactura($this->getIdFactura()->getIdEmisorFactura())
+            ->setNumSerieFactura($this->getIdFactura()->getNumSerieFactura())
+            ->setFechaExpedicionFactura($this->getIdFactura()->getFechaExpedicionFactura())
             ->setMotivoAnulacion('1'); // Sustitución por otra factura
 
         return $cancellation;

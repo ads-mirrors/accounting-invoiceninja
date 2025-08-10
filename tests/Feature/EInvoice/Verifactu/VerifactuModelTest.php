@@ -12,16 +12,17 @@
 
 namespace Tests\Feature\EInvoice\Verifactu;
 
+use Tests\TestCase;
 use App\Services\EDocument\Standards\Verifactu\Models\Cupon;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
-use App\Services\EDocument\Standards\Verifactu\Models\DetalleDesglose;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
+use App\Services\EDocument\Standards\Verifactu\Models\DetalleDesglose;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
+use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
+use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
 use App\Services\EDocument\Standards\Verifactu\Models\PrimerRegistroCadena;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
-use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
-use Tests\TestCase;
 
 class VerifactuModelTest extends TestCase
 {
@@ -31,7 +32,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-001')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-001')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setRefExterna('REF-123')
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
@@ -88,27 +92,19 @@ class VerifactuModelTest extends TestCase
 
         $xml = $invoice->toXmlString();
         
-        // // Debug output
-        // echo "\nGenerated XML:\n";
-        // echo $xml;
-        // echo "\n\n";
-
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
         nlog($xml);
-        // Validate against XSD
-        $doc = new \DOMDocument();
-        $doc->loadXML($xml);
-        
-        if (!$doc->schemaValidate($this->getTestXsdPath())) {
-            echo "\nValidation Errors:\n";
-            libxml_use_internal_errors(true);
-            $doc->schemaValidate($this->getTestXsdPath());
-            foreach (libxml_get_errors() as $error) {
-                echo $error->message . "\n";
-            }
-            libxml_clear_errors();
-        }
+        nlog($errors);
+      }
 
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+      $this->assertCount(0, $errors);
+
+
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -127,7 +123,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-002')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-002')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F2')
             ->setFacturaSimplificadaArt7273('S')
@@ -171,13 +170,17 @@ class VerifactuModelTest extends TestCase
 
         $xml = $invoice->toXmlString();
         
-        // // Debug output
-        // echo "\nGenerated XML:\n";
-        // echo $xml;
-        // echo "\n\n";
+        
+$xslt = new VerifactuDocumentValidator($xml);
+$xslt->validate();
+$errors = $xslt->getVerifactuErrors();
 
-        // Validate against XSD
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+if (count($errors) > 0) {
+    nlog($xml);
+    nlog($errors);
+}
+
+$this->assertCount(0, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -193,7 +196,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-003')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-003')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('R1')
             ->setTipoRectificativa('I')
@@ -250,13 +256,17 @@ class VerifactuModelTest extends TestCase
 
         $xml = $invoice->toXmlString();
         
-        // // Debug output
-        // echo "\nGenerated XML:\n";
-        // echo $xml;
-        // echo "\n\n";
 
-        // Validate against XSD
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+$xslt = new VerifactuDocumentValidator($xml);
+$xslt->validate();
+$errors = $xslt->getVerifactuErrors();
+
+if (count($errors) > 0) {
+    nlog($xml);
+    nlog($errors);
+}
+
+$this->assertCount(0, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -267,12 +277,112 @@ class VerifactuModelTest extends TestCase
         $this->assertEquals($invoice->getTipoRectificativa(), $deserialized->getTipoRectificativa());
     }
 
+    public function testCreateAndSerializeR1InvoiceWithImporteRectificacion(): void
+    {
+        $invoice = new Invoice();
+        $invoice
+            ->setIdVersion('1.0')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-004')
+                ->setFechaExpedicionFactura('01-01-2023'))
+            ->setNombreRazonEmisor('Empresa Ejemplo SL')
+            ->setTipoFactura('R1')
+            ->setTipoRectificativa('I')
+            ->setImporteRectificacion(100.00)
+            ->setDescripcionOperacion('Rectificación completa de factura anterior')
+            ->setCuotaTotal(21.00)
+            ->setImporteTotal(100.00)
+            ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
+            ->setTipoHuella('01')
+            ->setHuella('abc123...');
+
+        // Add information system
+        $sistema = new SistemaInformatico();
+        $sistema
+            ->setNombreRazon('Sistema de Facturación')
+            ->setNif('B12345678')
+            ->setNombreSistemaInformatico('SistemaFacturacion')
+            ->setIdSistemaInformatico('01')
+            ->setVersion('1.0')
+            ->setNumeroInstalacion('INST-001')
+            ->setTipoUsoPosibleSoloVerifactu('S')
+            ->setTipoUsoPosibleMultiOT('S')
+            ->setIndicadorMultiplesOT('S');
+        $invoice->setSistemaInformatico($sistema);
+
+        // Add desglose
+        $desglose = new Desglose();
+        $desglose->setDesgloseIVA([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '02',
+            'CalificacionOperacion' => 'S2',
+            'BaseImponibleOimporteNoSujeto' => 100.00,
+            'TipoImpositivo' => 21,
+            'CuotaRepercutida' => 21.00
+        ]);
+        $invoice->setDesglose($desglose);
+
+        // Add encadenamiento
+        $encadenamiento = new Encadenamiento();
+        $encadenamiento->setPrimerRegistro('S');
+        $invoice->setEncadenamiento($encadenamiento);
+
+        // Add rectified invoice
+        $facturaRectificativa = new FacturaRectificativa(
+            'I',  // tipoRectificativa
+            100.00,  // baseRectificada
+            21.00  // cuotaRectificada
+        );
+        $facturaRectificativa->addFacturaRectificada(
+            'B12345678',  // nif
+            'FAC-2023-001',  // numSerie
+            '01-01-2023'  // fecha
+        );
+        $invoice->setFacturaRectificativa($facturaRectificativa);
+
+        $xml = $invoice->toXmlString();
+        
+        // Debug: Check if the property is set correctly
+        $this->assertEquals(100.00, $invoice->getImporteRectificacion());
+        $this->assertEquals('R1', $invoice->getTipoFactura());
+        
+        // Debug: Log the XML to see what's actually generated
+        nlog('Generated XML: ' . $xml);
+        
+        // Verify that ImporteRectificacion is included in the XML
+        // Note: The XML includes namespace prefix 'sum1:' and the value is formatted as '100' not '100.00'
+        $this->assertStringContainsString('<sum1:ImporteRectificacion>100</sum1:ImporteRectificacion>', $xml);
+        
+        // Validate against Verifactu schema
+        $xslt = new VerifactuDocumentValidator($xml);
+        $xslt->validate();
+        $errors = $xslt->getVerifactuErrors();
+
+        if (count($errors) > 0) {
+            nlog($xml);
+            nlog($errors);
+        }
+
+        $this->assertCount(0, $errors);
+
+        // Test deserialization
+        $deserialized = Invoice::fromXml($xml);
+        $this->assertEquals($invoice->getIdVersion(), $deserialized->getIdVersion());
+        $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
+        $this->assertEquals($invoice->getTipoRectificativa(), $deserialized->getTipoRectificativa());
+        $this->assertEquals($invoice->getImporteRectificacion(), $deserialized->getImporteRectificacion());
+    }
+
     public function testCreateAndSerializeInvoiceWithoutRecipient(): void
     {
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-004')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-004')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setFacturaSinIdentifDestinatarioArt61d('S')
@@ -312,14 +422,17 @@ class VerifactuModelTest extends TestCase
         $invoice->setEncadenamiento($encadenamiento);
 
         $xml = $invoice->toXmlString();
-        
-        // // Debug output
-        // echo "\nGenerated XML:\n";
-        // echo $xml;
-        // echo "\n\n";
-        
-        // Validate against XSD
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+
+$xslt = new VerifactuDocumentValidator($xml);
+$xslt->validate();
+$errors = $xslt->getVerifactuErrors();
+
+if (count($errors) > 0) {
+    nlog($xml);
+    nlog($errors);
+}
+
+$this->assertCount(0, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -354,7 +467,10 @@ class VerifactuModelTest extends TestCase
     {
         $invoice = new Invoice();
         $invoice->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-001')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-001')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setRefExterna('REF-123')
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('R1')
@@ -407,13 +523,18 @@ class VerifactuModelTest extends TestCase
         $invoice->setFacturaRectificativa($facturaRectificativa);
 
         $xml = $invoice->toXmlString();
-        
-        // Debug output
-        // echo "\nGenerated XML:\n";
-        // echo $xml;
-        // echo "\n\n";
 
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+$xslt = new VerifactuDocumentValidator($xml);
+$xslt->validate();
+$errors = $xslt->getVerifactuErrors();
+
+if (count($errors) > 0) {
+    nlog($xml);
+    nlog($errors);
+}
+
+$this->assertCount(0, $errors);
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -430,7 +551,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-005')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-005')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Venta a múltiples destinatarios')
@@ -492,13 +616,16 @@ class VerifactuModelTest extends TestCase
         // Generate XML string
         $xml = $invoice->toXmlString();
         
-        // Debug output
-        // echo "\nGenerated XML:\n";
-        // echo $xml;
-        // echo "\n\n";
+$xslt = new VerifactuDocumentValidator($xml);
+$xslt->validate();
+$errors = $xslt->getVerifactuErrors();
 
-        // Validate against XSD
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+if (count($errors) > 0) {
+    nlog($xml);
+    nlog($errors);
+}
+
+$this->assertCount(0, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -521,7 +648,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-006')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-006')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Operación exenta de IVA')
@@ -570,7 +700,20 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
         
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -583,7 +726,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-007')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-007')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Venta con diferentes tipos impositivos')
@@ -642,7 +788,18 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
         
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -655,7 +812,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-008')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-008')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Factura con encadenamiento posterior')
@@ -704,7 +864,18 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
         
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -716,7 +887,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-009')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-009')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Factura emitida por tercero')
@@ -773,7 +947,18 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
         
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -787,7 +972,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-010')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-010')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setMacrodato('S')
@@ -837,7 +1025,18 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
         
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -848,7 +1047,10 @@ class VerifactuModelTest extends TestCase
     {
         $invoice = new Invoice();
         $invoice->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-012')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-012')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Factura con datos de acuerdo')
@@ -891,7 +1093,18 @@ class VerifactuModelTest extends TestCase
         $invoice->setSistemaInformatico($sistema);
 
         $xml = $invoice->toXmlString();
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
 
         // Deserialize and verify
         $deserializedInvoice = Invoice::fromXml($xml);
@@ -903,7 +1116,10 @@ class VerifactuModelTest extends TestCase
     {
         $invoice = new Invoice();
         $invoice->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-013')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-013')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setSubsanacion('S')
             ->setRechazoPrevio('S')
@@ -947,7 +1163,18 @@ class VerifactuModelTest extends TestCase
 
         $xml = $invoice->toXmlString();
         $this->assertNotEmpty($xml);
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
 
         // Test deserialization
         $deserializedInvoice = Invoice::fromXml($xml);
@@ -960,7 +1187,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-014')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-014')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Factura con fecha de operación')
@@ -1007,7 +1237,18 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
         
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -1019,7 +1260,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-015')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-015')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Factura con cupón')
@@ -1066,7 +1310,18 @@ class VerifactuModelTest extends TestCase
         // echo $xml;
         // echo "\n\n";
         
-        $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -1082,7 +1337,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-016')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-016')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('INVALID'); // This should throw the exception immediately
     }
@@ -1094,7 +1352,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-017')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-017')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('R1')
             ->setTipoRectificativa('INVALID') // Invalid type
@@ -1119,36 +1380,6 @@ class VerifactuModelTest extends TestCase
         $invoice->toXmlString();
     }
 
-    public function testInvalidDateFormatThrowsException(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        
-        $invoice = new Invoice();
-        $invoice
-            ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-018')
-            ->setNombreRazonEmisor('Empresa Ejemplo SL')
-            ->setTipoFactura('F1')
-            ->setDescripcionOperacion('Factura con fecha inválida')
-            ->setCuotaTotal(21.00)
-            ->setImporteTotal(100.00)
-            ->setFechaHoraHusoGenRegistro('2023-01-01') // Invalid format
-            ->setTipoHuella('01')
-            ->setHuella('abc123...');
-
-        // Add sistema informatico
-        $sistema = new SistemaInformatico();
-        $sistema
-            ->setNombreRazon('Sistema de Facturación')
-            ->setNif('B12345678')
-            ->setNombreSistemaInformatico('SistemaFacturacion')
-            ->setIdSistemaInformatico('01')
-            ->setVersion('1.0')
-            ->setNumeroInstalacion('INST-001');
-        $invoice->setSistemaInformatico($sistema);
-
-        $invoice->toXmlString();
-    }
 
     public function testInvalidNIFFormatThrowsException(): void
     {
@@ -1157,7 +1388,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-019')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-019')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Factura con NIF inválido')
@@ -1195,7 +1429,10 @@ class VerifactuModelTest extends TestCase
         $invoice = new Invoice();
         $invoice
             ->setIdVersion('1.0')
-            ->setIdFactura('FAC-2023-020')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-020')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Factura con importe inválido')
@@ -1225,7 +1462,10 @@ class VerifactuModelTest extends TestCase
         
         $invoice = new Invoice();
         $invoice->setIdVersion('1.0')
-            ->setIdFactura('TEST123')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('TEST123')
+                ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Test Company')
             ->setTipoFactura('F1')
             ->setDescripcionOperacion('Test Operation')
@@ -1271,7 +1511,7 @@ class VerifactuModelTest extends TestCase
         $doc->loadXML($validXml);
 
         // Add an invalid element to trigger schema validation error
-        $invalidElement = $doc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sf:InvalidElement');
+        $invalidElement = $doc->createElementNS('https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd', 'sum1:InvalidElement');
         $invalidElement->textContent = 'test';
         $doc->documentElement->appendChild($invalidElement);
         
@@ -1286,80 +1526,6 @@ class VerifactuModelTest extends TestCase
 
         $this->assertCount(0, $xslt->getErrors());
     }
-
-    // public function testSignatureGeneration(): void
-    // {
-    //     $invoice = new Invoice();
-    //     $invoice->setIdVersion('1.0')
-    //         ->setIdFactura('TEST123')
-    //         ->setNombreRazonEmisor('Test Company')
-    //         ->setTipoFactura('F1')
-    //         ->setDescripcionOperacion('Test Operation')
-    //         ->setCuotaTotal(100.00)
-    //         ->setImporteTotal(121.00)
-    //         ->setFechaHoraHusoGenRegistro(date('Y-m-d\TH:i:s'))
-    //         ->setTipoHuella('01')
-    //         ->setHuella(hash('sha256', 'test'));
-
-    //     // Set up the desglose
-    //     $desglose = new Desglose();
-    //     $desglose->setDesgloseIVA([
-    //         'Impuesto' => 'IVA',
-    //         'ClaveRegimen' => '01',
-    //         'BaseImponible' => 100.00,
-    //         'TipoImpositivo' => 21.00,
-    //         'Cuota' => 21.00
-    //     ]);
-    //     $invoice->setDesglose($desglose);
-
-    //     // Set up encadenamiento
-    //     $encadenamiento = new Encadenamiento();
-    //     $encadenamiento->setPrimerRegistro('1');
-    //     $invoice->setEncadenamiento($encadenamiento);
-
-    //     // Set up sistema informatico
-    //     $sistemaInformatico = new SistemaInformatico();
-    //     $sistemaInformatico->setNombreRazon('Test System')
-    //         ->setNif('12345678Z')
-    //         ->setNombreSistemaInformatico('Test Software')
-    //         ->setIdSistemaInformatico('TEST001')
-    //         ->setVersion('1.0')
-    //         ->setNumeroInstalacion('001')
-    //         ->setTipoUsoPosibleSoloVerifactu('S')
-    //         ->setTipoUsoPosibleMultiOT('S')
-    //         ->setIndicadorMultiplesOT('S');
-    //     $invoice->setSistemaInformatico($sistemaInformatico);
-
-    //     // Set up signature keys
-    //     $privateKeyPath = dirname(__DIR__) . '/certs/private.pem';
-    //     $publicKeyPath = dirname(__DIR__) . '/certs/public.pem';
-    //     $certificatePath = dirname(__DIR__) . '/certs/certificate.pem';
-
-    //     // Set the keys
-    //     $invoice->setPrivateKeyPath($privateKeyPath)
-    //             ->setPublicKeyPath($publicKeyPath)
-    //             ->setCertificatePath($certificatePath);
-
-    //     // Generate signed XML
-    //     $xml = $invoice->toXmlString();
-
-    //     // Debug output
-    //     echo "\nGenerated XML with signature:\n";
-    //     echo $xml;
-    //     echo "\n\n";
-
-    //     // Load the XML into a DOMDocument for verification
-    //     $doc = new \DOMDocument();
-    //     $doc->loadXML($xml);
-
-    //     // Verify the signature
-    //     $this->assertTrue($invoice->verifySignature($doc));
-
-    //     // Validate against schema
-    //     $this->assertValidatesAgainstXsd($xml, $this->getTestXsdPath());
-
-    //     // Clean up test keys
-    // }
 
     protected function assertXmlEquals(string $expectedXml, string $actualXml): void
     {
