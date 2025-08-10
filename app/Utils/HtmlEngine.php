@@ -193,11 +193,12 @@ class HtmlEngine
         $data['$payment_schedule'] = ['value' => '', 'label' => ctrans('texts.payment_schedule')];
         $data['$payment_schedule_interval'] = ['value' => '', 'label' => ctrans('texts.payment_schedule')];
 
-        if ($this->entity_string == 'invoice' || $this->entity_string == 'recurring_invoice') {
-            
+        if(method_exists($this->entity, 'paymentSchedule')) {
             $data['$payment_schedule'] = ['value' => $this->entity->paymentSchedule(true), 'label' => ctrans('texts.payment_schedule')];
             $data['$payment_schedule_interval'] = ['value' => $this->entity->paymentScheduleInterval(), 'label' => ctrans('texts.payment_schedule')];
+        }
 
+        if ($this->entity_string == 'invoice' || $this->entity_string == 'recurring_invoice') {        
             $data['$entity'] = ['value' => ctrans('texts.invoice'), 'label' => ctrans('texts.invoice')];
             $data['$number'] = ['value' => $this->entity->number ?: ' ', 'label' => ctrans('texts.invoice_number')];
             $data['$invoice'] = ['value' => $this->entity->number ?: ' ', 'label' => ctrans('texts.invoice_number')];
@@ -395,6 +396,7 @@ class HtmlEngine
         $data['$total'] = ['value' => Number::formatMoney($this->entity_calc->getTotal(), $this->client) ?: ' ', 'label' => ctrans('texts.total')];
         $data['$amount'] = &$data['$total'];
         $data['$amount_bgn_eur'] = ['value' => Number::formatValue($this->entity_calc->getTotal()/1.95583, app('currencies')->first(function ($currency) {
+            /** @var \App\Models\Currency $currency */
             return $currency->code == 'EUR';
         })) ?: ' ', 'label' => ''];
         $data['$amount_due'] = ['value' => &$data['$balance_due']['value'], 'label' => ctrans('texts.amount_due')];
@@ -693,7 +695,7 @@ class HtmlEngine
             $data['$contact.signature'] = ['value' => '', 'label' => ''];
         }
 
-        if ($this->entity->quote) {
+        if ($this->entity->quote) { //@phpstan-ignore-line
             $data['$quote.reference'] = ['value' => $this->entity->quote->number ?: '&nbsp;', 'label' => ctrans('texts.quote_number')];
         }
 
@@ -771,7 +773,7 @@ class HtmlEngine
         if ($this->entity_string == 'invoice' && $this->entity->net_payments()->exists()) {
             $payment_list = '<br><br>';
 
-            foreach ($this->entity->net_payments as $payment) {
+            foreach ($this->entity->net_payments as $payment) { //@phpstan-ignore-line
                 $payment_list .= ctrans('texts.payment_subject') . ": " . $this->formatDate($payment->date, $this->client->date_format()) . " :: " . Number::formatMoney($payment->amount, $this->client) ." :: ". $payment->translatedType() . "<br>";
             }
 

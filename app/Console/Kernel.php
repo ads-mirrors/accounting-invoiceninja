@@ -73,9 +73,6 @@ class Kernel extends ConsoleKernel
         /* Checks for scheduled tasks */
         $schedule->job(new TaskScheduler())->hourlyAt(10)->withoutOverlapping()->name('task-scheduler-job')->onOneServer();
 
-        /* Generates the tax summary for invoices */
-        $schedule->job(new InvoiceTaxSummary())->monthly('23:30')->withoutOverlapping()->name('invoice-tax-summary-job')->onOneServer();
-
         // Run hourly over 26-hour period for complete timezone coverage
         $schedule->job(new InvoiceTaxSummary())
             ->hourly()
