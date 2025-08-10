@@ -17,6 +17,7 @@ use App\DataMapper\Tax\TaxModel;
 use App\Libraries\MultiDB;
 use App\Models\Company;
 use App\Models\Country;
+use App\Models\TaxRate;
 use App\Utils\Ninja;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -163,7 +164,7 @@ class CreateCompany
 
             $settings = $company->settings;
             $settings->language_id = '7';
-            $settings->e_invoice_type = 'Facturae_3.2.2';
+            $settings->e_invoice_type = 'Facturae_3.2.2'; //change this to verifactu
             $settings->currency_id = '3';
             $settings->timezone_id = '42';
 
@@ -237,7 +238,7 @@ class CreateCompany
             $company->settings = $settings;
 
             $company->save();
-
+            
             return $company;
 
         } catch (\Exception $e) {
