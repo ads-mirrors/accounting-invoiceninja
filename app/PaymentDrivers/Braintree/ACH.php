@@ -213,6 +213,10 @@ class ACH implements MethodInterface, LivewireMethodInterface
             $this->braintree->client->company,
         );
 
+        if ($response instanceof \Braintree\Result\Error && $response->message) {
+            throw new PaymentFailed($response->message, 400);
+        }
+
         throw new PaymentFailed($response->transaction->additionalProcessorResponse, $response->transaction->processorResponseCode);
     }
     /**
