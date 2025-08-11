@@ -11,6 +11,7 @@
 
 namespace Tests\Feature\EInvoice\Verifactu;
 
+use App\DataMapper\InvoiceItem;
 use Tests\TestCase;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -43,6 +44,92 @@ class VerifactuApiTest extends TestCase
         $this->faker = \Faker\Factory::create();
 
         $this->makeTestData();
+    }
+
+    public function test_cancel_invoice_response()
+    {
+
+        $item = new InvoiceItem();
+        $item->quantity = 1;
+        $item->product_key = 'product_1';
+        $item->notes = 'Product 1';
+        $item->cost = 100;
+        $item->discount = 0;
+        $item->tax_rate1 = 21;
+        $item->tax_name1 = 'IVA';
+        
+        $invoice = Invoice::factory()->create([
+            'company_id' => $this->company->id,
+            'client_id' => $this->client->id,
+            'user_id' => $this->user->id,
+            'number' => 'INV-0001',
+            'date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(100)->format('Y-m-d'),
+            'status_id' => Invoice::STATUS_DRAFT,
+            'is_deleted' => false,
+            'tax_rate1' => 0,
+            'tax_name1' => '',
+            'tax_rate2' => 0,
+            'tax_name2' => '',
+            'tax_rate3' => 0,
+            'tax_name3' => '',
+            'line_items' => [$item],
+            'discount' => 0,
+            'uses_inclusive_taxes' => false,
+            'exchange_rate' => 1,
+            'partial' => 0,
+            'partial_due_date' => null,
+            'footer' => '',
+        ]);
+        
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
+        $invoice->service()->markSent()->save();
+
+        $this->assertEquals($invoice->status_id, Invoice::STATUS_SENT);
+        $this->assertEquals($invoice->balance, 121);
+        $this->assertEquals($invoice->amount, 121);
+        
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        
+        $data = [
+            'action' => 'cancel',
+            'ids' => [$invoice->hashed_id],
+            'reason' => 'R3'
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+
+        $response->assertStatus(200);
+
+        $arr = $response->json();
+
+        $this->assertEquals($arr['data'][0]['status_id'], Invoice::STATUS_CANCELLED);
+        $this->assertEquals($arr['data'][0]['balance'], 121);
+        $this->assertEquals($arr['data'][0]['amount'], 121);
+        $this->assertNotNull($arr['data'][0]['backup']['credit_invoice_id']);
+        $this->assertNotNull($arr['data'][0]['backup']['credit_invoice_number']);
+        $this->assertEquals($arr['data'][0]['backup']['cancellation_reason'], 'R3');
+
+        $credit_invoice = Invoice::find($this->decodePrimaryKey($arr['data'][0]['backup']['credit_invoice_id']));
+
+        nlog($credit_invoice->toArray());
+        $this->assertNotNull($credit_invoice);
+        $this->assertEquals($credit_invoice->status_id, Invoice::STATUS_SENT);
+        $this->assertEquals($credit_invoice->balance, -121);
+        $this->assertEquals($credit_invoice->amount, -121);
+        $this->assertEquals($credit_invoice->backup->cancelled_invoice_id, $invoice->hashed_id);
+        $this->assertEquals($credit_invoice->backup->cancelled_invoice_number, $invoice->number);
+        $this->assertEquals($credit_invoice->backup->cancellation_reason, 'R3');
     }
 
     public function test_restore_invoice_validation()

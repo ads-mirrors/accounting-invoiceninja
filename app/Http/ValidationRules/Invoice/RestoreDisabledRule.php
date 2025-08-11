@@ -27,7 +27,7 @@ class RestoreDisabledRule implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
 
-        if (empty($value) || $value != 'restore') {
+        if (empty($value) ||!in_array($value, ['delete', 'restore'])) {
             return;
         }
 
@@ -36,8 +36,12 @@ class RestoreDisabledRule implements ValidationRule
         $company = $user->company();
 
         /** For verifactu, we do not allow restores of deleted invoices */
-        if($company->verifactuEnabled() && Invoice::withTrashed()->whereIn('id', $this->transformKeys(request()->ids))->where('company_id', $company->id)->where('is_deleted', true)->exists()) {
+        if($company->verifactuEnabled() && $value == 'restore' &&Invoice::withTrashed()->whereIn('id', $this->transformKeys(request()->ids))->where('company_id', $company->id)->where('is_deleted', true)->exists()) {
             $fail(ctrans('texts.restore_disabled_verifactu'));
+        }
+        
+        if ($company->verifactuEnabled() && $value == 'delete' && Invoice::withTrashed()->whereIn('id', $this->transformKeys(request()->ids))->where('company_id', $company->id)->where('status_id', Invoice::STATUS_CANCELLED)->exists()) {
+            $fail(ctrans('texts.delete_disabled_verifactu'));
         }
 
     }

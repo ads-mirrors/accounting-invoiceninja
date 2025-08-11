@@ -674,6 +674,15 @@ class InvoiceService
 
     }
 
+    //@todo - verifactu
+    public function sendVerifactu()
+    {
+        // if($this->invoice->company->verifactuEnabled()) {
+        //     (new SendVerifactu($this->invoice))->handle();
+        // }
+
+        return $this;
+    }
     /**
      * Saves the invoice.
      * @return Invoice object

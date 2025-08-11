@@ -5574,6 +5574,7 @@ $lang = array(
     'selected_products' => 'Selected Products',
     'create_company_error_unauthorized' => 'You are not authorized to create a company. Only the account owner can create a company.',
     'restore_disabled_verifactu' => 'You cannot restore an invoice once it has been deleted',
+    'delete_disabled_verifactu' => 'You cannot delete an invoice once it has been cancelled',
 );
 
 return $lang;
