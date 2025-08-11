@@ -11,12 +11,13 @@
 
 namespace App\Http\Requests\Invoice;
 
-use App\Http\Requests\Request;
-use App\Http\ValidationRules\Project\ValidProjectForClient;
 use App\Models\Invoice;
-use App\Utils\Traits\CleanLineItems;
+use App\Http\Requests\Request;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Validation\Rule;
+use App\Utils\Traits\CleanLineItems;
+use App\Http\ValidationRules\Project\ValidProjectForClient;
+use App\Http\ValidationRules\Invoice\CanGenerateModificationInvoice;
 
 class StoreInvoiceRequest extends Request
 {
@@ -89,6 +90,9 @@ class StoreInvoiceRequest extends Request
         $rules['custom_surcharge4'] = ['sometimes', 'nullable', 'bail', 'numeric', 'max:99999999999999'];
         $rules['location_id'] = ['nullable', 'sometimes','bail', Rule::exists('locations', 'id')->where('company_id', $user->company()->id)->where('client_id', $this->client_id)];
 
+        $rules['verifactu_modified'] = ['bail', 'boolean', 'required_with:modified_invoice_id'];
+        $rules['modified_invoice_id'] = ['bail', 'required_with:verifactu_modified', new CanGenerateModificationInvoice()];
+        
         return $rules;
     }
 

@@ -243,9 +243,9 @@ class Invoice extends BaseModel
 
     public const STATUS_REVERSED = 6;
 
-    public const STATUS_OVERDUE = -1; //status < 4 || < 3 && !is_deleted && !trashed() && due_date < now()
+    public const STATUS_OVERDUE = -1; // status < 4 || < 3 && !is_deleted && !trashed() && due_date < now()
 
-    public const STATUS_UNPAID = -2; //status < 4 || < 3 && !is_deleted && !trashed()
+    public const STATUS_UNPAID = -2; // status < 4 || < 3 && !is_deleted && !trashed()
 
     public const STATUS_REPLACED = 7; // handle the case where the invoice is replaced by another invoice.
 

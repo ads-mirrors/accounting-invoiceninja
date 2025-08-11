@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Config;
 use App\Repositories\InvoiceRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class VerifactuApiTest extends TestCase
@@ -46,7 +47,7 @@ class VerifactuApiTest extends TestCase
         $this->makeTestData();
     }
 
-    public function test_cancel_invoice_response()
+    private function buildData()
     {
 
         $item = new InvoiceItem();
@@ -57,12 +58,13 @@ class VerifactuApiTest extends TestCase
         $item->discount = 0;
         $item->tax_rate1 = 21;
         $item->tax_name1 = 'IVA';
-        
+
+        /** @var \App\Models\Invoice $invoice */
         $invoice = Invoice::factory()->create([
             'company_id' => $this->company->id,
             'client_id' => $this->client->id,
             'user_id' => $this->user->id,
-            'number' => 'INV-0001',
+            'number' => Str::random(32),
             'date' => now()->format('Y-m-d'),
             'due_date' => now()->addDays(100)->format('Y-m-d'),
             'status_id' => Invoice::STATUS_DRAFT,
@@ -81,9 +83,100 @@ class VerifactuApiTest extends TestCase
             'partial_due_date' => null,
             'footer' => '',
         ]);
-        
+
         $repo = new InvoiceRepository();
         $invoice = $repo->save([], $invoice);
+
+        return $invoice;
+
+    }
+
+    public function test_create_modification_invoice_validation_fails()
+    {
+        $invoice = $this->buildData();;
+
+        $data = $invoice->toArray();
+        $data['verifactu_modified'] = true;
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(422);
+        
+    }
+
+    public function test_create_modification_invoice_validation_fails2()
+    {
+        $invoice = $this->buildData();;
+
+        $data = $invoice->toArray();
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = "XXX";
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(422);
+        
+    }
+
+    public function test_create_modification_invoice_validation_fails3()
+    {
+        $invoice = $this->buildData();;
+
+        $invoice2 = $this->buildData();
+        $invoice2->service()->markPaid()->save();
+
+        $data = $invoice->toArray();
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice2->hashed_id;
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(422);
+        
+    }
+
+    public function test_create_modification_invoice_validation_fails4()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();;
+
+        $invoice2 = $this->buildData();
+        $invoice2->service()->markSent()->save();
+
+        $data = $invoice->toArray();
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice2->hashed_id;
+        $data['client_id'] = $this->client->hashed_id;
+        $data['number'] = null;
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+        
+    }
+
+    public function test_cancel_invoice_response()
+    {
+
+       $invoice = $this->buildData();
 
         $invoice->service()->markSent()->save();
 
