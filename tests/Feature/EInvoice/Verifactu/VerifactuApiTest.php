@@ -84,6 +84,46 @@ class VerifactuApiTest extends TestCase
 
     }
     
+
+    public function test_restore_invoice_that_is_archived()
+    {
+                
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $data = [
+            'action' => 'archive',
+            'ids' => [$this->invoice->hashed_id]
+        ];
+        
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+
+        $response->assertStatus(200);
+
+        $arr = $response->json();
+
+        $this->assertFalse($arr['data'][0]['is_deleted']);
+        
+        $data = [
+            'action' => 'restore',
+            'ids' => [$this->invoice->hashed_id]
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+
+        $response->assertStatus(200);
+
+    }
+
     /**
      * test_update_company_settings
      *
