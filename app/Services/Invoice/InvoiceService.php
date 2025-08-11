@@ -244,9 +244,12 @@ class InvoiceService
 
     public function markDeleted()
     {
-        // $this->removeUnpaidGatewayFees();
 
         $this->invoice = (new MarkInvoiceDeleted($this->invoice))->run();
+
+        if($this->invoice->company->verifactuEnabled()) {
+            $this->deleteVerifactu();
+        }
 
         return $this;
     }
@@ -674,11 +677,33 @@ class InvoiceService
 
     }
 
-    //@todo - verifactu
-    public function sendVerifactu()
+     
+    /**
+     * sendVerifactu
+     * @todo - send the invoice to AEAT
+     * ONLY send when the transaction is ES => ES
+     * Ensure we run all sending syncronously to ensure chronology
+     *  
+     * @return self
+     */
+    public function sendVerifactu(): self
     {
         // if($this->invoice->company->verifactuEnabled()) {
         //     (new SendVerifactu($this->invoice))->handle();
+        // }
+
+        return $this;
+    }
+    
+    /**
+     * deleteVerifactu
+     * @todo - handle "cancelling" the invoice in AEAT 
+     * @return self
+     */
+    public function deleteVerifactu(): self
+    {
+        // if($this->invoice->company->verifactuEnabled()) {
+        //     (new DeleteVerifactu($this->invoice))->handle();
         // }
 
         return $this;
