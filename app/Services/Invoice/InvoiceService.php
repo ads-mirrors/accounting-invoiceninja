@@ -233,11 +233,11 @@ class InvoiceService
         return $this;
     }
 
-    public function handleCancellation()
+    public function handleCancellation(?string $reason = null)
     {
         $this->removeUnpaidGatewayFees();
 
-        $this->invoice = (new HandleCancellation($this->invoice))->run();
+        $this->invoice = (new HandleCancellation($this->invoice, $reason))->run();
 
         return $this;
     }

@@ -22,9 +22,8 @@ class HandleCancellation extends AbstractService
 {
     use GeneratesCounter;
 
-    public function __construct(private Invoice $invoice)
+    public function __construct(private Invoice $invoice, private ?string $reason = null)
     {
-        $this->invoice = $invoice;
     }
 
     public function run()

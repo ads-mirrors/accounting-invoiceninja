@@ -1030,4 +1030,18 @@ class Company extends BaseModel
     {
         return !$this->account->is_flagged && $this->account->e_invoice_quota > 0 && isset($this->legal_entity_id) && isset($this->tax_data->acts_as_sender) && $this->tax_data->acts_as_sender;
     }
+    
+    /**
+     * verifactuEnabled
+     * 
+     * Returns a flag if the current company is using verifactu as the e-invoice provider
+     *
+     * @return bool
+     */
+    public function verifactuEnabled(): bool
+    {
+        return once(function () {
+            return $this->getSetting('e_invoice_type') == 'verifactu';
+        });
+    }
 }

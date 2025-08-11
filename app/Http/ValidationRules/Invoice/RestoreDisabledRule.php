@@ -13,6 +13,8 @@
 namespace App\Http\ValidationRules\Invoice;
 
 use Closure;
+use App\Models\Invoice;
+use App\Utils\Traits\MakesHash;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
@@ -20,19 +22,21 @@ use Illuminate\Contracts\Validation\ValidationRule;
  */
 class RestoreDisabledRule implements ValidationRule
 {
+    use MakesHash;
+    
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-
 
         if (empty($value) || $value != 'restore') {
             return;
         }
 
         $user = auth()->user();
+        
         $company = $user->company();
 
-        /** For verifactu, we do not allow restores */
-        if($company->settings->e_invoice_type == 'verifactu') {
+        /** For verifactu, we do not allow restores of deleted invoices */
+        if($company->verifactuEnabled() && Invoice::withTrashed()->whereIn('id', $this->transformKeys(request()->ids))->where('company_id', $company->id)->where('is_deleted', true)->exists()) {
             $fail(ctrans('texts.restore_disabled_verifactu'));
         }
 
