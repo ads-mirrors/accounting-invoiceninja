@@ -18,6 +18,7 @@ use Illuminate\Validation\Rule;
 use App\Utils\Traits\CleanLineItems;
 use App\Http\ValidationRules\Project\ValidProjectForClient;
 use App\Http\ValidationRules\Invoice\CanGenerateModificationInvoice;
+use App\Http\ValidationRules\Invoice\VerifactuAmountCheck;
 
 class StoreInvoiceRequest extends Request
 {
@@ -45,7 +46,7 @@ class StoreInvoiceRequest extends Request
 
         $rules = [];
 
-        $rules['client_id'] = ['required', 'bail', Rule::exists('clients', 'id')->where('company_id', $user->company()->id)->where('is_deleted', 0)];
+        $rules['client_id'] = ['required', 'bail', new VerifactuAmountCheck($this->all()) , Rule::exists('clients', 'id')->where('company_id', $user->company()->id)->where('is_deleted', 0)];
 
         if ($this->file('documents') && is_array($this->file('documents'))) {
             $rules['documents.*'] = $this->fileValidation();
@@ -72,7 +73,7 @@ class StoreInvoiceRequest extends Request
         $rules['date'] = 'bail|sometimes|date:Y-m-d';
         $rules['due_date'] = ['bail', 'sometimes', 'nullable', 'after:partial_due_date', Rule::requiredIf(fn () => strlen($this->partial_due_date ?? '') > 1), 'date'];
 
-        $rules['line_items'] = 'array';
+        $rules['line_items'] = ['bail', 'array'];
         $rules['discount'] = 'sometimes|numeric|max:99999999999999';
         $rules['tax_rate1'] = 'bail|sometimes|numeric';
         $rules['tax_rate2'] = 'bail|sometimes|numeric';
@@ -92,7 +93,7 @@ class StoreInvoiceRequest extends Request
 
         $rules['verifactu_modified'] = ['bail', 'boolean', 'required_with:modified_invoice_id'];
         $rules['modified_invoice_id'] = ['bail', 'required_with:verifactu_modified', new CanGenerateModificationInvoice()];
-        
+
         return $rules;
     }
 

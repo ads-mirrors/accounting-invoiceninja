@@ -91,6 +91,305 @@ class VerifactuApiTest extends TestCase
 
     }
 
+    public function test_credits_never_exceed_original_invoice7()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+
+        $this->assertEquals(121, $invoice->amount);
+        
+
+        $data = $invoice->toArray();
+        unset($data['client']);
+        unset($data['invitations']);
+        $data['client_id'] = $this->client->hashed_id;
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        $data['discount'] = 120;
+        $data['is_amount_discount'] = true;
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+
+    }
+
+
+    public function test_credits_never_exceed_original_invoice6()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+
+        $this->assertEquals(121, $invoice->amount);
+        
+        $invoice->line_items = [[
+            'quantity' => -1,
+            'cost' => 10,
+            'discount' => 0,
+            'tax_rate1' => 21,
+            'tax_name1' => 'IVA',
+        ]];
+
+        $invoice->discount = 0;
+        $invoice->is_amount_discount = false;
+
+        $data = $invoice->toArray();
+        unset($data['client']);
+        unset($data['invitations']);
+        $data['client_id'] = $this->client->hashed_id;
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+
+        $response = $this->withHeaders([
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-TOKEN' => $this->token,
+            ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+
+        $response = $this->withHeaders([
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-TOKEN' => $this->token,
+            ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+
+        $response = $this->withHeaders([
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-TOKEN' => $this->token,
+            ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+
+
+    }
+
+    public function test_credits_never_exceed_original_invoice5()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+
+        $this->assertEquals(121, $invoice->amount);
+        
+        $invoice->line_items = [[
+            'quantity' => -5,
+            'cost' => 100,
+            'discount' => 0,
+            'tax_rate1' => 21,
+            'tax_name1' => 'IVA',
+        ]];
+
+        $invoice->discount = 0;
+        $invoice->is_amount_discount = false;
+
+        $data = $invoice->toArray();
+        unset($data['client']);
+        $data['client_id'] = $this->client->hashed_id;
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+
+        $response->assertStatus(422);
+    }
+
+    public function test_credits_never_exceed_original_invoice4()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+
+        $this->assertEquals(121, $invoice->amount);
+        
+        $data = $invoice->toArray();
+
+        unset($data['client']);
+        unset($data['company']);
+        unset($data['invitations']);
+        $data['client_id'] = $this->client->hashed_id;
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        $data['line_items'] = [[
+            'quantity' => -1,
+            'cost' => 100,
+            'discount' => 0,
+            'tax_rate1' => 21,
+            'tax_name1' => 'IVA',
+        ]];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+    }
+
+
+    public function test_credits_never_exceed_original_invoice3()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+        
+        $invoice->line_items = [];
+        $invoice->discount = 500;
+        $invoice->is_amount_discount = false;
+
+        $data = $invoice->toArray();
+        $data['client_id'] = $this->client->hashed_id;
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_credits_never_exceed_original_invoice2()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+        
+        $invoice->line_items = [];
+        
+        $invoice->discount = 500;
+        $invoice->is_amount_discount = false;
+
+        $data = $invoice->toArray();
+        $data['client_id'] = $this->client->hashed_id;
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(422);
+
+    }
+
+
+    public function test_credits_never_exceed_original_invoice()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+        
+        // $invoice->line_items = [];
+        $invoice->discount = 5;
+        $invoice->is_amount_discount = false;
+
+        $data = $invoice->toArray();
+        $data['client_id'] = $this->client->hashed_id;
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_verifactu_amount_check()
+    {
+        
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->line_items = [];
+        $invoice->discount = 500;
+        $invoice->is_amount_discount = false;
+
+        $data = $invoice->toArray();
+        $data['client_id'] = $this->client->hashed_id;
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(422);
+
+    }
+
     public function test_create_modification_invoice()
     {
         
@@ -281,13 +580,11 @@ class VerifactuApiTest extends TestCase
         $response->assertStatus(200);
 
         $arr = $response->json();
-// nlog($arr);
 
         $this->assertEquals($arr['data'][0]['status_id'], Invoice::STATUS_CANCELLED);
         $this->assertEquals($arr['data'][0]['balance'], 121);
         $this->assertEquals($arr['data'][0]['amount'], 121);
         $this->assertNotNull($arr['data'][0]['backup']['child_invoice_ids'][0]);
-        
 
         $credit_invoice = Invoice::find($this->decodePrimaryKey($arr['data'][0]['backup']['child_invoice_ids'][0]));
 

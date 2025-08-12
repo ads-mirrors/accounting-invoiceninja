@@ -60,7 +60,19 @@ class HandleCancellation extends AbstractService
         return $this->invoice;
     }
 
-
+    
+    /**
+     * verifactuCancellation
+     * @todo we must ensure that if there have been previous credit notes attached to the invoice, 
+     *       that the credit notes are not exceeded by the cancellation amount.
+     *       This is because the credit notes are not linked to the invoice, but are linked to the 
+     *       invoice's backup.
+     *       So we need to check the backup for the credit notes and ensure that the cancellation amount
+     *       does not exceed the credit notes.
+     *       If it does, we need to create a new credit note with the remaining amount.
+     *       This is because the credit notes are not linked to the invoice, but are linked to the 
+     * @return Invoice
+     */
     private function verifactuCancellation(): Invoice
     {
 
