@@ -35,8 +35,6 @@ class MultiDBUserTest extends TestCase
     {
         parent::setUp();
 
-        // $this->withoutExceptionHandling();
-
         if (! config('ninja.db.multi_db_enabled')) {
             $this->markTestSkipped('Multi DB not enabled - skipping');
         }
@@ -221,32 +219,53 @@ class MultiDBUserTest extends TestCase
 
     protected function tearDown(): void
     {
+        try {
+            // Clean up database records before calling parent::tearDown()
+            $this->cleanupTestData();
+        } catch (\Exception $e) {
+            // Log error but don't fail teardown
+            error_log("Error during test cleanup: " . $e->getMessage());
+        }
+
         parent::tearDown();
+    }
 
-                
-            $u = User::on('db-ninja-01')->where('email', 'db1@example.com')->first();
-            if ($u) {
-                $u->account->delete();
+    private function cleanupTestData(): void
+    {
+        // Only proceed if we have database connections available
+        if (!app()->bound('db') || !config('database.connections.db-ninja-01')) {
+            return;
+        }
+
+        try {
+            // Clean up db-ninja-01
+            if (DB::connection('db-ninja-01')->getPdo()) {
+                $u = User::on('db-ninja-01')->where('email', 'db1@example.com')->first();
+                if ($u && $u->account) {
+                    $u->account->delete();
+                }
+
+                $u = User::on('db-ninja-01')->where('email', 'db2@example.com')->first();
+                if ($u && $u->account) {
+                    $u->account->delete();
+                }
             }
 
+            // Clean up db-ninja-02
+            if (DB::connection('db-ninja-02')->getPdo()) {
+                $u = User::on('db-ninja-02')->where('email', 'db1@example.com')->first();
+                if ($u && $u->account) {
+                    $u->account->delete();
+                }
 
-            $u = User::on('db-ninja-01')->where('email', 'db2@example.com')->first();
-            if ($u) {
-                $u->account->delete();
+                $u = User::on('db-ninja-02')->where('email', 'db2@example.com')->first();
+                if ($u && $u->account) {
+                    $u->account->delete();
+                }
             }
-        
-                        
-            $u = User::on('db-ninja-02')->where('email', 'db1@example.com')->first();
-            if ($u) {
-                $u->account->delete();
-            }
-
-
-            $u = User::on('db-ninja-02')->where('email', 'db2@example.com')->first();
-            if ($u) {
-                $u->account->delete();
-            }
-
-        
+        } catch (\Exception $e) {
+            // Log error but don't fail cleanup
+            error_log("Error during database cleanup: " . $e->getMessage());
+        }
     }
 }
