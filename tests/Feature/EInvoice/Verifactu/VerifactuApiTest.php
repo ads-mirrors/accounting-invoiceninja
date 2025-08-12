@@ -91,6 +91,129 @@ class VerifactuApiTest extends TestCase
 
     }
 
+    public function test_archive_invoice_with_no_parent()
+    {
+                
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+        $settings->is_locked = 'when_sent';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+
+        $data = [
+            'action' => 'archive',
+            'ids' => [$invoice->hashed_id]
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+        
+        $response->assertStatus(200);
+
+
+        $data = [
+            'action' => 'restore',
+            'ids' => [$invoice->hashed_id]
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_delete_invoice_with_parent()
+    {
+                
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+
+        $this->assertEquals(121, $invoice->amount);
+
+        $data = $invoice->toArray();
+        unset($data['client']);
+        unset($data['invitations']);
+        $data['client_id'] = $this->client->hashed_id;
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        $data['discount'] = 121;
+        $data['is_amount_discount'] = true;
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+
+        $data = [
+            'action' => 'delete',
+            'ids' => [$invoice->hashed_id]
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+        
+        $response->assertStatus(422);
+
+    }
+
+    public function test_delete_invoice_with_no_parent()
+    {
+                
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+
+        $data = [
+            'action' => 'delete',
+            'ids' => [$invoice->hashed_id]
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+        
+        $response->assertStatus(200);
+
+
+        $data = [
+            'action' => 'restore',
+            'ids' => [$invoice->hashed_id]
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+
+        $response->assertStatus(422);
+   }
+
+
     public function test_credits_never_exceed_original_invoice9()
     {
 
