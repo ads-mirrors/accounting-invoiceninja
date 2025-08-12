@@ -719,8 +719,14 @@ class InvoiceService
      */
     public function modifyVerifactuWorkflow(string $modified_invoice_hashed_id): self
     {
+        //if the new invoice has a negative amount - then it is not a replacement, it is a 
+        //delta modification on an existing invoice.
         $modified_invoice = Invoice::withTrashed()->find($this->decodePrimaryKey($modified_invoice_hashed_id));
-        $modified_invoice->status_id = Invoice::STATUS_REPLACED;
+        
+        if($this->invoice->amount > 0) {
+            $modified_invoice->status_id = Invoice::STATUS_REPLACED;
+        }
+
         $modified_invoice->backup->modified_invoice_id = $this->invoice->hashed_id;
         $modified_invoice->save();
 

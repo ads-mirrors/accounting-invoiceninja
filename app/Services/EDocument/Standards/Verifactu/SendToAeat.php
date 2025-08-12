@@ -37,12 +37,11 @@ class SendToAeat implements ShouldQueue
 
     public $deleteWhenMissingModels = true;
     
-/**
- * Modification Invoices - (modify) Generates a F3 document which replaces the original invoice. And becomes the new invoice.
- * Create Invoices - (create) Generates a F1 document.
- * Cancellation Invoices - (cancel) Generates a R3 document with full negative  values of the original invoice.
- */
-
+    /**
+     * Modification Invoices - (modify) Generates a F3 document which replaces the original invoice. And becomes the new invoice.
+     * Create Invoices - (create) Generates a F1 document.
+     * Cancellation Invoices - (cancel) Generates a R3 document with full negative  values of the original invoice.
+     */
 
     /**
      * __construct
