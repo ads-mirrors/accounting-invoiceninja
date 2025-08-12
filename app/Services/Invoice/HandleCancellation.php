@@ -86,17 +86,15 @@ class HandleCancellation extends AbstractService
         }
 
         $replicated_invoice->line_items = $items;
-        $replicated_invoice->backup->cancelled_invoice_id = $this->invoice->hashed_id;
-        $replicated_invoice->backup->cancelled_invoice_number = $this->invoice->number;
-        $replicated_invoice->backup->cancellation_reason = $this->reason ?? 'R3';
+        $replicated_invoice->backup->parent_invoice_id = $this->invoice->hashed_id;
+        $replicated_invoice->backup->parent_invoice_number = $this->invoice->number;
+        $replicated_invoice->backup->reason = $this->reason ?? 'R3';
 
         $invoice_repository = new InvoiceRepository();
         $replicated_invoice = $invoice_repository->save([], $replicated_invoice);
         $replicated_invoice->service()->markSent()->sendVerifactu()->save();
 
-        $this->invoice->backup->credit_invoice_id = $replicated_invoice->hashed_id;
-        $this->invoice->backup->credit_invoice_number = $replicated_invoice->number;
-        $this->invoice->backup->cancellation_reason = $this->reason ?? 'R3';
+        $this->invoice->backup->child_invoice_ids->push($replicated_invoice->hashed_id);
 
         $this->invoice->saveQuietly();
         $this->invoice->fresh();

@@ -727,12 +727,12 @@ class InvoiceService
             $modified_invoice->status_id = Invoice::STATUS_REPLACED;
         }
 
-        $modified_invoice->backup->modified_invoice_id = $this->invoice->hashed_id;
+        $modified_invoice->backup->child_invoice_ids->push($this->invoice->hashed_id);
         $modified_invoice->save();
 
         $this->markSent();
         //Update the client balance by the delta amount from the previous invoice to this one.
-        $this->invoice->backup->replaced_invoice_id = $modified_invoice->hashed_id;
+        $this->invoice->backup->parent_invoice_id = $modified_invoice->hashed_id;
         $this->invoice->saveQuietly();
 
         $this->invoice->client->service()->updateBalance(round(($this->invoice->amount - $modified_invoice->amount), 2));

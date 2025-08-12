@@ -46,14 +46,11 @@ class InvoiceBackupCast implements CastsAttributes
                     'adjustment' => $value->cancellation->adjustment,
                     'status_id' => $value->cancellation->status_id,
                 ] : [],
-                'cancelled_invoice_id' => $value->cancelled_invoice_id,
-                'cancelled_invoice_number' => $value->cancelled_invoice_number,
-                'cancellation_reason' => $value->cancellation_reason,
-                'credit_invoice_id' => $value->credit_invoice_id,
-                'credit_invoice_number' => $value->credit_invoice_number,
+                'parent_invoice_id' => $value->parent_invoice_id,
+                'parent_invoice_number' => $value->parent_invoice_number,
+                'reason' => $value->reason,
+                'child_invoice_ids' => $value->child_invoice_ids->toArray(),
                 'redirect' => $value->redirect,
-                'modified_invoice_id' => $value->modified_invoice_id,
-                'replaced_invoice_id' => $value->replaced_invoice_id,
             ])
         ];
     }

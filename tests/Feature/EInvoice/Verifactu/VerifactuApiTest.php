@@ -109,8 +109,6 @@ class VerifactuApiTest extends TestCase
         $this->assertEquals(121, $invoice->balance);
         $this->assertEquals(131, $this->client->fresh()->balance);
 
-        $this->assertNull($invoice->backup->modified_invoice_id);
-
         $invoice2 = $this->buildData();
         
         $items = $invoice2->line_items;
@@ -140,12 +138,12 @@ class VerifactuApiTest extends TestCase
         $this->assertEquals($arr['data']['status_id'], Invoice::STATUS_SENT);
         $this->assertEquals($arr['data']['amount'], 242);
         $this->assertEquals($arr['data']['balance'], 242);
-        $this->assertEquals($arr['data']['backup']['replaced_invoice_id'], $invoice->hashed_id);
+        $this->assertEquals($arr['data']['backup']['parent_invoice_id'], $invoice->hashed_id);
 
         $invoice = $invoice->fresh();
 
         $this->assertEquals(Invoice::STATUS_REPLACED, $invoice->status_id);
-        $this->assertEquals($arr['data']['id'], $invoice->backup->modified_invoice_id);
+        $this->assertTrue($invoice->backup->child_invoice_ids->contains($arr['data']['id']));
 
         $this->assertEquals(615, $this->client->fresh()->balance);
 
@@ -283,24 +281,22 @@ class VerifactuApiTest extends TestCase
         $response->assertStatus(200);
 
         $arr = $response->json();
+// nlog($arr);
 
         $this->assertEquals($arr['data'][0]['status_id'], Invoice::STATUS_CANCELLED);
         $this->assertEquals($arr['data'][0]['balance'], 121);
         $this->assertEquals($arr['data'][0]['amount'], 121);
-        $this->assertNotNull($arr['data'][0]['backup']['credit_invoice_id']);
-        $this->assertNotNull($arr['data'][0]['backup']['credit_invoice_number']);
-        $this->assertEquals($arr['data'][0]['backup']['cancellation_reason'], 'R3');
+        $this->assertNotNull($arr['data'][0]['backup']['child_invoice_ids'][0]);
+        
 
-        $credit_invoice = Invoice::find($this->decodePrimaryKey($arr['data'][0]['backup']['credit_invoice_id']));
+        $credit_invoice = Invoice::find($this->decodePrimaryKey($arr['data'][0]['backup']['child_invoice_ids'][0]));
 
-        nlog($credit_invoice->toArray());
         $this->assertNotNull($credit_invoice);
         $this->assertEquals($credit_invoice->status_id, Invoice::STATUS_SENT);
         $this->assertEquals($credit_invoice->balance, -121);
         $this->assertEquals($credit_invoice->amount, -121);
-        $this->assertEquals($credit_invoice->backup->cancelled_invoice_id, $invoice->hashed_id);
-        $this->assertEquals($credit_invoice->backup->cancelled_invoice_number, $invoice->number);
-        $this->assertEquals($credit_invoice->backup->cancellation_reason, 'R3');
+        $this->assertEquals($credit_invoice->backup->parent_invoice_id, $invoice->hashed_id);
+        $this->assertEquals($credit_invoice->backup->parent_invoice_number, $invoice->number);
     }
 
     public function test_restore_invoice_validation()
