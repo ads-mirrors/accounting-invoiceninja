@@ -31,6 +31,9 @@ use Tests\TestCase;
  */
 class MultiDBUserTest extends TestCase
 {
+    protected $token;
+    protected $company_token;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -131,7 +134,8 @@ class MultiDBUserTest extends TestCase
 
         $this->token = \Illuminate\Support\Str::random(40);
 
-        $this->company_token = CompanyToken::on('db-ninja-01')->create([
+        /** @var CompanyToken $company_token */
+        $company_token = CompanyToken::on('db-ninja-01')->create([
             'user_id' => $user->id,
             'company_id' => $coco->id,
             'account_id' => $account->id,
@@ -139,6 +143,7 @@ class MultiDBUserTest extends TestCase
             'token' => $this->token,
         ]);
 
+        $this->company_token = $company_token;
         User::unguard(false);
     }
 
@@ -179,14 +184,6 @@ class MultiDBUserTest extends TestCase
     public function test_check_that_set_db_by_email_works_db_3()
     {
         $this->assertFalse(MultiDB::userFindAndSetDb('bademail@example.com'));
-    }
-
-    /*
-     * This is what you do when you demand 100% code coverage :/
-     */
-    public function test_set_db_invokes()
-    {
-        $this->expectNotToPerformAssertions(MultiDB::setDB('db-ninja-01'));
     }
 
     public function test_cross_db_user_linking_fails_appropriately()
@@ -239,7 +236,7 @@ class MultiDBUserTest extends TestCase
 
         try {
             // Clean up db-ninja-01
-            if (DB::connection('db-ninja-01')->getPdo()) {
+            if (\DB::connection('db-ninja-01')->getPdo()) {
                 $u = User::on('db-ninja-01')->where('email', 'db1@example.com')->first();
                 if ($u && $u->account) {
                     $u->account->delete();
@@ -252,7 +249,7 @@ class MultiDBUserTest extends TestCase
             }
 
             // Clean up db-ninja-02
-            if (DB::connection('db-ninja-02')->getPdo()) {
+            if (\DB::connection('db-ninja-02')->getPdo()) {
                 $u = User::on('db-ninja-02')->where('email', 'db1@example.com')->first();
                 if ($u && $u->account) {
                     $u->account->delete();

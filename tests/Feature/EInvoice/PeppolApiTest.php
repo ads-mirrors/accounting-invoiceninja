@@ -49,7 +49,7 @@ class PeppolApiTest extends TestCase
         config(['ninja.environment' => 'selfhost']);
 
         /**
-         * @var \App\Models\CompanyUser $user
+         * @var \App\Models\User $user
          */
         $user = $this->user;
 
