@@ -11,20 +11,21 @@
 
 namespace App\Services\EDocument\Standards\Verifactu;
 
+use Mail;
 use App\Utils\Ninja;
+use App\Models\Company;
 use App\Models\Invoice;
 use App\Libraries\MultiDB;
-use App\Models\Company;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Services\EDocument\Standards\Verifactu;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Mail;
-use Illuminate\Mail\Mailables\Address;
 
 class SendToAeat implements ShouldQueue
 {
@@ -38,9 +39,11 @@ class SendToAeat implements ShouldQueue
     public $deleteWhenMissingModels = true;
     
     /**
-     * Modification Invoices - (modify) Generates a F3 document which replaces the original invoice. And becomes the new invoice.
+     * Modification Invoices - (modify) 
+     *  - If Amount > 0 - We generates a F3 document which replaces the original invoice. And becomes the new invoice.
+     *  - If Amount < 0 - We generate a R2 document which is a negative modification on the original invoice.
      * Create Invoices - (create) Generates a F1 document.
-     * Cancellation Invoices - (cancel) Generates a R3 document with full negative  values of the original invoice.
+     * Cancellation Invoices - (cancel) Generates a R3 document with full negative values of the original invoice.
      */
 
     /**
@@ -66,6 +69,50 @@ class SendToAeat implements ShouldQueue
 
         $invoice = Invoice::withTrashed()->find($this->invoice_id);
 
+        switch($this->action) {
+            case 'modify':
+                $this->modifyInvoice($invoice);
+                break;
+            case 'create':
+                $this->createInvoice($invoice);
+                break;
+            case 'cancel':
+                $this->cancelInvoice($invoice);
+                break;
+        }
+
+    }
+
+    public function modifyInvoice(Invoice $invoice)
+    {
+        $verifactu = new Verifactu($invoice);
+        $verifactu->run();
+    }
+
+    public function createInvoice(Invoice $invoice)
+    {
+        $verifactu = new Verifactu($invoice);
+        $verifactu->run();
+    }
+
+    public function cancelInvoice(Invoice $invoice)
+    {
+
+        $verifactu = new Verifactu($invoice);
+        $document = (new RegistroAlta($invoice))->run()->getInvoice();
+
+        $last_hash = $invoice->company->verifactu_logs()->first();
+
+        $huella = $this->cancellationHash($document, $last_hash->hash);
+
+        $cancellation = $document->createCancellation();
+        $cancellation->setHuella($huella);
+
+        $soapXml = $cancellation->toSoapEnvelope();
+
+        $response = $verifactu->send($soapXml);
+
+        nlog($response);
     }
 
     public function middleware()
@@ -76,5 +123,32 @@ class SendToAeat implements ShouldQueue
     public function failed($exception = null)
     {
         nlog($exception);
+    }
+
+
+    
+    /**
+     * cancellationHash
+     *
+     * @param  mixed $document
+     * @param  string $huella
+     * @return string
+     */
+    private function cancellationHash($document, string $huella): string
+    {
+
+        $idEmisorFacturaAnulada = $document->getIdFactura()->getIdEmisorFactura();
+        $numSerieFacturaAnulada = $document->getIdFactura()->getNumSerieFactura();
+        $fechaExpedicionFacturaAnulada = $document->getIdFactura()->getFechaExpedicionFactura();
+        $fechaHoraHusoGenRegistro = $document->getFechaHoraHusoGenRegistro();
+
+        $hashInput = "IDEmisorFacturaAnulada={$idEmisorFacturaAnulada}&" .
+            "NumSerieFacturaAnulada={$numSerieFacturaAnulada}&" .
+            "FechaExpedicionFacturaAnulada={$fechaExpedicionFacturaAnulada}&" .
+            "Huella={$huella}&" .
+            "FechaHoraHusoGenRegistro={$fechaHoraHusoGenRegistro}";
+
+        return strtoupper(hash('sha256', $hashInput));
+
     }
 }

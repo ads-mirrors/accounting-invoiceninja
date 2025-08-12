@@ -44,7 +44,7 @@ class EInvoiceController extends BaseController
         $el = new EntityLevel();
 
         $data = [];
-
+        
         match ($request->entity) {
             'invoices' => $data = $el->checkInvoice($request->getEntity()),
             'clients' => $data = $el->checkClient($request->getEntity()),

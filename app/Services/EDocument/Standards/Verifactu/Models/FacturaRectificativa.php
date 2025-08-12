@@ -119,36 +119,6 @@ class FacturaRectificativa extends BaseXmlModel
         return $idFacturaRectificada;
     }
 
-    /**
-     * Create a FacturaRectificativa instance for a substitutive rectification
-     * 
-     * @param string $nif The NIF of the rectified invoice
-     * @param string $numSerie The series number of the rectified invoice
-     * @param string $fecha The date of the rectified invoice
-     * @return static
-     */
-    public static function createForSubstitutive(string $nif, string $numSerie, string $fecha): static
-    {
-        $instance = new static('S', 0.0, 0.0);
-        $instance->setRectifiedInvoice($nif, $numSerie, $fecha);
-        return $instance;
-    }
-
-    /**
-     * Create a FacturaRectificativa instance for a complete rectification
-     * 
-     * @param string $nif The NIF of the rectified invoice
-     * @param string $numSerie The series number of the rectified invoice
-     * @param string $fecha The date of the rectified invoice
-     * @return static
-     */
-    public static function createForComplete(string $nif, string $numSerie, string $fecha): static
-    {
-        $instance = new static('I', 0.0, 0.0);
-        $instance->setRectifiedInvoice($nif, $numSerie, $fecha);
-        return $instance;
-    }
-
     public static function fromDOMElement(\DOMElement $element): self
     {
         // This method is required by BaseXmlModel but not used in this context

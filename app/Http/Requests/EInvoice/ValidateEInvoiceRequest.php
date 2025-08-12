@@ -75,7 +75,6 @@ class ValidateEInvoiceRequest extends Request
             return false;
         }
 
-
         $class = Invoice::class;
 
         match ($this->entity) {

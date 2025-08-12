@@ -576,59 +576,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         return $this;
     }
 
-    /**
-     * Helper method to create a complete rectification invoice with ImporteRectificacion
-     * 
-     * @param float $importeRectificacion The rectification amount
-     * @param string $descripcionOperacion Description of the rectification operation
-     * @return self
-     */
-    public function makeCompleteRectificationWithAmount(float $importeRectificacion, string $descripcionOperacion = 'Rectificación completa de factura'): self
-    {
-        return $this->makeRectificativeWithAmount(self::TIPO_RECTIFICATIVA_COMPLETA, $importeRectificacion, $descripcionOperacion);
-    }
-
-    /**
-     * Helper method to create a substitutive rectification invoice with ImporteRectificacion
-     * 
-     * @param float $importeRectificacion The rectification amount
-     * @param string $descripcionOperacion Description of the rectification operation
-     * @return self
-     */
-    public function makeSubstitutiveRectificationWithAmount(float $importeRectificacion, string $descripcionOperacion = 'Rectificación sustitutiva de factura'): self
-    {
-        return $this->makeRectificativeWithAmount(self::TIPO_RECTIFICATIVA_SUSTITUTIVA, $importeRectificacion, $descripcionOperacion);
-    }
-
-    /**
-     * Helper method to create a substitutive rectification invoice that automatically calculates ImporteRectificacion
-     * from the difference between the original and new amounts
-     * 
-     * @param float $originalAmount The original invoice amount
-     * @param float $newAmount The new invoice amount
-     * @param string $descripcionOperacion Description of the rectification operation
-     * @return self
-     */
-    public function makeSubstitutiveRectificationFromDifference(float $originalAmount, float $newAmount, string $descripcionOperacion = 'Rectificación sustitutiva de factura'): self
-    {
-        $importeRectificacion = $newAmount - $originalAmount;
-        
-        return $this->makeRectificativeWithAmount(self::TIPO_RECTIFICATIVA_SUSTITUTIVA, $importeRectificacion, $descripcionOperacion);
-    }
-
-    /**
-     * Calculate and set ImporteRectificacion based on the difference between amounts
-     * 
-     * @param float $originalAmount The original invoice amount
-     * @param float $newAmount The new invoice amount
-     * @return self
-     */
-    public function calculateImporteRectificacion(float $originalAmount, float $newAmount): self
-    {
-        $this->importeRectificacion = $newAmount - $originalAmount;
-        return $this;
-    }
-
 
 
     /**
@@ -652,11 +599,11 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             throw new \InvalidArgumentException('DescripcionOperacion is required');
         }
         
-        if ($this->cuotaTotal === null || $this->cuotaTotal < 0) {
+        if ($this->cuotaTotal < 0) {
             throw new \InvalidArgumentException('CuotaTotal must be a positive number');
         }
         
-        if ($this->importeTotal === null || $this->importeTotal < 0) {
+        if ($this->importeTotal < 0) {
             throw new \InvalidArgumentException('ImporteTotal must be a positive number');
         }
         
@@ -1042,32 +989,17 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $root->appendChild($this->createElement($doc, 'ImporteTotal', (string)$this->importeTotal));
 
         // 13. Encadenamiento (always present for R1 invoices)
-        if ($this->encadenamiento !== null) {
+        // if ($this->encadenamiento !== null) {
             $root->appendChild($this->encadenamiento->toXml($doc));
-        } else {
-            // Create default Encadenamiento if not set
-            $encadenamientoElement = $this->createElement($doc, 'Encadenamiento');
-            $encadenamientoElement->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
-            $root->appendChild($encadenamientoElement);
-        }
+        // } else {
+        //     // Create default Encadenamiento if not set
+        //     $encadenamientoElement = $this->createElement($doc, 'Encadenamiento');
+        //     $encadenamientoElement->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
+        //     $root->appendChild($encadenamientoElement);
+        // }
 
         // 14. SistemaInformatico (always present for R1 invoices)
-        if ($this->sistemaInformatico !== null) {
-            $root->appendChild($this->sistemaInformatico->toXml($doc));
-        } else {
-            // Create default SistemaInformatico if not set
-            $sistemaInformaticoElement = $this->createElement($doc, 'SistemaInformatico');
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'NombreRazon', $this->nombreRazonEmisor));
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'NIF', $this->idEmisorFactura));
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'NombreSistemaInformatico', 'InvoiceNinja'));
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'IdSistemaInformatico', '77'));
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'Version', '1.0.03'));
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'NumeroInstalacion', '383'));
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'TipoUsoPosibleSoloVerifactu', 'N'));
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'TipoUsoPosibleMultiOT', 'S'));
-            $sistemaInformaticoElement->appendChild($this->createElement($doc, 'IndicadorMultiplesOT', 'S'));
-            $root->appendChild($sistemaInformaticoElement);
-        }
+        $root->appendChild($this->sistemaInformatico->toXml($doc));
 
         // 15. FechaHoraHusoGenRegistro
         $root->appendChild($this->createElement($doc, 'FechaHoraHusoGenRegistro', $this->fechaHoraHusoGenRegistro));

@@ -158,6 +158,7 @@ class Peppol extends AbstractService
 
     public function __construct(public Invoice $invoice)
     {
+        
         $this->company = $invoice->company;
         $this->calc = $this->invoice->calc();
         $this->e = new EInvoice();
