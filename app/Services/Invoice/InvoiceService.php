@@ -708,6 +708,33 @@ class InvoiceService
 
         return $this;
     }
+    
+    /**
+     * modifyVerifactuWorkflow
+     * @todo - handle invoice modifications - ensure when we 
+     * sent this to AEAT we reference the invoice that was replaced.
+     * 
+     * @param  string $modified_invoice_hashed_id
+     * @return self
+     */
+    public function modifyVerifactuWorkflow(string $modified_invoice_hashed_id): self
+    {
+        $modified_invoice = Invoice::withTrashed()->find($this->decodePrimaryKey($modified_invoice_hashed_id));
+        $modified_invoice->status_id = Invoice::STATUS_REPLACED;
+        $modified_invoice->backup->modified_invoice_id = $this->invoice->hashed_id;
+        $modified_invoice->save();
+
+        $this->markSent();
+        //Update the client balance by the delta amount from the previous invoice to this one.
+        $this->invoice->backup->replaced_invoice_id = $modified_invoice->hashed_id;
+        $this->invoice->saveQuietly();
+
+        $this->invoice->client->service()->updateBalance(round(($modified_invoice->amount - $this->invoice->amount), 2));
+        $this->sendVerifactu();
+        
+        return $this;
+    }
+
     /**
      * Saves the invoice.
      * @return Invoice object

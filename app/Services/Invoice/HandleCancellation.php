@@ -87,10 +87,11 @@ class HandleCancellation extends AbstractService
 
         $replicated_invoice->line_items = $items;
 
-        $backup = new \stdClass();
-        $backup->cancelled_invoice_id = $this->invoice->hashed_id;
-        $backup->cancelled_invoice_number = $this->invoice->number;
-        $backup->cancellation_reason = $this->reason ?? 'R3';
+        $backup = new \App\DataMapper\InvoiceBackup(
+            cancelled_invoice_id: $this->invoice->hashed_id,
+            cancelled_invoice_number: $this->invoice->number,
+            cancellation_reason: $this->reason ?? 'R3'
+        );
 
         $replicated_invoice->backup = $backup;
 
@@ -98,10 +99,11 @@ class HandleCancellation extends AbstractService
         $replicated_invoice = $invoice_repository->save([], $replicated_invoice);
         $replicated_invoice->service()->markSent()->sendVerifactu()->save();
 
-        $old_backup = new \stdClass();
-        $old_backup->credit_invoice_id = $replicated_invoice->hashed_id;
-        $old_backup->credit_invoice_number = $replicated_invoice->number;
-        $old_backup->cancellation_reason = $this->reason ?? 'R3';
+        $old_backup = new \App\DataMapper\InvoiceBackup(
+            credit_invoice_id: $replicated_invoice->hashed_id,
+            credit_invoice_number: $replicated_invoice->number,
+            cancellation_reason: $this->reason ?? 'R3'
+        );
 
         $this->invoice->backup = $old_backup;
         $this->invoice->saveQuietly();
@@ -115,10 +117,9 @@ class HandleCancellation extends AbstractService
 
     public function reverse()
     {
-        /* The stored cancelled object - contains the adjustment and status*/
-        $cancellation = $this->invoice->backup->cancellation;
-
         /* Will turn the negative cancellation amount to a positive adjustment*/
+        
+        $cancellation = $this->invoice->backup->cancellation;
         $adjustment = $cancellation->adjustment * -1;
 
         $this->invoice->ledger()->updateInvoiceBalance($adjustment, "Invoice {$this->invoice->number} reversal");
@@ -133,11 +134,9 @@ class HandleCancellation extends AbstractService
 
         $this->invoice->client->service()->calculateBalance();
 
-
-        /* Pop the cancellation out of the backup*/
-        $backup = $this->invoice->backup;
-        unset($backup->cancellation);
-        $this->invoice->backup = $backup;
+        /* Clear the cancellation data */
+        $this->invoice->backup->cancellation->adjustment = 0;
+        $this->invoice->backup->cancellation->status_id = 0;
         $this->invoice->saveQuietly();
         $this->invoice->fresh();
 
@@ -152,19 +151,11 @@ class HandleCancellation extends AbstractService
      */
     private function backupCancellation($adjustment)
     {
-        if (! is_object($this->invoice->backup)) {
-            $backup = new stdClass();
-            $this->invoice->backup = $backup;
-        }
 
-        $cancellation = new stdClass();
-        $cancellation->adjustment = $adjustment;
-        $cancellation->status_id = $this->invoice->status_id;
-
-        $invoice_backup = $this->invoice->backup;
-        $invoice_backup->cancellation = $cancellation;
-
-        $this->invoice->backup = $invoice_backup;
+        // Direct assignment to properties
+        $this->invoice->backup->cancellation->adjustment = $adjustment;
+        $this->invoice->backup->cancellation->status_id = $this->invoice->status_id;
+        
         $this->invoice->saveQuietly();
     }
 }

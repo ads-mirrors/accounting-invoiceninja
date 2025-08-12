@@ -29,6 +29,7 @@ use App\Helpers\Invoice\InvoiceSumInclusive;
 use App\Utils\Traits\Invoice\ActionsInvoice;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Events\Invoice\InvoiceReminderWasEmailed;
+use App\DataMapper\InvoiceBackup;
 use App\Utils\Number;
 
 /**
@@ -55,7 +56,7 @@ use App\Utils\Number;
  * @property string|null $due_date
  * @property bool $is_deleted
  * @property object|array|string $line_items
- * @property object|null $backup
+ * @property InvoiceBackup $backup
  * @property object|null $sync
  * @property string|null $footer
  * @property string|null $public_notes
@@ -207,7 +208,7 @@ class Invoice extends BaseModel
 
     protected $casts = [
         'line_items' => 'object',
-        'backup' => 'object',
+        'backup' => InvoiceBackup::class,
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
