@@ -112,6 +112,11 @@ class ACH implements MethodInterface, LivewireMethodInterface
                 return $this->braintree->processInternallyFailedPayment($this->braintree, $e);
             }
         }
+        
+        if ($result instanceof \Braintree\Result\Error && $result->message) {
+            session()->flash('ach_error', $result->message);
+            return back()->withInput();
+        }
 
         return back()->withMessage(ctrans('texts.unable_to_verify_payment_method'));
     }
@@ -207,6 +212,10 @@ class ACH implements MethodInterface, LivewireMethodInterface
             $this->braintree->client,
             $this->braintree->client->company,
         );
+
+        if ($response instanceof \Braintree\Result\Error && $response->message) {
+            throw new PaymentFailed($response->message, 400);
+        }
 
         throw new PaymentFailed($response->transaction->additionalProcessorResponse, $response->transaction->processorResponseCode);
     }

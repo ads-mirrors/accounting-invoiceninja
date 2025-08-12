@@ -70,7 +70,7 @@
     "src": "resources/js/clients/payment_methods/authorize-stripe-acss.js"
   },
   "resources/js/clients/payment_methods/braintree-ach.js": {
-    "file": "assets/braintree-ach-3d6b328f.js",
+    "file": "assets/braintree-ach-78e45d03.js",
     "imports": [
       "_wait-8f4ae121.js"
     ],
