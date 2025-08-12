@@ -81,31 +81,23 @@ class HandleCancellation extends AbstractService
 
         $items = $replicated_invoice->line_items;
 
-            foreach($items as &$item) {
-                $item->quantity = $item->quantity * -1;
-            }
+        foreach($items as &$item) {
+            $item->quantity = $item->quantity * -1;
+        }
 
         $replicated_invoice->line_items = $items;
-
-        $backup = new \App\DataMapper\InvoiceBackup(
-            cancelled_invoice_id: $this->invoice->hashed_id,
-            cancelled_invoice_number: $this->invoice->number,
-            cancellation_reason: $this->reason ?? 'R3'
-        );
-
-        $replicated_invoice->backup = $backup;
+        $replicated_invoice->backup->cancelled_invoice_id = $this->invoice->hashed_id;
+        $replicated_invoice->backup->cancelled_invoice_number = $this->invoice->number;
+        $replicated_invoice->backup->cancellation_reason = $this->reason ?? 'R3';
 
         $invoice_repository = new InvoiceRepository();
         $replicated_invoice = $invoice_repository->save([], $replicated_invoice);
         $replicated_invoice->service()->markSent()->sendVerifactu()->save();
 
-        $old_backup = new \App\DataMapper\InvoiceBackup(
-            credit_invoice_id: $replicated_invoice->hashed_id,
-            credit_invoice_number: $replicated_invoice->number,
-            cancellation_reason: $this->reason ?? 'R3'
-        );
+        $this->invoice->backup->credit_invoice_id = $replicated_invoice->hashed_id;
+        $this->invoice->backup->credit_invoice_number = $replicated_invoice->number;
+        $this->invoice->backup->cancellation_reason = $this->reason ?? 'R3';
 
-        $this->invoice->backup = $old_backup;
         $this->invoice->saveQuietly();
         $this->invoice->fresh();
         

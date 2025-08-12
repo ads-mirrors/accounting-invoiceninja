@@ -729,7 +729,7 @@ class InvoiceService
         $this->invoice->backup->replaced_invoice_id = $modified_invoice->hashed_id;
         $this->invoice->saveQuietly();
 
-        $this->invoice->client->service()->updateBalance(round(($modified_invoice->amount - $this->invoice->amount), 2));
+        $this->invoice->client->service()->updateBalance(round(($this->invoice->amount - $modified_invoice->amount), 2));
         $this->sendVerifactu();
         
         return $this;

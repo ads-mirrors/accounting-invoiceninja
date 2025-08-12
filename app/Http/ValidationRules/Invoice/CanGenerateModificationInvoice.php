@@ -51,14 +51,14 @@ class CanGenerateModificationInvoice implements ValidationRule
             $fail("Cannot create a modification invoice where a payment has been made.");
         } elseif($invoice->status_id === Invoice::STATUS_CANCELLED  ) {
             $fail("Cannot create a modification invoice for a cancelled invoice.");
-        } elseif($invoice->status_id === Invoice::STATUS_REPLACED) {
-            $fail("Cannot create a modification invoice for a replaced invoice.");
+        // } elseif($invoice->status_id === Invoice::STATUS_REPLACED) {
+            // $fail("Cannot create a modification invoice for a replaced invoice.");
         } elseif($invoice->status_id === Invoice::STATUS_REVERSED) {
             $fail("Cannot create a modification invoice for a reversed invoice.");
-        } elseif ($invoice->status_id !== Invoice::STATUS_SENT) {
-            $fail("Cannot create a modification invoice.");
-        } elseif($invoice->amount <= 0){
-            $fail("Cannot create a modification invoice for an invoice with an amount less than 0.");
+        // } elseif ($invoice->status_id !== Invoice::STATUS_SENT) {
+        //     $fail("Cannot create a modification invoice.");
+        // } elseif($invoice->amount <= 0){
+        //     $fail("Cannot create a modification invoice for an invoice with an amount less than 0.");
         }
 
     }

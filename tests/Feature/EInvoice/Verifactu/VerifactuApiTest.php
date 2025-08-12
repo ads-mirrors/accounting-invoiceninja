@@ -91,6 +91,84 @@ class VerifactuApiTest extends TestCase
 
     }
 
+    public function test_create_modification_invoice()
+    {
+        
+        $this->assertEquals(10, $this->client->balance);
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+        
+        $this->assertEquals(121, $invoice->amount);
+        $this->assertEquals(121, $invoice->balance);
+        $this->assertEquals(131, $this->client->fresh()->balance);
+
+        $this->assertNull($invoice->backup->modified_invoice_id);
+
+        $invoice2 = $this->buildData();
+        
+        $items = $invoice2->line_items;
+        $items[] = $items[0];
+        $invoice2->line_items = $items;
+        $invoice2 = $invoice2->calc()->getInvoice();
+
+        $invoice2->service()->markSent()->save();
+
+        $this->assertEquals(373, $this->client->fresh()->balance);
+        
+        $data = $invoice2->toArray();
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $invoice->hashed_id;
+        $data['number'] = null;
+        $data['client_id'] = $this->client->hashed_id;
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+
+        $arr = $response->json();
+
+        $this->assertEquals($arr['data']['status_id'], Invoice::STATUS_SENT);
+        $this->assertEquals($arr['data']['amount'], 242);
+        $this->assertEquals($arr['data']['balance'], 242);
+        $this->assertEquals($arr['data']['backup']['replaced_invoice_id'], $invoice->hashed_id);
+
+        $invoice = $invoice->fresh();
+
+        $this->assertEquals(Invoice::STATUS_REPLACED, $invoice->status_id);
+        $this->assertEquals($arr['data']['id'], $invoice->backup->modified_invoice_id);
+
+        $this->assertEquals(615, $this->client->fresh()->balance);
+
+        //now create another modification invoice reducing the amounts
+
+        $data = $invoice2->toArray();
+        $data['verifactu_modified'] = true;
+        $data['modified_invoice_id'] = $arr['data']['id'];
+        $data['number'] = null;
+        $data['client_id'] = $this->client->hashed_id;
+        $data['line_items'] = $invoice2->line_items;
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices', $data);
+
+        $response->assertStatus(200);
+
+        $this->assertEquals(494, $this->client->fresh()->balance);
+
+    }
+
     public function test_create_modification_invoice_validation_fails()
     {
         $invoice = $this->buildData();;

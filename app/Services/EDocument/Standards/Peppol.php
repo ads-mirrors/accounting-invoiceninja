@@ -21,7 +21,6 @@ use App\Helpers\Invoice\InvoiceSum;
 use InvoiceNinja\EInvoice\EInvoice;
 use App\Utils\Traits\NumberFormatter;
 use App\Helpers\Invoice\InvoiceSumInclusive;
-use App\Services\EDocument\Gateway\Qvalia\Qvalia;
 use InvoiceNinja\EInvoice\Models\Peppol\ItemType\Item;
 use App\Services\EDocument\Gateway\Storecove\Storecove;
 use InvoiceNinja\EInvoice\Models\Peppol\PartyType\Party;
@@ -139,9 +138,9 @@ class Peppol extends AbstractService
 
     private EInvoice $e;
 
-    private string $api_network = Storecove::class; // Storecove::class; // Qvalia::class;
+    private string $api_network = Storecove::class; // Storecove::class;
 
-    public Qvalia | Storecove $gateway;
+    public Storecove $gateway;
 
     private string $customizationID = 'urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0';
 
