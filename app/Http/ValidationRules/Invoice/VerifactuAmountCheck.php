@@ -38,8 +38,6 @@ class VerifactuAmountCheck implements ValidationRule
 
         $company = $user->company();
 
-        $start = microtime(true);
-        /** For verifactu, we do not allow restores of deleted invoices */
         if ($company->verifactuEnabled()) {
 
             $invoice = false;
@@ -48,16 +46,13 @@ class VerifactuAmountCheck implements ValidationRule
             $child_invoice_count = 0;
 
             if(isset($this->input['modified_invoice_id'])) {
-                $invoice = Invoice::withTrashed()->find($this->decodePrimaryKey($this->input['modified_invoice_id']));
+                $invoice = Invoice::withTrashed()->where('id', $this->decodePrimaryKey($this->input['modified_invoice_id']))->company()->firstOrFail();
                 $child_invoices = Invoice::withTrashed()
                                     ->whereIn('id', $this->transformKeys($invoice->backup->child_invoice_ids->toArray()))
                                     ->get();
 
                 $child_invoice_totals = round($child_invoices->sum('amount'), 2);
                 $child_invoice_count = $child_invoices->count();
-                // if($child_invoice_totals + $invoice->amount < 0) {
-                //     $fail("Negative invoices can only be linked to existing invoices");
-                // }
             }
 
             $items = collect($this->input['line_items'])->map(function ($item) use($company){
@@ -89,12 +84,6 @@ class VerifactuAmountCheck implements ValidationRule
 
             $total = $items->sum() - $total_discount;
 
-            nlog("total " . $total);
-            nlog(!$invoice);
-            nlog($total);
-            nlog($child_invoice_totals);
-nlog($invoice->amount ?? 0);
-
             if($total < 0 && !$invoice) {
                 $fail("Negative invoices {$total} can only be linked to existing invoices");
             }
@@ -104,6 +93,5 @@ nlog($invoice->amount ?? 0);
             }
         }
 
-        nlog(microtime(true) - $start);
     }
 }

@@ -27,22 +27,33 @@ class RestoreDisabledRule implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
 
-        if (empty($value) ||!in_array($value, ['delete', 'restore'])) {
+        $user = auth()->user();
+        $company = $user->company();
+
+
+        if (empty($value) || !$company->verifactuEnabled()) {
             return;
         }
 
-        $user = auth()->user();
-        
-        $company = $user->company();
+        $base_query = Invoice::withTrashed()
+                            ->whereIn('id', $this->transformKeys(request()->ids))
+                            ->company();
+
+        $restore_query = clone $base_query;
+        $delete_query = clone $base_query;
+
+        $mutated_query = $delete_query->where(function ($q){
+            $q->whereNotNull('backup->parent_invoice_id')->orWhere('backup->child_invoice_ids', '!=', []);
+        });
 
         /** For verifactu, we do not allow restores of deleted invoices */
-        if($company->verifactuEnabled() && $value == 'restore' &&Invoice::withTrashed()->whereIn('id', $this->transformKeys(request()->ids))->where('company_id', $company->id)->where('is_deleted', true)->exists()) {
+        if($value == 'restore' && $restore_query->where('is_deleted', true)->exists()) {
             $fail(ctrans('texts.restore_disabled_verifactu'));
         }
-        
-        if ($company->verifactuEnabled() && $value == 'delete' && Invoice::withTrashed()->whereIn('id', $this->transformKeys(request()->ids))->where('company_id', $company->id)->where('status_id', Invoice::STATUS_CANCELLED)->exists()) {
+        elseif(in_array($value, ['delete', 'cancel']) && $delete_query->exists()) {
+            nlog($delete_query->pluck('backup')->toArray()); // any verifactu invoices that have a parent can NEVER be deleted. The parent can also NEVER be deleted
             $fail(ctrans('texts.delete_disabled_verifactu'));
         }
-
     }
+    
 }

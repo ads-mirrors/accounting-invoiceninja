@@ -632,7 +632,6 @@ class VerifactuApiTest extends TestCase
         $this->company->settings = $settings;
         $this->company->save();
 
-        
         $data = [
             'action' => 'cancel',
             'ids' => [$invoice->hashed_id],
