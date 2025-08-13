@@ -44,7 +44,6 @@ class SendToAeat implements ShouldQueue
     
     /**
      * Modification Invoices - (modify) 
-     *  - If Amount > 0 - We generates a F3 document which replaces the original invoice. And becomes the new invoice.
      *  - If Amount < 0 - We generate a R2 document which is a negative modification on the original invoice.
      * Create Invoices - (create) Generates a F1 document.
      * Cancellation Invoices - (cancel) Generates a R3 document with full negative values of the original invoice.
@@ -111,7 +110,12 @@ class SendToAeat implements ShouldQueue
 
         nlog($response);
 
-        $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_INVOICE_SENT : Activity::VERIFACTU_INVOICE_SENT_FAILURE, $response['message']);
+        $message = '';
+        if (isset($response['errors'][0]['message'])) {
+            $message = $response['errors'][0]['message'];
+        }
+
+        $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_INVOICE_SENT : Activity::VERIFACTU_INVOICE_SENT_FAILURE, $message);
         $this->systemLog($invoice, $response, $response['success'] ? SystemLog::EVENT_VERIFACTU_SUCCESS : SystemLog::EVENT_VERIFACTU_FAILURE, SystemLog::TYPE_VERIFACTU_INVOICE);
 
     }
@@ -120,6 +124,7 @@ class SendToAeat implements ShouldQueue
     {
 
         $verifactu = new Verifactu($invoice);
+        
         $document = (new RegistroAlta($invoice))->run()->getInvoice();
 
         $last_hash = $invoice->company->verifactu_logs()->first();
@@ -127,25 +132,36 @@ class SendToAeat implements ShouldQueue
         $huella = $this->cancellationHash($document, $last_hash->hash);
 
         $cancellation = $document->createCancellation();
+
         $cancellation->setHuella($huella);
 
         $soapXml = $cancellation->toSoapEnvelope();
 
-        $response = $verifactu->send($soapXml);
+        $response = $verifactu->setInvoice($document)
+                        ->setHuella($huella)
+                        ->setPreviousHash($last_hash->hash)
+                        ->send($soapXml);
 
         nlog($response);
+        
+        $message = '';
 
         if($response['success']) {
-        //if successful, we need to pop this invoice from the child array of the parent invoice!
+            //if successful, we need to pop this invoice from the child array of the parent invoice!
             $parent = Invoice::withTrashed()->find($invoice->backup->parent_invoice_id);
-                if($parent) {
-                    $parent->backup->child_invoice_ids = $parent->backup->child_invoice_ids->reject(fn($id) => $id === $invoice->hashed_id);
-                    $parent->saveQuietly();
-                }
+            
+            if($parent) {
+                $parent->backup->child_invoice_ids = $parent->backup->child_invoice_ids->reject(fn($id) => $id === $invoice->hashed_id);
+                $parent->saveQuietly();
+            }
+        }
+
+        if(isset($response['errors'][0]['message'])){
+            $message = $response['errors'][0]['message'];
         }
 
         //@todo - verifactu logging
-        $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_CANCELLATION_SENT : Activity::VERIFACTU_CANCELLATION_SENT_FAILURE, $response['message']);
+        $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_CANCELLATION_SENT : Activity::VERIFACTU_CANCELLATION_SENT_FAILURE, $message);
         $this->systemLog($invoice, $response, $response['success'] ? SystemLog::EVENT_VERIFACTU_SUCCESS : SystemLog::EVENT_VERIFACTU_FAILURE, SystemLog::TYPE_VERIFACTU_CANCELLATION);
     }
 

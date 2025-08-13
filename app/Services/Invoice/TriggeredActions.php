@@ -81,8 +81,13 @@ class TriggeredActions extends AbstractService
             $company->save();
         }
 
-        if($this->request->has('retry_e_send') && $this->request->input('retry_e_send') == 'true' && strlen($this->invoice->backup->guid ?? '') == 0 && $this->invoice->client->peppolSendingEnabled()) {    
-            \App\Services\EDocument\Jobs\SendEDocument::dispatch(get_class($this->invoice), $this->invoice->id, $this->invoice->company->db);
+        if($this->request->has('retry_e_send') && $this->request->input('retry_e_send') == 'true' && strlen($this->invoice->backup->guid ?? '') == 0) {
+            if($this->invoice->client->peppolSendingEnabled()) {
+                \App\Services\EDocument\Jobs\SendEDocument::dispatch(get_class($this->invoice), $this->invoice->id, $this->invoice->company->db);
+            }
+            elseif($this->invoice->company->verifactuEnabled()) {
+                $this->invoice->service()->sendVerifactu();
+            }
         }
 
         if($this->request->has('redirect')) {

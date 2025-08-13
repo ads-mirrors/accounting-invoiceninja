@@ -35,6 +35,10 @@ class AeatClient
         $this->certificate = $this->certificate ?? config('services.verifactu.certificate');
         $this->ssl_key = $this->ssl_key ?? config('services.verifactu.ssl_key');
 
+        if(config('services.verifactu.test_mode')) {
+            $this->setTestMode();
+        }
+
         return $this;
     }
     

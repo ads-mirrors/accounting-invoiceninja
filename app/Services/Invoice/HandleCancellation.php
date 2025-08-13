@@ -17,11 +17,13 @@ use App\Repositories\InvoiceRepository;
 use App\Services\AbstractService;
 use App\Utils\Ninja;
 use App\Utils\Traits\GeneratesCounter;
+use App\Utils\Traits\MakesHash;
 use stdClass;
 
 class HandleCancellation extends AbstractService
 {
     use GeneratesCounter;
+    use MakesHash;
 
     public function __construct(private Invoice $invoice, private ?string $reason = null)
     {

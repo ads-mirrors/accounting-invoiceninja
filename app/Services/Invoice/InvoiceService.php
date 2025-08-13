@@ -678,7 +678,6 @@ class InvoiceService
 
     }
 
-     
     /**
      * sendVerifactu
      *  

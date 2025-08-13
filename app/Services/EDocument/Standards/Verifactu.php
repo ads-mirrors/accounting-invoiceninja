@@ -192,7 +192,7 @@ class Verifactu extends AbstractService
 
         $response =  $this->aeat_client->send($soapXml);
 
-        if($response['success']){
+        if($response['success'] || $response['status'] == 'ParcialmenteCorrecto'){
             $this->writeLog($response);
         }
 

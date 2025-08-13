@@ -151,5 +151,6 @@ return [
         'certificate' => env('VERIFACTU_CERTIFICATE', ''),
         'ssl_key' => env('VERIFACTU_SSL_KEY', ''),
         'sender_name' => env('VERIFACTU_SENDER_NAME', 'CERTIFICADO FISICA PRUEBAS'),
+        'test_mode' => env('VERIFACTU_TEST_MODE', false),
     ],
 ];
