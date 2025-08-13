@@ -76,39 +76,56 @@ class HandleCancellation extends AbstractService
     private function verifactuCancellation(): Invoice
     {
 
-        $replicated_invoice = $this->invoice->replicate();
-
         $this->invoice = $this->invoice->service()->setStatus(Invoice::STATUS_CANCELLED)->save();
         $this->invoice->service()->workFlow()->save();
 
-        $replicated_invoice->status_id = Invoice::STATUS_DRAFT;
-        $replicated_invoice->date = now()->format('Y-m-d');
-        $replicated_invoice->due_date = null;
-        $replicated_invoice->partial = 0;
-        $replicated_invoice->partial_due_date = null;
-        $replicated_invoice->number = null;
-        $replicated_invoice->amount = 0;
-        $replicated_invoice->balance = 0;
-        $replicated_invoice->paid_to_date = 0;
+        // R2 Cancellation - do not create a separate document
+        if($this->invoice->backup->document_type === 'R2'){
 
-        $items = $replicated_invoice->line_items;
+            $parent = Invoice::withTrashed()->find($this->decodePrimaryKey($this->invoice->backup->parent_invoice_id));
 
-        foreach($items as &$item) {
-            $item->quantity = $item->quantity * -1;
+            if(!$parent) {
+                return $this->invoice;
+            }
+
+            $parent->backup->adjustable_amount -= $this->invoice->amount;
+            $parent->backup->child_invoice_ids->reject(fn($id) => $id === $this->invoice->hashed_id);
+            $parent->save();
+
+            $this->invoice->service()->cancelVerifactu();
+        }
+        else {
+            $replicated_invoice = $this->invoice->replicate();
+            $replicated_invoice->status_id = Invoice::STATUS_DRAFT;
+            $replicated_invoice->date = now()->format('Y-m-d');
+            $replicated_invoice->due_date = null;
+            $replicated_invoice->partial = 0;
+            $replicated_invoice->partial_due_date = null;
+            $replicated_invoice->number = null;
+            $replicated_invoice->amount = 0;
+            $replicated_invoice->balance = 0;
+            $replicated_invoice->paid_to_date = 0;
+
+            $items = $replicated_invoice->line_items;
+
+            foreach($items as &$item) {
+                $item->quantity = $item->quantity * -1;
+            }
+
+            $replicated_invoice->line_items = $items;
+            $replicated_invoice->backup->parent_invoice_id = $this->invoice->hashed_id;
+            $replicated_invoice->backup->parent_invoice_number = $this->invoice->number;
+            $replicated_invoice->backup->document_type = 'R2'; // Full Credit Note Generated for the invoice
+
+            $invoice_repository = new InvoiceRepository();
+            $replicated_invoice = $invoice_repository->save([], $replicated_invoice);
+            $replicated_invoice->service()->markSent()->sendVerifactu()->save();
+
+            $this->invoice->backup->child_invoice_ids->push($replicated_invoice->hashed_id);
+
+            $this->invoice->saveQuietly();
         }
 
-        $replicated_invoice->line_items = $items;
-        $replicated_invoice->backup->parent_invoice_id = $this->invoice->hashed_id;
-        $replicated_invoice->backup->parent_invoice_number = $this->invoice->number;
-        $replicated_invoice->backup->document_type = 'R2'; // Full Credit Note Generated for the invoice
-
-        $invoice_repository = new InvoiceRepository();
-        $replicated_invoice = $invoice_repository->save([], $replicated_invoice);
-        $replicated_invoice->service()->markSent()->sendVerifactu()->save();
-
-        $this->invoice->backup->child_invoice_ids->push($replicated_invoice->hashed_id);
-
-        $this->invoice->saveQuietly();
         $this->invoice->fresh();
         
         event(new InvoiceWasCancelled($this->invoice, $this->invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));

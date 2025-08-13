@@ -15,12 +15,16 @@ use Mail;
 use App\Utils\Ninja;
 use App\Models\Company;
 use App\Models\Invoice;
+use App\Models\Activity;
+use App\Models\SystemLog;
 use App\Libraries\MultiDB;
 use Illuminate\Bus\Queueable;
+use App\Jobs\Util\SystemLogger;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\SerializesModels;
+use App\Repositories\ActivityRepository;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -63,16 +67,13 @@ class SendToAeat implements ShouldQueue
         return [5, 30, 240, 3600, 7200];
     }
 
-    public function handle()
+    public function handle(ActivityRepository $activity_repository)
     {
         MultiDB::setDB($this->company->db);
 
         $invoice = Invoice::withTrashed()->find($this->invoice_id);
 
         switch($this->action) {
-            case 'modify':
-                $this->modifyInvoice($invoice);
-                break;
             case 'create':
                 $this->createInvoice($invoice);
                 break;
@@ -92,27 +93,7 @@ class SendToAeat implements ShouldQueue
      * @param  Invoice $invoice
      * @return void
      */
-    public function modifyInvoice(Invoice $invoice)
-    {
-                
-        $verifactu = new Verifactu($invoice);
-        $verifactu->run();
-
-        $envelope = $verifactu->getEnvelope();
-
-        $response = $verifactu->send($envelope);
-
-        nlog($response);
-
-        // if($invoice->amount >= 0) {
-        //     $document = (new RegistroAlta($invoice))->run()->getInvoice();
-        // }
-        // else {
-        //     $document = (new RegistroRectificacion($invoice))->run()->getInvoice();
-        // }
-        
-    }
-
+    
     public function createInvoice(Invoice $invoice)
     {
         $verifactu = new Verifactu($invoice);
@@ -123,6 +104,9 @@ class SendToAeat implements ShouldQueue
         $response = $verifactu->send($envelope);
 
         nlog($response);
+
+        $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_INVOICE_SENT : Activity::VERIFACTU_INVOICE_SENT_FAILURE, $response['message']);
+        $this->systemLog($invoice, $response, $response['success'] ? SystemLog::EVENT_VERIFACTU_SUCCESS : SystemLog::EVENT_VERIFACTU_FAILURE, SystemLog::TYPE_VERIFACTU_INVOICE);
 
     }
 
@@ -153,12 +137,15 @@ class SendToAeat implements ShouldQueue
                     $parent->saveQuietly();
                 }
         }
+
         //@todo - verifactu logging
+        $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_CANCELLATION_SENT : Activity::VERIFACTU_CANCELLATION_SENT_FAILURE, $response['message']);
+        $this->systemLog($invoice, $response, $response['success'] ? SystemLog::EVENT_VERIFACTU_SUCCESS : SystemLog::EVENT_VERIFACTU_FAILURE, SystemLog::TYPE_VERIFACTU_CANCELLATION);
     }
 
     public function middleware()
     {
-        return [new WithoutOverlapping("send_to_aeat_{$this->company->company_key}")];
+        return [(new WithoutOverlapping("send_to_aeat_{$this->company->company_key}"))->releaseAfter(30)->expireAfter(30)];
     }
 
     public function failed($exception = null)
@@ -166,7 +153,34 @@ class SendToAeat implements ShouldQueue
         nlog($exception);
     }
 
+    private function writeActivity(Invoice $invoice, int $activity_id, string $notes = ''): void
+    {
+        $activity = new Activity();
+        $activity->user_id = $invoice->user_id;
+        $activity->client_id = $invoice->client_id;
+        $activity->company_id = $invoice->company_id;
+        $activity->account_id = $invoice->company->account_id;
+        $activity->activity_type_id = $activity_id;
+        $activity->invoice_id = $invoice->id;
+        $activity->notes = str_replace('"', '', $notes);
+        $activity->is_system = true;
 
+        $activity->save();
+
+    }
+
+    private function systemLog(Invoice $invoice, array $data, int $event_id, int $type_id): void
+    {
+        (new SystemLogger(
+                $data,
+                SystemLog::CATEGORY_VERIFACTU,
+                $event_id,
+                $type_id,
+                $invoice->client,
+                $invoice->company
+            )
+        )->handle();
+    }
     
     /**
      * cancellationHash

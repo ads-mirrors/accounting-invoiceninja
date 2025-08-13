@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Events\Invoice\InvoiceWasArchived;
 use App\Jobs\Inventory\AdjustProductInventory;
 use App\Libraries\Currency\Conversion\CurrencyApi;
+use App\Services\EDocument\Standards\Verifactu\SendToAeat;
 
 class InvoiceService
 {
@@ -248,7 +249,7 @@ class InvoiceService
         $this->invoice = (new MarkInvoiceDeleted($this->invoice))->run();
 
         if($this->invoice->company->verifactuEnabled()) {
-            $this->deleteVerifactu();
+            $this->cancelVerifactu();
         }
 
         return $this;
@@ -680,31 +681,24 @@ class InvoiceService
      
     /**
      * sendVerifactu
-     * @todo - send the invoice to AEAT
-     * ONLY send when the transaction is ES => ES
-     * Ensure we run all sending syncronously to ensure chronology
      *  
      * @return self
      */
     public function sendVerifactu(): self
     {
-        // if($this->invoice->company->verifactuEnabled()) {
-        //     (new SendVerifactu($this->invoice))->handle();
-        // }
-
+        SendToAeat::dispatch($this->invoice->id, $this->invoice->company, 'create');
+        
         return $this;
     }
     
     /**
-     * deleteVerifactu
-     * @todo - handle "cancelling" the invoice in AEAT 
+     * cancelVerifactu
+     * 
      * @return self
      */
-    public function deleteVerifactu(): self
+    public function cancelVerifactu(): self
     {
-        // if($this->invoice->company->verifactuEnabled()) {
-        //     (new DeleteVerifactu($this->invoice))->handle();
-        // }
+        SendToAeat::dispatch($this->invoice->id, $this->invoice->company, 'cancel');
 
         return $this;
     }

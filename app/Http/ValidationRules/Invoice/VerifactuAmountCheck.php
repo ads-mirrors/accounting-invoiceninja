@@ -39,13 +39,13 @@ class VerifactuAmountCheck implements ValidationRule
 
         $company = $user->company();
 
-        if ($company->verifactuEnabled()) {
+        if ($company->verifactuEnabled()) { // Company level check if Verifactu is enabled
             
             $client = Client::withTrashed()->find($this->input['client_id']);
 
-            if($client->country->iso_3166_2 !== 'ES') {
+            if($client->country->iso_3166_2 !== 'ES') { // Client level check if client is in Spain
                 return;
-            }
+            }   
 
             $invoice = false;
             $child_invoices = false;
