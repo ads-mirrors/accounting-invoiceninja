@@ -13,6 +13,7 @@
 namespace App\Http\ValidationRules\Invoice;
 
 use Closure;
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -39,6 +40,12 @@ class VerifactuAmountCheck implements ValidationRule
         $company = $user->company();
 
         if ($company->verifactuEnabled()) {
+            
+            $client = Client::withTrashed()->find($this->input['client_id']);
+
+            if($client->country->iso_3166_2 !== 'ES') {
+                return;
+            }
 
             $invoice = false;
             $child_invoices = false;
@@ -47,12 +54,18 @@ class VerifactuAmountCheck implements ValidationRule
 
             if(isset($this->input['modified_invoice_id'])) {
                 $invoice = Invoice::withTrashed()->where('id', $this->decodePrimaryKey($this->input['modified_invoice_id']))->company()->firstOrFail();
+                
+                if ($invoice->backup->adjustable_amount <= 0) {
+                    $fail("Invoice already credited in full");
+                }
+                
                 $child_invoices = Invoice::withTrashed()
                                     ->whereIn('id', $this->transformKeys($invoice->backup->child_invoice_ids->toArray()))
                                     ->get();
 
                 $child_invoice_totals = round($child_invoices->sum('amount'), 2);
                 $child_invoice_count = $child_invoices->count();
+
             }
 
             $items = collect($this->input['line_items'])->map(function ($item) use($company){
@@ -84,10 +97,7 @@ class VerifactuAmountCheck implements ValidationRule
 
             $total = $items->sum() - $total_discount;
 
-            if($total > 0) {
-                $fail("Only negative amounts allowed for rectification {$total}");
-            }
-            elseif($total < 0 && !$invoice) {
+            if($total < 0 && !$invoice) {
                 $fail("Negative invoices {$total} can only be linked to existing invoices");
             }
             elseif($invoice && ($total + $child_invoice_totals + $invoice->amount) < 0) {

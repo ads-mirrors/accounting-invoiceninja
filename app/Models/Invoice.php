@@ -248,8 +248,6 @@ class Invoice extends BaseModel
 
     public const STATUS_UNPAID = -2; // status < 4 || < 3 && !is_deleted && !trashed()
 
-    public const STATUS_REPLACED = 7; // handle the case where the invoice is replaced by another invoice.
-
     public function toSearchableArray()
     {
         $locale = $this->company->locale();

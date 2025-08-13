@@ -27,9 +27,10 @@ class InvoiceBackup implements Castable
         public Cancellation $cancellation = new Cancellation(0,0), 
         public ?string $parent_invoice_id = null, // The id of the invoice that was cancelled
         public ?string $parent_invoice_number = null, // The number of the invoice that was cancelled
-        public ?string $document_type = null, // The reason for the cancellation
+        public ?string $document_type = null, // F1, R2
         public Collection $child_invoice_ids = new Collection(), // Collection of child invoice IDs
         public ?string $redirect = null, // The redirect url for the invoice
+        public float $adjustable_amount = 0,
     ) {}
 
     /**
@@ -51,7 +52,8 @@ class InvoiceBackup implements Castable
             parent_invoice_number: $data['parent_invoice_number'] ?? null,
             document_type: $data['document_type'] ?? null,
             child_invoice_ids: isset($data['child_invoice_ids']) ? collect($data['child_invoice_ids']) : new Collection(),
-            redirect: $data['redirect'] ?? null
+            redirect: $data['redirect'] ?? null,
+            adjustable_amount: $data['adjustable_amount'] ?? 0,
         );
     }
 

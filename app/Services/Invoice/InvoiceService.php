@@ -710,35 +710,35 @@ class InvoiceService
     }
     
     /**
-     * modifyVerifactuWorkflow
-     * @todo - handle invoice modifications - ensure when we 
-     * sent this to AEAT we reference the invoice that was replaced.
+     * Handles all requirements for verifactu saves
      * 
-     * @param  string $modified_invoice_hashed_id
+     * @param  array $invoice_array
+     * @param  bool $new_model
      * @return self
      */
-    public function modifyVerifactuWorkflow(string $modified_invoice_hashed_id): self
+    public function modifyVerifactuWorkflow(array $invoice_array, bool $new_model): self
     {
-        //if the new invoice has a negative amount - then it is not a replacement, it is a 
-        //delta modification on an existing invoice.
-        $modified_invoice = Invoice::withTrashed()->find($this->decodePrimaryKey($modified_invoice_hashed_id));
-        
-        if($this->invoice->amount > 0) {
-            $modified_invoice->status_id = Invoice::STATUS_REPLACED;
+        if($new_model && $this->invoice->amount >= 0) {
+            $this->invoice->backup->document_type = 'F1';
+            $this->invoice->backup->adjustable_amount = $this->invoice->amount;
+            $this->invoice->saveQuietly();
+        }
+        elseif(isset($invoice_array['modified_invoice_id'])) {
+            $modified_invoice = Invoice::withTrashed()->find($this->decodePrimaryKey($invoice_array['modified_invoice_id']));
+            $modified_invoice->backup->child_invoice_ids->push($this->invoice->hashed_id);
+            $modified_invoice->backup->adjustable_amount += $this->invoice->amount;
+            $modified_invoice->save();
+
+            $this->markSent();
+            //Update the client balance by the delta amount from the previous invoice to this one.
+            $this->invoice->backup->parent_invoice_id = $modified_invoice->hashed_id;
+            $this->invoice->backup->document_type = 'R2';
+            $this->invoice->saveQuietly();
+
+            $this->invoice->client->service()->updateBalance(round(($this->invoice->amount - $modified_invoice->amount), 2));
+            $this->sendVerifactu();
         }
 
-        $modified_invoice->backup->child_invoice_ids->push($this->invoice->hashed_id);
-        $modified_invoice->save();
-
-        $this->markSent();
-        //Update the client balance by the delta amount from the previous invoice to this one.
-        $this->invoice->backup->parent_invoice_id = $modified_invoice->hashed_id;
-        $this->invoice->backup->document_type = 'F3';
-        $this->invoice->saveQuietly();
-
-        $this->invoice->client->service()->updateBalance(round(($this->invoice->amount - $modified_invoice->amount), 2));
-        $this->sendVerifactu();
-        
         return $this;
     }
 

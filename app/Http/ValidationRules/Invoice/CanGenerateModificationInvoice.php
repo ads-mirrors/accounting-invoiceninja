@@ -53,8 +53,6 @@ class CanGenerateModificationInvoice implements ValidationRule
             $fail("No se puede crear una factura de rectificación cuando se ha realizado un pago."); // Cannot create a rectification invoice where a payment has been made
         } elseif($invoice->status_id === Invoice::STATUS_CANCELLED  ) {
             $fail("No se puede crear una factura de rectificación para una factura cancelada."); // Cannot create a rectification invoice for a cancelled invoice
-        } elseif($invoice->status_id === Invoice::STATUS_REPLACED) {
-            $fail("No se puede crear una factura de rectificación para una factura reemplazada."); // Cannot create a rectification invoice for a replaced invoice
         } elseif($invoice->status_id === Invoice::STATUS_REVERSED) {
             $fail("No se puede crear una factura de rectificación para una factura revertida."); // Cannot create a rectification invoice for a reversed invoice
         }
