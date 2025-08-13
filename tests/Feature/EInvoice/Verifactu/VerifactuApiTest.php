@@ -93,6 +93,62 @@ class VerifactuApiTest extends TestCase
 
     }
 
+    public function test_delete_validation_for_parent_fails_correctly()
+    {
+
+        $settings = $this->company->settings;
+        $settings->e_invoice_type = 'verifactu';
+        $settings->is_locked = 'when_sent';
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $invoice = $this->buildData();
+        $invoice->service()->markSent()->save();
+
+        $invoice2 = $this->buildData();
+        $invoice2->backup->document_type = 'R2';
+        $invoice2->backup->parent_invoice_id = $invoice->hashed_id;
+        $invoice2->save();
+        $invoice2->service()->markSent()->save();
+
+        $invoice->backup->child_invoice_ids->push($invoice2->hashed_id);
+        $invoice->save();
+
+        $this->assertEquals('F1', $invoice->backup->document_type);
+        $this->assertEquals('R2', $invoice2->backup->document_type);
+        $this->assertCount(1, $invoice->backup->child_invoice_ids);
+
+        $data = [
+            'action' => 'delete',
+            'ids' => [$invoice->hashed_id]
+        ];
+
+        $response = $this->withHeaders([
+                'X-API-SECRET' => config('ninja.api_secret'),
+                'X-API-TOKEN' => $this->token,
+            ])->postJson('/api/v1/invoices/bulk', $data);
+
+        $response->assertStatus(422);
+
+        $data = [
+            'action' => 'delete',
+            'ids' => [$invoice2->hashed_id]
+        ];
+
+        sleep(1);
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/invoices/bulk', $data);
+
+        $response->assertStatus(200);
+
+
+    }
+
+
     public function test_archive_invoice_with_no_parent()
     {
                 
