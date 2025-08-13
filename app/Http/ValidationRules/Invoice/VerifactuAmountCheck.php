@@ -84,7 +84,10 @@ class VerifactuAmountCheck implements ValidationRule
 
             $total = $items->sum() - $total_discount;
 
-            if($total < 0 && !$invoice) {
+            if($total > 0) {
+                $fail("Only negative amounts allowed for rectification {$total}");
+            }
+            elseif($total < 0 && !$invoice) {
                 $fail("Negative invoices {$total} can only be linked to existing invoices");
             }
             elseif($invoice && ($total + $child_invoice_totals + $invoice->amount) < 0) {

@@ -84,6 +84,8 @@ class VerifactuApiTest extends TestCase
             'footer' => '',
         ]);
 
+        $invoice->backup->document_type = 'F1';
+
         $repo = new InvoiceRepository();
         $invoice = $repo->save([], $invoice);
 
@@ -185,8 +187,11 @@ class VerifactuApiTest extends TestCase
         $this->company->save();
 
         $invoice = $this->buildData();
-        $invoice->service()->markSent()->save();
+        $invoice = $invoice->service()->markSent()->save();
 
+        $this->assertEquals('F1', $invoice->backup->document_type);
+        $this->assertFalse($invoice->is_deleted);
+        
         $data = [
             'action' => 'delete',
             'ids' => [$invoice->hashed_id]
@@ -311,7 +316,7 @@ class VerifactuApiTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/invoices', $data);
 
-        $response->assertStatus(200);
+        $response->assertStatus(422);
 
     }
 
@@ -551,7 +556,7 @@ class VerifactuApiTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/invoices', $data);
 
-        $response->assertStatus(200);
+        $response->assertStatus(422);
     }
 
     public function test_verifactu_amount_check()
@@ -620,39 +625,8 @@ class VerifactuApiTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/invoices', $data);
 
-        $response->assertStatus(200);
+        $response->assertStatus(422);
 
-        $arr = $response->json();
-
-        $this->assertEquals($arr['data']['status_id'], Invoice::STATUS_SENT);
-        $this->assertEquals($arr['data']['amount'], 242);
-        $this->assertEquals($arr['data']['balance'], 242);
-        $this->assertEquals($arr['data']['backup']['parent_invoice_id'], $invoice->hashed_id);
-
-        $invoice = $invoice->fresh();
-
-        $this->assertEquals(Invoice::STATUS_REPLACED, $invoice->status_id);
-        $this->assertTrue($invoice->backup->child_invoice_ids->contains($arr['data']['id']));
-
-        $this->assertEquals(615, $this->client->fresh()->balance);
-
-        //now create another modification invoice reducing the amounts
-
-        $data = $invoice2->toArray();
-        $data['verifactu_modified'] = true;
-        $data['modified_invoice_id'] = $arr['data']['id'];
-        $data['number'] = null;
-        $data['client_id'] = $this->client->hashed_id;
-        $data['line_items'] = $invoice2->line_items;
-
-        $response = $this->withHeaders([
-            'X-API-SECRET' => config('ninja.api_secret'),
-            'X-API-TOKEN' => $this->token,
-        ])->postJson('/api/v1/invoices', $data);
-
-        $response->assertStatus(200);
-
-        $this->assertEquals(494, $this->client->fresh()->balance);
 
     }
 
@@ -734,7 +708,7 @@ class VerifactuApiTest extends TestCase
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/invoices', $data);
 
-        $response->assertStatus(200);
+        $response->assertStatus(422);
         
     }
 

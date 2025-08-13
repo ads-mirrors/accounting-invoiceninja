@@ -62,22 +62,14 @@ class Verifactu extends AbstractService
 
         $i_logs = $this->invoice->verifactu_logs;
 
-        // if($i_logs->count() >= 1){
-            // $document = (new RegistroAlta($this->invoice))->run()->setRectification()->getInvoice();
-        // }
-        // else{
-            $document = (new RegistroAlta($this->invoice))->run();
-            
-            if($this->invoice->amount < 0) {
-                $document = $document->setRectification();
-            }
-            elseif($this->invoice->backup->document_type === 'F3') {
-                $document = $document->setModification();
-            }
-            
-            $document = $document->getInvoice();
-        // }
-
+        $document = (new RegistroAlta($this->invoice))->run();
+        
+        if($this->invoice->amount < 0) {
+            $document = $document->setRectification();
+        }
+        
+        $document = $document->getInvoice();
+    
         //keep this state for logging later on successful send
         $this->_document = $document;
 

@@ -43,7 +43,7 @@ class RestoreDisabledRule implements ValidationRule
         $delete_query = clone $base_query;
 
         $mutated_query = $delete_query->where(function ($q){
-            $q->where('backup->document_type', '!=', 'R2')->orWhere('backup->child_invoice_ids', '!=', '[]');
+            $q->where('backup->document_type', 'F1')->where('backup->child_invoice_ids', '!=', '[]');
         });
 
         /** For verifactu, we do not allow restores of deleted invoices */
@@ -51,7 +51,6 @@ class RestoreDisabledRule implements ValidationRule
             $fail(ctrans('texts.restore_disabled_verifactu'));
         }
         elseif(in_array($value, ['delete', 'cancel']) && $mutated_query->exists()) {
-            // any verifactu invoices that have a parent can NEVER be deleted. The parent can also NEVER be deleted
             $fail(ctrans('texts.delete_disabled_verifactu'));
         }
     }
