@@ -20,7 +20,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
 {
     // Constants for invoice types
     public const TIPO_FACTURA_NORMAL = 'F1';
-    public const TIPO_FACTURA_RECTIFICATIVA = 'R1';
+    public const TIPO_FACTURA_RECTIFICATIVA = 'R2';
     public const TIPO_FACTURA_SUSTITUIDA = 'F3';
     
     // Constants for rectification types
@@ -599,11 +599,11 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             throw new \InvalidArgumentException('DescripcionOperacion is required');
         }
         
-        if ($this->cuotaTotal < 0) {
+        if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA && $this->cuotaTotal < 0) {
             throw new \InvalidArgumentException('CuotaTotal must be a positive number');
         }
         
-        if ($this->importeTotal < 0) {
+        if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA && $this->importeTotal < 0) {
             throw new \InvalidArgumentException('ImporteTotal must be a positive number');
         }
         

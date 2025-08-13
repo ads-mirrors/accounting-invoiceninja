@@ -82,17 +82,48 @@ class SendToAeat implements ShouldQueue
         }
 
     }
-
+    
+    /**
+     * modifyInvoice
+     *
+     * Two code paths here:
+     * 1. F3 - we are replacing the invoice with a new one: ie. invoice->amount >=0
+     * 2. R2 - we are modifying the invoice with a negative amount: ie. invoice->amount < 0
+     * @param  Invoice $invoice
+     * @return void
+     */
     public function modifyInvoice(Invoice $invoice)
     {
+                
         $verifactu = new Verifactu($invoice);
         $verifactu->run();
+
+        $envelope = $verifactu->getEnvelope();
+
+        $response = $verifactu->send($envelope);
+
+        nlog($response);
+        
+        // if($invoice->amount >= 0) {
+        //     $document = (new RegistroAlta($invoice))->run()->getInvoice();
+        // }
+        // else {
+        //     $document = (new RegistroRectificacion($invoice))->run()->getInvoice();
+        // }
+        
     }
 
     public function createInvoice(Invoice $invoice)
     {
         $verifactu = new Verifactu($invoice);
         $verifactu->run();
+
+        $envelope = $verifactu->getEnvelope();
+
+        $response = $verifactu->send($envelope);
+
+        nlog($response);
+
     }
 
     public function cancelInvoice(Invoice $invoice)

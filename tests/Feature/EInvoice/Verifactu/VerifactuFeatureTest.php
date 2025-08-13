@@ -13,10 +13,12 @@ use App\Models\CompanyToken;
 use App\Models\VerifactuLog;
 use App\Models\ClientContact;
 use App\DataMapper\InvoiceItem;
+use App\Factory\InvoiceFactory;
 use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
 use Illuminate\Support\Facades\Http;
+use App\Repositories\InvoiceRepository;
 use App\Services\EDocument\Standards\Verifactu;
 use App\Services\EDocument\Standards\Verifactu\RegistroAlta;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
@@ -52,9 +54,15 @@ class VerifactuFeatureTest extends TestCase
 
         $this->faker = Faker::create();
 
-        $this->markTestSkipped('not now');
+        // $this->markTestSkipped('not now');
     }
-
+    
+    /**
+     * Helper to stub test data.
+     *
+     * @param  mixed $settings
+     * @return Invoice $invoice
+     */
     private function buildData($settings = null)
     {
         /** @var Account $a */
@@ -93,11 +101,13 @@ class VerifactuFeatureTest extends TestCase
             $settings->name = $this->nombre_razon;
         }
 
-        $this->company = Company::factory()->create([
+        /** @var Company $company */
+        $company = Company::factory()->create([
             'account_id' => $this->account->id,
             'settings' => $settings,
         ]);
 
+        $this->company = $company;
         $this->company->settings = $settings;
         $this->company->save();
 
@@ -122,7 +132,8 @@ class VerifactuFeatureTest extends TestCase
         $client_settings = ClientSettings::defaults();
         $client_settings->currency_id = '3';
 
-        $this->client = Client::factory()->create([
+        /** @var Client $client */
+        $client = Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
             'is_deleted' => 0,
@@ -137,6 +148,8 @@ class VerifactuFeatureTest extends TestCase
             'paid_to_date' => 0,
             'settings' => $client_settings,
         ]);
+
+        $this->client = $client;
 
         ClientContact::factory()->create([
                 'user_id' => $this->user->id,
@@ -194,7 +207,13 @@ class VerifactuFeatureTest extends TestCase
                         
         return $invoice;
     }
-
+    
+    /**
+     * test_construction_and_validation
+     *
+     * tests building / validating / sending a NEW invoice in a chain
+     * @return void
+     */
     public function test_construction_and_validation()
     {
 // - current previous hash - 10C643EDC7DC727FAC6BAEBAAC7BEA67B5C1369A5A5ED74E5AD3149FC30A3C8C
@@ -208,6 +227,7 @@ class VerifactuFeatureTest extends TestCase
 
         $this->assertNotNull($invoice);
 
+        /** @var Invoice $_inv */
         $_inv = Invoice::factory()->create([
             'user_id' => $invoice->user_id,
             'company_id' => $invoice->company_id,
@@ -240,7 +260,6 @@ class VerifactuFeatureTest extends TestCase
         if (!empty($errors)) {
 
             nlog('Verifactu Validation Errors:');
-            nlog($xml);
             nlog($errors);
         }
 
@@ -269,7 +288,14 @@ class VerifactuFeatureTest extends TestCase
 
         $xx->forceDelete();
     }
-
+    
+    /**
+     * testBuildInvoiceCancellation
+     *
+     * test cancellation of an invoice and sending to AEAT
+     * 
+     * @return void
+     */
     public function testBuildInvoiceCancellation()
     {
         $invoice = $this->buildData();
@@ -332,44 +358,97 @@ class VerifactuFeatureTest extends TestCase
 
         $xx->forceDelete();
 
-
     }
 
-    private function cancellationHash($document, $huella)
+    
+    
+    /**
+     * test_invoice_modification_validation
+     * 
+     * Test that the modified invoice passes the validation rules
+     * @return void
+     */
+    public function test_invoice_modification_validation()
     {
 
-    $idEmisorFacturaAnulada = $document->getIdFactura()->getIdEmisorFactura();
-    $numSerieFacturaAnulada = $document->getIdFactura()->getNumSerieFactura();
-    $fechaExpedicionFacturaAnulada = $document->getIdFactura()->getFechaExpedicionFactura();
-    $fechaHoraHusoGenRegistro = $document->getFechaHoraHusoGenRegistro();
-
-    $hashInput = "IDEmisorFacturaAnulada={$idEmisorFacturaAnulada}&" .
-        "NumSerieFacturaAnulada={$numSerieFacturaAnulada}&" .
-        "FechaExpedicionFacturaAnulada={$fechaExpedicionFacturaAnulada}&" .
-        "Huella={$huella}&" .
-        "FechaHoraHusoGenRegistro={$fechaHoraHusoGenRegistro}";
-
-        nlog("Cancellation Huella: " . $hashInput);
-
-    return strtoupper(hash('sha256', $hashInput));
-
-
-
-    }
-
-
-    public function test_invoice_invoice_modification()
-    {
         $invoice = $this->buildData();
-        $invoice->number = 'TEST0033343460-R2';
+
+        /** @var Invoice $_invoice */
+        $_invoice = Invoice::factory()->create([
+            'user_id' => $invoice->user_id,
+            'company_id' => $invoice->company_id,
+            'client_id' => $invoice->client_id,
+            'date' => '2025-08-10',
+            'status_id' => Invoice::STATUS_SENT,
+            'uses_inclusive_taxes' => false,
+            'number' => 'Replaceable Invoice #'.rand(1000000000, 9999999999),
+        ]);
+
+        $invoice->number = 'TEST0033343460-R4';
+        $invoice->status_id = Invoice::STATUS_DRAFT;
+        $invoice->backup->parent_invoice_id = $_invoice->hashed_id;
+
+        $items = $invoice->line_items;
+
+        foreach($items as &$item) {
+            $item->quantity = -1;
+        }
+
+        $invoice->line_items = $items;
+        
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save($invoice->toArray(), $invoice);
+        $invoice = $invoice->service()->markSent()->save();
+
+        $previous_huella = 'E5A23515881D696FCD1CA8EE4902632BFC6D892BA8EB79CB656A5F84963079D3';
+
+        $verifactu2 = new Verifactu($invoice);
+        $document2 = $verifactu2->setTestMode()
+                ->setPreviousHash($previous_huella)
+                ->run()
+                ->getInvoice();
+
+        $soapXml = $document2->toSoapEnvelope();
+                    
+        $this->assertNotNull($document2->getHuella());
+        
+        nlog("huella: " . $document2->getHuella());
+
+        nlog($soapXml);
+        
+        $xslt = new VerifactuDocumentValidator($soapXml);
+        $xslt->validate();
+        $errors = $xslt->getVerifactuErrors();
+
+        if (count($errors) > 0) {
+            nlog('Errors:');
+            nlog($errors);
+            nlog('Errors:');
+        }
+
+        $this->assertCount(0, $errors);
+
+    }
+    
+    /**
+     * test_invoice_invoice_modification
+     * Creates a new invoice and sends to AEAT, follows with a matching credit note that is then sent to AEAT
+     * 
+     * @return void
+     */
+    public function test_invoice_invoice_modification_and_create_cancellation_of_rectification_invoice()
+    {
+        // New Invoice
+        $invoice = $this->buildData();
+        $invoice->number = 'TEST0033343460-R13';
         $invoice->save();
 
-        $previous_huella = '1FB6B4EF72DD2A07CC23B3F9D74EE5749C8E86B34B9B1DFFFC8C3E46ACA87E21';
+        $previous_huella = 'FDC8D47AC4BE81237A6A2FC21F854C824618805DB684F6B28053AC62AB8C86EB';
 
         $xx = VerifactuLog::create([
             'invoice_id' => $invoice->id,
             'company_id' => $invoice->company_id,
-            'invoice_number' => 'TEST0033343459',
+            'invoice_number' => 'TEST0033343460-C9',
             'date' => '2025-08-10',
             'hash' => $previous_huella,
             'nif' => 'A39200019',
@@ -389,6 +468,77 @@ class VerifactuFeatureTest extends TestCase
         $this->assertNotNull($response);
         $this->assertArrayHasKey('success', $response);
         $this->assertTrue($response['success']);
+
+        // Credit Note
+        $invoice2 = $invoice->replicate();
+        $invoice2->number = 'TEST0033343460-C10';
+        $invoice2->status_id = Invoice::STATUS_DRAFT;
+        $invoice2->backup->parent_invoice_id = $invoice->hashed_id;
+
+        $items = $invoice2->line_items;
+
+        foreach($items as &$item) {
+            $item->quantity = -1;
+        }
+
+        $invoice2->line_items = $items;
+                
+        $invoice2->save();
+        
+        $data = $invoice2->toArray();
+        $data['client_id'] = $invoice->client_id;
+        unset($data['id']);
+
+        $repo = new InvoiceRepository();
+        $invoice2 = $repo->save($data, $invoice2);
+        $invoice2 = $invoice2->service()->markSent()->save();
+
+        $this->assertEquals(-121, $invoice2->amount);
+        
+        $verifactu2 = new Verifactu($invoice2);
+        $document2 = $verifactu2->setTestMode()
+                ->setPreviousHash($document->getHuella())
+                ->run()
+                ->getInvoice();
+
+        nlog($document2->toSoapEnvelope());
+
+        $response = $verifactu2->send($document2->toSoapEnvelope());
+
+        $this->assertNotNull($response);
+        $this->assertArrayHasKey('success', $response);
+        $this->assertTrue($response['success']);
+
+//Lets try and cancel the credit note now - we should fail!!
+        $verifactu = new Verifactu($invoice2);
+        $document = (new RegistroAlta($invoice2))->run()->getInvoice();
+        $huella = $this->cancellationHash($document, $document2->getHuella());
+
+        $cancellation = $document->createCancellation();
+        $cancellation->setHuella($huella);
+
+        $soapXml = $cancellation->toSoapEnvelope();
+
+        nlog($soapXml);
+
+        $response = $verifactu->setTestMode()
+                        ->setInvoice($document)
+                        ->setHuella($huella)
+                        ->setPreviousHash($document2->getHuella())
+                        ->send($soapXml);
+
+        nlog("CANCELLATION RESPONSE");
+        nlog($response);
+
+        $this->assertNotNull($response);
+        $this->assertArrayHasKey('success', $response);
+        $this->assertTrue($response['success']);
+
+        $xx->forceDelete();
+
+        VerifactuLog::query()->where('id', $invoice2->id)->forceDelete();
+        VerifactuLog::query()->where('id', $invoice->id)->forceDelete();
+
     }
 
         public function test_rectification_invoice()
@@ -511,81 +661,6 @@ class VerifactuFeatureTest extends TestCase
         }
 
 
-    public function testInvoiceCancellation()
-    {
-        // Create a sample invoice
-        $invoice = $this->buildData();
-        
-        // Create cancellation from invoice
-        $cancellation = \App\Services\EDocument\Standards\Verifactu\Models\InvoiceCancellation::fromInvoice(
-            $invoice, 
-            'ABCD1234EF5678901234567890ABCDEF1234567890ABCDEF1234567890ABCDEF12'
-        );
-        
-        // Set custom cancellation details
-        $cancellation->setEstado('02') // 02 = Invoice cancelled
-                    ->setDescripcionEstado('Factura anulada por error');
-        
-        // Generate XML
-        $xmlString = $cancellation->toXmlString();
-        
-        // Verify XML structure
-        $this->assertNotEmpty($xmlString);
-        $this->assertStringContainsString('SuministroLRFacturas', $xmlString);
-        $this->assertStringContainsString('LRFacturaEntrada', $xmlString);
-        $this->assertStringContainsString('IDFactura', $xmlString);
-        $this->assertStringContainsString('EstadoFactura', $xmlString);
-        $this->assertStringContainsString('Estado', $xmlString);
-        $this->assertStringContainsString('02', $xmlString); // Cancelled status
-        
-        // Generate SOAP envelope
-        $soapEnvelope = $cancellation->toSoapEnvelope();
-        
-        // Verify SOAP structure
-        $this->assertNotEmpty($soapEnvelope);
-        $this->assertStringContainsString('soapenv:Envelope', $soapEnvelope);
-        $this->assertStringContainsString('RegFactuSistemaFacturacion', $soapEnvelope);
-        
-        // Test serialization
-        $serialized = $cancellation->serialize();
-        $this->assertNotEmpty($serialized);
-        
-        // Test deserialization
-        $deserialized = \App\Services\EDocument\Standards\Verifactu\Models\InvoiceCancellation::unserialize($serialized);
-        $this->assertEquals($cancellation->getNumSerieFacturaEmisor(), $deserialized->getNumSerieFacturaEmisor());
-        $this->assertEquals($cancellation->getEstado(), $deserialized->getEstado());
-        
-        // Test from XML
-        $fromXml = \App\Services\EDocument\Standards\Verifactu\Models\InvoiceCancellation::fromXml($xmlString);
-        $this->assertEquals($cancellation->getNumSerieFacturaEmisor(), $fromXml->getNumSerieFacturaEmisor());
-        $this->assertEquals($cancellation->getEstado(), $fromXml->getEstado());
-
-        $response = Http::withHeaders([
-               'Content-Type' => 'text/xml; charset=utf-8',
-               'SOAPAction' => '',
-           ])
-           ->withOptions([
-               'cert' => storage_path('aeat-cert5.pem'),
-               'ssl_key' => storage_path('aeat-key5.pem'),
-               'verify' => false,
-               'timeout' => 30,
-           ])
-           ->withBody($soapEnvelope, 'text/xml')
-           ->post('https://prewww1.aeat.es/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP');
-
-        nlog('Request with AEAT official test data:');
-        nlog($soapEnvelope);
-        nlog('Response with AEAT official test data:');
-        nlog('Response Status: ' . $response->status());
-        nlog('Response Headers: ' . json_encode($response->headers()));
-        nlog('Response Body: ' . $response->body());
-
-        $r = new ResponseProcessor();
-        $rx = $r->processResponse($response->body());
-
-        nlog($rx);
-
-    }
 
     /**
      * Test that R1 invoice XML structure is exactly as expected with proper element order
@@ -753,5 +828,27 @@ class VerifactuFeatureTest extends TestCase
         $this->assertStringContainsString('</sum:RegFactuSistemaFacturacion>', $soapXml);
         $this->assertStringContainsString('</soapenv:Body>', $soapXml);
         $this->assertStringContainsString('</soapenv:Envelope>', $soapXml);
+    }
+
+
+////////////////////////////////////////////////
+    private function cancellationHash($document, $huella)
+    {
+
+        $idEmisorFacturaAnulada = $document->getIdFactura()->getIdEmisorFactura();
+        $numSerieFacturaAnulada = $document->getIdFactura()->getNumSerieFactura();
+        $fechaExpedicionFacturaAnulada = $document->getIdFactura()->getFechaExpedicionFactura();
+        $fechaHoraHusoGenRegistro = $document->getFechaHoraHusoGenRegistro();
+
+        $hashInput = "IDEmisorFacturaAnulada={$idEmisorFacturaAnulada}&" .
+            "NumSerieFacturaAnulada={$numSerieFacturaAnulada}&" .
+            "FechaExpedicionFacturaAnulada={$fechaExpedicionFacturaAnulada}&" .
+            "Huella={$huella}&" .
+            "FechaHoraHusoGenRegistro={$fechaHoraHusoGenRegistro}";
+
+            nlog("Cancellation Huella: " . $hashInput);
+
+        return strtoupper(hash('sha256', $hashInput));
+
     }
 }

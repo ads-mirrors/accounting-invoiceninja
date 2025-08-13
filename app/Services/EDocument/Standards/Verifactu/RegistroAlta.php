@@ -29,11 +29,13 @@ use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
 use App\Models\VerifactuLog;
+use App\Utils\Traits\MakesHash;
 
 class RegistroAlta
 {
-      use Taxer;
+    use Taxer;
     use NumberFormatter;
+    use MakesHash;
 
     private Company $company;
 
@@ -212,27 +214,36 @@ class RegistroAlta
     public function setRectification(): self
     {
 
-        $this->v_invoice->setTipoFactura('R1');
-        $this->v_invoice->setTipoRectificativa('S'); // S for substitutive rectification
+        $this->v_invoice->setTipoFactura('R2');
+        $this->v_invoice->setTipoRectificativa('I'); // S for substitutive rectification
+
+        //need to harvest the parent invoice!!
+
+        $_i = Invoice::withTrashed()->find($this->decodePrimaryKey($this->invoice->backup->parent_invoice_id));
+
+        if(!$_i) {
+            throw new \Exception('Parent invoice not found');
+        }
 
         // Set up rectified invoice information
         $facturasRectificadas = [
             [
                 'IDEmisorFactura' => $this->company->settings->vat_number,
-                'NumSerieFactura' => $this->invoice->number,
-                'FechaExpedicionFactura' => \Carbon\Carbon::parse($this->invoice->date)->format('d-m-Y')
+                'NumSerieFactura' => $_i->number,
+                'FechaExpedicionFactura' => \Carbon\Carbon::parse($_i->date)->format('d-m-Y')
             ]
         ];
 
         $this->v_invoice->setFacturasRectificadas($facturasRectificadas);
 
-        // Set up rectification amounts
-        $importeRectificacion = [
-            'BaseRectificada' => $this->calc->getNetSubtotal(),
-            'CuotaRectificada' => $this->invoice->total_taxes,
-            'CuotaRecargoRectificado' => 0.00
-        ];
-        $this->v_invoice->setRectificationAmounts($importeRectificacion);
+        // // Set up rectification amounts
+        // $importeRectificacion = [
+        //     'BaseRectificada' => $this->calc->getNetSubtotal(),
+        //     'CuotaRectificada' => $this->invoice->total_taxes,
+        //     'CuotaRecargoRectificado' => 0.00
+        // ];
+        
+        // $this->v_invoice->setRectificationAmounts($importeRectificacion);
 
         return $this;
     }

@@ -62,25 +62,28 @@ class Verifactu extends AbstractService
 
         $i_logs = $this->invoice->verifactu_logs;
 
-        if($i_logs->count() >= 1){
-            $document = (new RegistroAlta($this->invoice))->run()->setRectification()->getInvoice();
-        }
-        else{
-            $document = (new RegistroAlta($this->invoice))->run()->getInvoice();
-        }
+        // if($i_logs->count() >= 1){
+            // $document = (new RegistroAlta($this->invoice))->run()->setRectification()->getInvoice();
+        // }
+        // else{
+            $document = (new RegistroAlta($this->invoice))->run();
+            
+            if($this->invoice->amount < 0) {
+                $document = $document->setRectification();
+            }
+            
+            $document = $document->getInvoice();
+        // }
 
         //keep this state for logging later on successful send
         $this->_document = $document;
 
         $this->_previous_huella = '';
 
-        //1. new => RegistraAlta
         if($v_logs->count() >= 1){
             $v_log = $v_logs->first();
             $this->_previous_huella = $v_log->hash;
         }
-
-        //3. cancelled => RegistroAnulacion
 
         $this->_huella = $this->calculateHash($document, $this->_previous_huella); // careful with this! we'll need to reference this later
         $document->setHuella($this->_huella);
@@ -90,7 +93,20 @@ class Verifactu extends AbstractService
         return $this;
         
     }
-        
+            
+    /**
+     * setHuella
+     * We need this for cancellation documents.
+     * 
+     * @param  string $huella
+     * @return self
+     */
+    public function setHuella(string $huella): self
+    {
+        $this->_huella = $huella;
+        return $this;
+    }
+    
     public function getInvoice()
     {
         return $this->_document;
