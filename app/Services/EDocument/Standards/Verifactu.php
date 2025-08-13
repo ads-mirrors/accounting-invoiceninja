@@ -71,6 +71,9 @@ class Verifactu extends AbstractService
             if($this->invoice->amount < 0) {
                 $document = $document->setRectification();
             }
+            elseif($this->invoice->backup->document_type === 'F3') {
+                $document = $document->setModification();
+            }
             
             $document = $document->getInvoice();
         // }

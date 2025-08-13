@@ -103,7 +103,7 @@ class SendToAeat implements ShouldQueue
         $response = $verifactu->send($envelope);
 
         nlog($response);
-        
+
         // if($invoice->amount >= 0) {
         //     $document = (new RegistroAlta($invoice))->run()->getInvoice();
         // }
@@ -144,6 +144,16 @@ class SendToAeat implements ShouldQueue
         $response = $verifactu->send($soapXml);
 
         nlog($response);
+
+        if($response['success']) {
+        //if successful, we need to pop this invoice from the child array of the parent invoice!
+            $parent = Invoice::withTrashed()->find($invoice->backup->parent_invoice_id);
+                if($parent) {
+                    $parent->backup->child_invoice_ids = $parent->backup->child_invoice_ids->reject(fn($id) => $id === $invoice->hashed_id);
+                    $parent->saveQuietly();
+                }
+        }
+        //@todo - verifactu logging
     }
 
     public function middleware()

@@ -733,6 +733,7 @@ class InvoiceService
         $this->markSent();
         //Update the client balance by the delta amount from the previous invoice to this one.
         $this->invoice->backup->parent_invoice_id = $modified_invoice->hashed_id;
+        $this->invoice->backup->document_type = 'F3';
         $this->invoice->saveQuietly();
 
         $this->invoice->client->service()->updateBalance(round(($this->invoice->amount - $modified_invoice->amount), 2));

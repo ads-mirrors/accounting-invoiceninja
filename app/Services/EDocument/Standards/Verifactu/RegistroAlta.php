@@ -236,15 +236,9 @@ class RegistroAlta
 
         $this->v_invoice->setFacturasRectificadas($facturasRectificadas);
 
-        // // Set up rectification amounts
-        // $importeRectificacion = [
-        //     'BaseRectificada' => $this->calc->getNetSubtotal(),
-        //     'CuotaRectificada' => $this->invoice->total_taxes,
-        //     'CuotaRecargoRectificado' => 0.00
-        // ];
+        $this->invoice->backup->document_type = 'R2';
+        $this->invoice->save();
         
-        // $this->v_invoice->setRectificationAmounts($importeRectificacion);
-
         return $this;
     }
 

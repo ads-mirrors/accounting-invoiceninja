@@ -100,7 +100,7 @@ class HandleCancellation extends AbstractService
         $replicated_invoice->line_items = $items;
         $replicated_invoice->backup->parent_invoice_id = $this->invoice->hashed_id;
         $replicated_invoice->backup->parent_invoice_number = $this->invoice->number;
-        $replicated_invoice->backup->reason = $this->reason ?? 'R3';
+        $replicated_invoice->backup->document_type = 'R2'; // Full Credit Note Generated for the invoice
 
         $invoice_repository = new InvoiceRepository();
         $replicated_invoice = $invoice_repository->save([], $replicated_invoice);

@@ -43,7 +43,7 @@ class RestoreDisabledRule implements ValidationRule
         $delete_query = clone $base_query;
 
         $mutated_query = $delete_query->where(function ($q){
-            $q->whereNotNull('backup->parent_invoice_id')->orWhere('backup->child_invoice_ids', '!=', '[]');
+            $q->where('backup->document_type', '!=', 'R2')->orWhere('backup->child_invoice_ids', '!=', '[]');
         });
 
         /** For verifactu, we do not allow restores of deleted invoices */

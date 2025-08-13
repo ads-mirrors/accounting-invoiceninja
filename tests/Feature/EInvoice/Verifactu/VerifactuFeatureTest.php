@@ -474,7 +474,7 @@ class VerifactuFeatureTest extends TestCase
         $invoice2->number = 'TEST0033343460-C10';
         $invoice2->status_id = Invoice::STATUS_DRAFT;
         $invoice2->backup->parent_invoice_id = $invoice->hashed_id;
-
+        $invoice2->backup->document_type = 'R2';
         $items = $invoice2->line_items;
 
         foreach($items as &$item) {
