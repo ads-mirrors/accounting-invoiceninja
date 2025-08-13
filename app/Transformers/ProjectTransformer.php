@@ -41,19 +41,7 @@ class ProjectTransformer extends EntityTransformer
         'invoices',
         'expenses',
         'quotes',
-        'user',
     ];
-
-    public function includeUser(Project $project): ?Item
-    {
-        $transformer = new UserTransformer($this->serializer);
-
-        if (!$project->user) { //@phpstan-ignore-line
-            return null;
-        }
-
-        return $this->includeItem($project->user, $transformer, User::class);
-    }
 
     public function includeDocuments(Project $project)
     {
