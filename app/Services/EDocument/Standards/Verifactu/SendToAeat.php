@@ -73,6 +73,12 @@ class SendToAeat implements ShouldQueue
 
         $invoice = Invoice::withTrashed()->find($this->invoice_id);
 
+        if($invoice->client->country->iso_3166_2 != 'ES') {
+            $invoice->backup->guid = 'NOT_ES';
+            $invoice->saveQuietly();
+            return;
+        }
+
         switch($this->action) {
             case 'create':
                 $this->createInvoice($invoice);

@@ -23,7 +23,7 @@ use Illuminate\Support\Collection;
 class InvoiceBackup implements Castable
 {
     public function __construct(
-        public string $guid = '', // The E-INVOICE SENT GUID reference 
+        public string $guid = '', // The E-INVOICE SENT GUID reference - or enum to advise the document has been successfully sent.
         public Cancellation $cancellation = new Cancellation(0,0), 
         public ?string $parent_invoice_id = null, // The id of the invoice that was cancelled
         public ?string $parent_invoice_number = null, // The number of the invoice that was cancelled
