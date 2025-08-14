@@ -26,7 +26,7 @@ use Tests\TestCase;
 class InvoiceMarkPaidTest extends TestCase
 {
     use MockAccountData;
-    use DatabaseTransactions;
+    // use DatabaseTransactions;
 
     public $invoice;
 
@@ -82,7 +82,6 @@ class InvoiceMarkPaidTest extends TestCase
 
         $response->assertStatus(200);
 
-
         $this->assertEquals(0, $response->json('data.balance'));
         $this->assertEquals(10, $response->json('data.paid_to_date'));
         $this->assertEquals(4, $response->json('data.status_id'));
@@ -93,6 +92,8 @@ class InvoiceMarkPaidTest extends TestCase
         $this->assertEquals(10, $i->paid_to_date);
         $this->assertEquals(4, $i->status_id);
 
+
+        $c->forceDelete();
 
     }
 
@@ -116,6 +117,7 @@ class InvoiceMarkPaidTest extends TestCase
         $line_items[] = $item;
 
 
+        /** @var \App\Models\Invoice $i */
         $i = Invoice::factory()->create([
             'discount' => 0,
             'tax_name1' => '',
@@ -158,6 +160,7 @@ class InvoiceMarkPaidTest extends TestCase
         $this->assertEquals(4, $i->status_id);
 
 
+        $c->forceDelete();
     }
 
 }

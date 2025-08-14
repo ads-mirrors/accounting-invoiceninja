@@ -155,8 +155,10 @@ class LoginController extends BaseController
                 $user = $user->fresh();
             }
 
+            nlog("LOGIN:: {$request->email} - {$user->account_id}");
+
             /** @var \App\Models\CompanyUser $cu */
-            $cu = $this->hydrateCompanyUser();
+            $cu = $this->hydrateCompanyUser($user);
 
             if ($cu->count() == 0) {
                 return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
@@ -307,7 +309,7 @@ class LoginController extends BaseController
             Auth::login($existing_user, false);
 
             /** @var \App\Models\CompanyUser $cu */
-            $cu = $this->hydrateCompanyUser();
+            $cu = $this->hydrateCompanyUser($existing_user);
 
             if ($cu->count() == 0) {
                 return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
@@ -336,7 +338,7 @@ class LoginController extends BaseController
             ]);
 
             /** @var \App\Models\CompanyUser $cu */
-            $cu = $this->hydrateCompanyUser();
+            $cu = $this->hydrateCompanyUser($user);
 
             if ($cu->count() == 0) {
                 return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
@@ -385,7 +387,7 @@ class LoginController extends BaseController
         $user->save();
 
         /** @var \App\Models\CompanyUser $cu */
-        $cu = $this->hydrateCompanyUser();
+        $cu = $this->hydrateCompanyUser($user);
 
         if ($cu->count() == 0) {
             return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
@@ -398,11 +400,11 @@ class LoginController extends BaseController
         return $this->timeConstrainedResponse($cu);
     }
 
-    private function hydrateCompanyUser(): Builder
+    private function hydrateCompanyUser(User $user): Builder
     {
 
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
+        // /** @var \App\Models\User $user */
+        // $user = auth()->user();
 
         /** @var Builder $cu */
         $cu = CompanyUser::query()->where('user_id', $user->id);
@@ -427,8 +429,6 @@ class LoginController extends BaseController
         $truth->setCompany($set_company);
 
         //21-03-2024
-
-
         $cu->each(function ($cu) {
             /** @var \App\Models\CompanyUser $cu */
             if (CompanyToken::query()->where('company_id', $cu->company_id)->where('user_id', $cu->user_id)->where('is_system', true)->doesntExist()) {
@@ -512,7 +512,7 @@ class LoginController extends BaseController
         Auth::login($existing_user, false);
 
         /** @var \App\Models\CompanyUser $cu */
-        $cu = $this->hydrateCompanyUser();
+        $cu = $this->hydrateCompanyUser($existing_user);
 
         if ($cu->count() == 0) {
             return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
@@ -527,19 +527,12 @@ class LoginController extends BaseController
         return $this->timeConstrainedResponse($cu);
     }
 
-    private function existingLoginUser($oauth_user_id, $provider)
+    private function existingLoginUser($user)
     {
 
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
-
-        $user->update([
-            'oauth_user_id' => $oauth_user_id,
-            'oauth_provider_id' => $provider,
-        ]);
 
         /** @var \App\Models\CompanyUser $cu */
-        $cu = $this->hydrateCompanyUser();
+        $cu = $this->hydrateCompanyUser($user);
 
         if ($cu->count() == 0) {
             return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
@@ -598,7 +591,13 @@ class LoginController extends BaseController
 
                 Auth::login($existing_login_user, false);
 
-                return $this->existingLoginUser($google->harvestSubField($user), 'google');
+                $existing_login_user->update([
+                    'oauth_user_id' => $google->harvestSubField($user),
+                    'oauth_provider_id' => 'google',
+                ]);
+
+
+                return $this->existingLoginUser($existing_login_user);
             }
 
             if (request()->has('create') && request()->input('create') == 'true') {
@@ -635,16 +634,14 @@ class LoginController extends BaseController
             return $account;
         }
 
-        Auth::login($account->default_company->owner(), false);
-
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
-
+        $user = $account->default_company->owner();        
         $user->email_verified_at = now();
         $user->save();
 
+        Auth::login($user, false);
+
         /** @var \App\Models\CompanyUser $cu */
-        $cu = $this->hydrateCompanyUser();
+        $cu = $this->hydrateCompanyUser($user);
 
         if ($cu->count() == 0) {
             return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);

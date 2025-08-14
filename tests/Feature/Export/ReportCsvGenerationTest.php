@@ -54,7 +54,7 @@ class ReportCsvGenerationTest extends TestCase
 
         $this->withoutExceptionHandling();
 
-        // Invoice::withTrashed()->cursor()->each(function ($i) { $i->forceDelete();});
+        config(['queue.default' => 'sync']);
 
         $this->buildData();
 
@@ -272,13 +272,12 @@ class ReportCsvGenerationTest extends TestCase
 
     public function testContactProps()
     {
-        Invoice::factory()->count(5)->create(
-            [
+
+        Invoice::factory()->count(5)->create([
                 'client_id' => $this->client->id,
                 'company_id' => $this->company->id,
                 'user_id' => $this->user->id
-            ]
-        );
+            ]);
 
         $data = [
             'date_range' => 'all',
@@ -328,7 +327,7 @@ $this->account->forceDelete();
 
     private function poll($hash)
     {
-        $response = Http::retry(100, 400, throw: false)
+        $response = Http::retry(100, 200, throw: false)
                     ->withHeaders([
                         'X-API-SECRET' => config('ninja.api_secret'),
                         'X-API-TOKEN' => $this->token,

@@ -22,16 +22,16 @@ use Tests\TestCase;
  */
 class PeppolApiTest extends TestCase
 {
-    use DatabaseTransactions;
+    // use DatabaseTransactions;
     use MockAccountData;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        if (!config('ninja.storecove_api_key')) {
+        // if (!config('ninja.storecove_api_key')) {
             $this->markTestSkipped('Storecove API key not set');
-        }
+        // }
 
         $this->makeTestData();
 
@@ -49,7 +49,7 @@ class PeppolApiTest extends TestCase
         config(['ninja.environment' => 'selfhost']);
 
         /**
-         * @var \App\Models\CompanyUser $user
+         * @var \App\Models\User $user
          */
         $user = $this->user;
 
