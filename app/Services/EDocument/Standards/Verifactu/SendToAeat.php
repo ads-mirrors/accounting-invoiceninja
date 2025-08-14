@@ -72,6 +72,8 @@ class SendToAeat implements ShouldQueue
 
         $invoice = Invoice::withTrashed()->find($this->invoice_id);
 
+        $invoice = $invoice->service()->markSent()->save();
+        
         switch($this->action) {
             case 'create':
                 $this->createInvoice($invoice);

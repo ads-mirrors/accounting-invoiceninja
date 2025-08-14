@@ -5581,6 +5581,10 @@ $lang = array(
     'verifactu_cancellation_send_success' => 'Invoice cancellation for :invoice sent to AEAT successfully',
     'verifactu_cancellation_send_failure' => 'Invoice cancellation for :invoice failed to send to AEAT :notes',
     'verifactu' => 'Verifactu',
+    'activity_150' => 'E-Invoice :invoice for :client sent to AEAT successfully',
+    'activity_151' => 'E-Invoice :invoice for :client failed to send to AEAT :notes',
+    'activity_152' => 'Invoice cancellation for :invoice sent to AEAT successfully',
+    'activity_153' => 'Invoice cancellation for :invoice failed to send to AEAT :notes',
 );
 
 return $lang;
