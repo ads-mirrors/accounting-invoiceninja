@@ -22,7 +22,7 @@ use Tests\TestCase;
 class InvitationTest extends TestCase
 {
     use MockAccountData;
-    use DatabaseTransactions;
+    // use DatabaseTransactions;
     use MakesHash;
 
     protected function setUp(): void
@@ -57,10 +57,13 @@ class InvitationTest extends TestCase
 
         $response = null;
 
+        $data = $this->invoice->toArray();
+        unset($data['hashed_id']);
+
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/invoices/'.$this->encodePrimaryKey($this->invoice->id), $this->invoice->toArray());
+        ])->putJson('/api/v1/invoices/'.$this->invoice->hashed_id, $this->invoice->toArray());
 
         $response->assertStatus(200);
 

@@ -12,8 +12,9 @@
 
 namespace App\DataMapper;
 
-use App\Utils\Traits\MakesHash;
 use stdClass;
+use App\Utils\Ninja;
+use App\Utils\Traits\MakesHash;
 
 /**
  * CompanySettings.
