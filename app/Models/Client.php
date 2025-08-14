@@ -495,7 +495,7 @@ class Client extends BaseModel implements HasLocalePreference
                 return $item->id == $currency_id;
             });
 
-        });
+        }) ?? \App\Models\Currency::find($this->getSetting('currency_id'));
 
     }
 

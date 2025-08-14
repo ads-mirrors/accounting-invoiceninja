@@ -263,6 +263,7 @@ class StaticServiceProvider extends ServiceProvider
 
         });
 
+        nlog("static service provider registered");
     }
 
     public function boot()

@@ -27,6 +27,7 @@ use App\Models\Credit;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\User;
+use App\Repositories\InvoiceRepository;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Http;
@@ -652,6 +653,9 @@ $this->account->forceDelete();
             ]);
 
 
+            $repo = new InvoiceRepository();
+            $invoice = $repo->save([], $invoice);
+            
         $log =  '[[1689547165,1689550765,"sumtin",true]]';
 
         \App\Models\Task::factory()->create([
@@ -911,6 +915,11 @@ $this->account->forceDelete();
         $invoice->client->balance = 100;
         $invoice->client->paid_to_date = 0;
         $invoice->push();
+
+        
+$repo = new InvoiceRepository();
+$invoice = $repo->save([], $invoice);
+
 
         $invoice->service()->markPaid()->save();
 
@@ -1262,6 +1271,10 @@ $this->account->forceDelete();
            'terms' => 'Terms',
        ]);
 
+       $repo = new InvoiceRepository();
+            $invoice = $repo->save([], $invoice);
+            
+
         $data = [
             'date_range' => 'all',
             'report_keys' => ["client.name","invoice.number","invoice.amount","payment.date", "payment.amount","invoice.user"],
@@ -1451,6 +1464,9 @@ $this->account->forceDelete();
                 ],
            ]
        ]);
+
+$repo = new InvoiceRepository();
+$invoice = $repo->save([], $invoice);
 
         $data = [
             'date_range' => 'all',
@@ -1844,6 +1860,10 @@ $this->account->forceDelete();
            'terms' => 'Terms',
        ]);
 
+       $repo = new InvoiceRepository();
+            $invoice = $repo->save([], $invoice);
+            
+            
         $invoice->service()->markPaid()->save();
 
         $data = [
