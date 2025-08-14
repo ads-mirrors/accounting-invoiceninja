@@ -23,18 +23,20 @@ class EntityLevel implements EntityLevelInterface
     private array $errors = [];
 
     private array $client_fields = [
-        'address1',
-        'city',
+        // 'address1',
+        // 'city',
         // 'state',
-        'postal_code',
+        // 'postal_code',
+        'vat_number',
         'country_id',
     ];
 
     private array $company_settings_fields = [
-        'address1',
-        'city',
+        // 'address1',
+        // 'city',
         // 'state',
-        'postal_code',
+        // 'postal_code',
+        'vat_number',
         'country_id',
     ];
 
@@ -180,5 +182,73 @@ class EntityLevel implements EntityLevelInterface
     {
         return iconv_strlen($string) >= 1;
     }
+
+    public function isValidSpanishVAT(string $vat): bool
+    {
+        $vat = strtoupper(trim($vat));
+
+        // Quick format check
+        if (!preg_match('/^[A-Z]\d{7}[A-Z0-9]$|^\d{8}[A-Z]$|^[XYZ]\d{7}[A-Z]$/', $vat)) {
+            return false;
+        }
+
+        // NIF (individuals)
+        if (preg_match('/^\d{8}[A-Z]$/', $vat)) {
+            $number = (int)substr($vat, 0, 8);
+            $letter = substr($vat, -1);
+            $letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+            return $letter === $letters[$number % 23];
+        }
+
+        // NIE (foreigners)
+        if (preg_match('/^[XYZ]\d{7}[A-Z]$/', $vat)) {
+            $replace = ['X' => '0', 'Y' => '1', 'Z' => '2'];
+            $number = (int)($replace[$vat[0]] . substr($vat, 1, 7));
+            $letter = substr($vat, -1);
+            $letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+            return $letter === $letters[$number % 23];
+        }
+
+        // CIF (companies)
+        if (preg_match('/^[ABCDEFGHJKLMNPQRSUVW]\d{7}[0-9A-J]$/', $vat)) {
+            $controlLetter = substr($vat, -1);
+            $digits = substr($vat, 1, 7);
+
+            $sumEven = 0;
+            $sumOdd = 0;
+            for ($i = 0; $i < 7; $i++) {
+                $n = (int)$digits[$i];
+                if ($i % 2 === 0) { // Odd positions (0-based index)
+                    $n = $n * 2;
+                    if ($n > 9) {
+                        $n = floor($n / 10) + ($n % 10);
+                    }
+                    $sumOdd += $n;
+                } else {
+                    $sumEven += $n;
+                }
+            }
+
+            $total = $sumEven + $sumOdd;
+            $controlDigit = (10 - ($total % 10)) % 10;
+            $controlChar = 'JABCDEFGHI'[$controlDigit];
+
+            $firstLetter = $vat[0];
+            if (strpos('PQRSW', $firstLetter) !== false) {
+                return $controlLetter === $controlChar; // Must be letter
+            } elseif (strpos('ABEH', $firstLetter) !== false) {
+                return $controlLetter == $controlDigit; // Must be digit
+            } else {
+                return ($controlLetter == $controlDigit || $controlLetter === $controlChar);
+            }
+        }
+
+        return false;
+    }
+
+// // Example usage:
+// var_dump(isValidSpanishVAT("12345678Z")); // true
+// var_dump(isValidSpanishVAT("B12345674")); // true (CIF example)
+// var_dump(isValidSpanishVAT("X1234567L")); // true (NIE)
 
 }

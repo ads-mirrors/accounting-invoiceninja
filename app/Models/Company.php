@@ -1041,7 +1041,7 @@ class Company extends BaseModel
     public function verifactuEnabled(): bool
     {
         return once(function () {
-            return $this->getSetting('e_invoice_type') == 'verifactu';
+            return $this->getSetting('e_invoice_type') == 'VERIFACTU';
         });
     }
 }

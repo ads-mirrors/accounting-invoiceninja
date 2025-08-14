@@ -15,21 +15,22 @@ namespace App\Services\EDocument\Standards\Verifactu;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\VerifactuLog;
 use App\Helpers\Invoice\Taxer;
+use App\Utils\Traits\MakesHash;
 use App\DataMapper\Tax\BaseRule;
 use App\Services\AbstractService;
 use App\Helpers\Invoice\InvoiceSum;
 use App\Utils\Traits\NumberFormatter;
 use App\Helpers\Invoice\InvoiceSumInclusive;
+use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
-use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
+use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
-use App\Models\VerifactuLog;
-use App\Utils\Traits\MakesHash;
 
 class RegistroAlta
 {
@@ -130,15 +131,28 @@ class RegistroAlta
         $emisor->setNif($this->company->settings->vat_number)
                 ->setNombreRazon($this->invoice->company->present()->name());
 
-        // $this->v_invoice->setTercero($emisor);
-
         /** The business entity (Client) that is receiving the invoice */
         $destinatarios = [];
         $destinatario = new PersonaFisicaJuridica();
 
-        $destinatario
-            ->setNif($this->invoice->client->vat_number)
-            ->setNombreRazon($this->invoice->client->present()->name());
+        if($this->invoice->client->country_id == 724) {
+            $destinatario
+                ->setNif($this->invoice->client->vat_number)
+                ->setNombreRazon($this->invoice->client->present()->name());
+        }
+        else {
+            $locationData = $this->invoice->location();
+
+            $destinatario = new IDOtro();
+            $destinatario->setCodigoPais($locationData['country_code']);
+
+            $br = new \App\DataMapper\Tax\BaseRule();
+
+            if(in_array($locationData['country_code'], $br->eu_country_codes) && strlen($this->invoice->client->vat_number ?? '') > 0) {
+                $destinatario->setIdType('03');
+                $destinatario->setId($this->invoice->client->vat_number);
+            }
+        }
 
         $destinatarios[] = $destinatario;
 

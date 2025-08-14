@@ -41,7 +41,7 @@ class EInvoiceController extends BaseController
      */
     public function validateEntity(ValidateEInvoiceRequest $request)
     {
-        $el = new EntityLevel();
+        $el = $request->getValidatorClass();
 
         $data = [];
         

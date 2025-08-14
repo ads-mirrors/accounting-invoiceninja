@@ -85,7 +85,8 @@ class VerifactuApiTest extends TestCase
         ]);
 
         $invoice->backup->document_type = 'F1';
-
+        $invoice->backup->adjustable_amount = 121;
+        
         $repo = new InvoiceRepository();
         $invoice = $repo->save([], $invoice);
 
@@ -97,7 +98,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
         $settings->is_locked = 'when_sent';
 
         $this->company->settings = $settings;
@@ -117,6 +118,7 @@ class VerifactuApiTest extends TestCase
 
         $this->assertEquals('F1', $invoice->backup->document_type);
         $this->assertEquals('R2', $invoice2->backup->document_type);
+        $this->assertEquals($invoice->hashed_id, $invoice2->backup->parent_invoice_id);
         $this->assertCount(1, $invoice->backup->child_invoice_ids);
 
         $data = [
@@ -153,7 +155,7 @@ class VerifactuApiTest extends TestCase
     {
                 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
         $settings->is_locked = 'when_sent';
 
         $this->company->settings = $settings;
@@ -192,7 +194,7 @@ class VerifactuApiTest extends TestCase
     {
                 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -219,6 +221,16 @@ class VerifactuApiTest extends TestCase
 
         $response->assertStatus(200);
 
+        $arr = $response->json();
+
+        $this->assertEquals('R2', $arr['data']['backup']['document_type']);
+        $this->assertEquals($invoice->hashed_id, $arr['data']['backup']['parent_invoice_id']);
+        
+        $invoice = $invoice->fresh();
+
+        $this->assertEquals('F1', $invoice->backup->document_type);
+        $this->assertCount(1, $invoice->backup->child_invoice_ids);
+        
         $data = [
             'action' => 'delete',
             'ids' => [$invoice->hashed_id]
@@ -237,7 +249,7 @@ class VerifactuApiTest extends TestCase
     {
                 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -279,7 +291,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -313,7 +325,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -346,7 +358,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -355,7 +367,6 @@ class VerifactuApiTest extends TestCase
         $invoice->service()->markSent()->save();
 
         $this->assertEquals(121, $invoice->amount);
-        
 
         $data = $invoice->toArray();
         unset($data['client']);
@@ -381,7 +392,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -445,7 +456,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -486,7 +497,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -526,7 +537,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -556,7 +567,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -589,7 +600,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -619,7 +630,7 @@ class VerifactuApiTest extends TestCase
     {
         
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -647,7 +658,7 @@ class VerifactuApiTest extends TestCase
         $this->assertEquals(10, $this->client->balance);
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -743,7 +754,7 @@ class VerifactuApiTest extends TestCase
     {
 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -780,7 +791,7 @@ class VerifactuApiTest extends TestCase
         $this->assertEquals($invoice->amount, 121);
         
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -819,7 +830,7 @@ class VerifactuApiTest extends TestCase
     {
                 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -859,7 +870,7 @@ class VerifactuApiTest extends TestCase
     {
                 
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
 
         $this->company->settings = $settings;
         $this->company->save();
@@ -910,7 +921,7 @@ class VerifactuApiTest extends TestCase
         Config::set('ninja.environment', 'hosted');
         
         $settings = $this->company->settings;
-        $settings->e_invoice_type = 'verifactu';
+        $settings->e_invoice_type = 'VERIFACTU';
         $this->company->settings = $settings;
         $this->company->save();
 
@@ -935,7 +946,7 @@ class VerifactuApiTest extends TestCase
 
         $arr = $response->json();
 
-        $this->assertEquals($arr['data']['settings']['e_invoice_type'], 'verifactu');
+        $this->assertEquals($arr['data']['settings']['e_invoice_type'], 'VERIFACTU');
         $this->assertEquals($arr['data']['settings']['lock_invoices'], 'when_sent');
     }
 }

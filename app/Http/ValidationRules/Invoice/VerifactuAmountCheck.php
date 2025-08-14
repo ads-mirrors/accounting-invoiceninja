@@ -43,10 +43,6 @@ class VerifactuAmountCheck implements ValidationRule
             
             $client = Client::withTrashed()->find($this->input['client_id']);
 
-            if($client->country->iso_3166_2 !== 'ES') { // Client level check if client is in Spain
-                return;
-            }   
-
             $invoice = false;
             $child_invoices = false;
             $child_invoice_totals = 0;
@@ -97,7 +93,10 @@ class VerifactuAmountCheck implements ValidationRule
 
             $total = $items->sum() - $total_discount;
 
-            if($total < 0 && !$invoice) {
+            if($total > 0 && $invoice) {
+                $fail("Only negative invoices can be linked to existing invoices {$total}");
+            }
+            elseif($total < 0 && !$invoice) {
                 $fail("Negative invoices {$total} can only be linked to existing invoices");
             }
             elseif($invoice && ($total + $child_invoice_totals + $invoice->amount) < 0) {

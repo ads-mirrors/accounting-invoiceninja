@@ -330,7 +330,7 @@ class BaseRepository
             }
 
             /** Verifactu modified invoice check */
-            if($model->company->verifactuEnabled() && $client->country->iso_3166_2 === 'ES') {
+            if($model->company->verifactuEnabled()) {
                 $model->service()->modifyVerifactuWorkflow($data, $this->new_model)->save();
             }
         }
