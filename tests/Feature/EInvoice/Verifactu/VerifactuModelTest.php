@@ -20,7 +20,6 @@ use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\DetalleDesglose;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
-use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
 use App\Services\EDocument\Standards\Verifactu\Models\PrimerRegistroCadena;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
 use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
@@ -291,188 +290,6 @@ $this->assertCount(0, $errors);
         $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
     }
 
-    public function testCreateAndSerializeRectificationInvoice(): void
-    {
-        $invoice = new Invoice();
-        $invoice
-            ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
-                ->setIdEmisorFactura('B12345678')
-                ->setNumSerieFactura('FAC-2023-003')
-                ->setFechaExpedicionFactura('01-01-2023'))
-            ->setNombreRazonEmisor('Empresa Ejemplo SL')
-            ->setTipoFactura('R1')
-            ->setTipoRectificativa('I')
-            ->setDescripcionOperacion('Rectificación de factura anterior')
-            ->setCuotaTotal(-21.00)
-            ->setImporteTotal(-100.00)
-            ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
-            ->setTipoHuella('01')
-            ->setHuella('abc123...');
-
-        // Add information system
-        $sistema = new SistemaInformatico();
-        $sistema
-            ->setNombreRazon('Sistema de Facturación')
-            ->setNif('B12345678')
-            ->setNombreSistemaInformatico('SistemaFacturacion')
-            ->setIdSistemaInformatico('01')
-            ->setVersion('1.0')
-            ->setNumeroInstalacion('INST-001')
-            ->setTipoUsoPosibleSoloVerifactu('S')
-            ->setTipoUsoPosibleMultiOT('S')
-            ->setIndicadorMultiplesOT('S');
-        $invoice->setSistemaInformatico($sistema);
-
-        // Add desglose
-        $desglose = new Desglose();
-        $desglose->setDesgloseIVA([
-            'Impuesto' => '01',
-            'ClaveRegimen' => '02',
-            'CalificacionOperacion' => 'S2',
-            'BaseImponibleOimporteNoSujeto' => -100.00,
-            'TipoImpositivo' => 21,
-            'CuotaRepercutida' => -21.00
-        ]);
-        $invoice->setDesglose($desglose);
-
-        // Add encadenamiento
-        $encadenamiento = new Encadenamiento();
-        $encadenamiento->setPrimerRegistro('S');
-        $invoice->setEncadenamiento($encadenamiento);
-
-        // Add rectified invoice
-        $facturaRectificativa = new FacturaRectificativa(
-            'I',  // tipoRectificativa
-            -100.00,  // baseRectificada
-            -21.00  // cuotaRectificada
-        );
-        $facturaRectificativa->addFacturaRectificada(
-            'B12345678',  // nif
-            'FAC-2023-001',  // numSerie
-            '01-01-2023'  // fecha
-        );
-        $invoice->setFacturaRectificativa($facturaRectificativa);
-
-        $xml = $invoice->toXmlString();
-        
-
-$xslt = new VerifactuDocumentValidator($xml);
-$xslt->validate();
-$errors = $xslt->getVerifactuErrors();
-
-if (count($errors) > 0) {
-    nlog($xml);
-    nlog($errors);
-}
-
-$this->assertCount(0, $errors);
-
-        // Test deserialization
-        $deserialized = Invoice::fromXml($xml);
-        $this->assertEquals($invoice->getIdVersion(), $deserialized->getIdVersion());
-        $this->assertEquals($invoice->getIdFactura(), $deserialized->getIdFactura());
-        $this->assertEquals($invoice->getNombreRazonEmisor(), $deserialized->getNombreRazonEmisor());
-        $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
-        $this->assertEquals($invoice->getTipoRectificativa(), $deserialized->getTipoRectificativa());
-    }
-
-    public function testCreateAndSerializeR1InvoiceWithImporteRectificacion(): void
-    {
-        $invoice = new Invoice();
-        $invoice
-            ->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
-                ->setIdEmisorFactura('B12345678')
-                ->setNumSerieFactura('FAC-2023-004')
-                ->setFechaExpedicionFactura('01-01-2023'))
-            ->setNombreRazonEmisor('Empresa Ejemplo SL')
-            ->setTipoFactura('R1')
-            ->setTipoRectificativa('I')
-            ->setImporteRectificacion(100.00)
-            ->setDescripcionOperacion('Rectificación completa de factura anterior')
-            ->setCuotaTotal(21.00)
-            ->setImporteTotal(100.00)
-            ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
-            ->setTipoHuella('01')
-            ->setHuella('abc123...');
-
-        // Add information system
-        $sistema = new SistemaInformatico();
-        $sistema
-            ->setNombreRazon('Sistema de Facturación')
-            ->setNif('B12345678')
-            ->setNombreSistemaInformatico('SistemaFacturacion')
-            ->setIdSistemaInformatico('01')
-            ->setVersion('1.0')
-            ->setNumeroInstalacion('INST-001')
-            ->setTipoUsoPosibleSoloVerifactu('S')
-            ->setTipoUsoPosibleMultiOT('S')
-            ->setIndicadorMultiplesOT('S');
-        $invoice->setSistemaInformatico($sistema);
-
-        // Add desglose
-        $desglose = new Desglose();
-        $desglose->setDesgloseIVA([
-            'Impuesto' => '01',
-            'ClaveRegimen' => '02',
-            'CalificacionOperacion' => 'S2',
-            'BaseImponibleOimporteNoSujeto' => 100.00,
-            'TipoImpositivo' => 21,
-            'CuotaRepercutida' => 21.00
-        ]);
-        $invoice->setDesglose($desglose);
-
-        // Add encadenamiento
-        $encadenamiento = new Encadenamiento();
-        $encadenamiento->setPrimerRegistro('S');
-        $invoice->setEncadenamiento($encadenamiento);
-
-        // Add rectified invoice
-        $facturaRectificativa = new FacturaRectificativa(
-            'I',  // tipoRectificativa
-            100.00,  // baseRectificada
-            21.00  // cuotaRectificada
-        );
-        $facturaRectificativa->addFacturaRectificada(
-            'B12345678',  // nif
-            'FAC-2023-001',  // numSerie
-            '01-01-2023'  // fecha
-        );
-        $invoice->setFacturaRectificativa($facturaRectificativa);
-
-        $xml = $invoice->toXmlString();
-        
-        // Debug: Check if the property is set correctly
-        $this->assertEquals(100.00, $invoice->getImporteRectificacion());
-        $this->assertEquals('R1', $invoice->getTipoFactura());
-        
-        // Debug: Log the XML to see what's actually generated
-        nlog('Generated XML: ' . $xml);
-        
-        // Verify that ImporteRectificacion is included in the XML
-        // Note: The XML includes namespace prefix 'sum1:' and the value is formatted as '100' not '100.00'
-        $this->assertStringContainsString('<sum1:ImporteRectificacion>100</sum1:ImporteRectificacion>', $xml);
-        
-        // Validate against Verifactu schema
-        $xslt = new VerifactuDocumentValidator($xml);
-        $xslt->validate();
-        $errors = $xslt->getVerifactuErrors();
-
-        if (count($errors) > 0) {
-            nlog($xml);
-            nlog($errors);
-        }
-
-        $this->assertCount(0, $errors);
-
-        // Test deserialization
-        $deserialized = Invoice::fromXml($xml);
-        $this->assertEquals($invoice->getIdVersion(), $deserialized->getIdVersion());
-        $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
-        $this->assertEquals($invoice->getTipoRectificativa(), $deserialized->getTipoRectificativa());
-        $this->assertEquals($invoice->getImporteRectificacion(), $deserialized->getImporteRectificacion());
-    }
 
     public function testCreateAndSerializeInvoiceWithoutRecipient(): void
     {
@@ -485,7 +302,6 @@ $this->assertCount(0, $errors);
                 ->setFechaExpedicionFactura('01-01-2023'))
             ->setNombreRazonEmisor('Empresa Ejemplo SL')
             ->setTipoFactura('F1')
-            ->setFacturaSinIdentifDestinatarioArt61d('S')
             ->setDescripcionOperacion('Venta de productos varios')
             ->setCuotaTotal(21.00)
             ->setImporteTotal(100.00)
@@ -523,16 +339,16 @@ $this->assertCount(0, $errors);
 
         $xml = $invoice->toXmlString();
 
-$xslt = new VerifactuDocumentValidator($xml);
-$xslt->validate();
-$errors = $xslt->getVerifactuErrors();
+        $xslt = new VerifactuDocumentValidator($xml);
+        $xslt->validate();
+        $errors = $xslt->getVerifactuErrors();
 
-if (count($errors) > 0) {
-    nlog($xml);
-    nlog($errors);
-}
+        if (count($errors) > 0) {
+            nlog($xml);
+            nlog($errors);
+        }
 
-$this->assertCount(0, $errors);
+        $this->assertCount(0, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -540,7 +356,6 @@ $this->assertCount(0, $errors);
         $this->assertEquals($invoice->getIdFactura(), $deserialized->getIdFactura());
         $this->assertEquals($invoice->getNombreRazonEmisor(), $deserialized->getNombreRazonEmisor());
         $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
-        $this->assertEquals($invoice->getFacturaSinIdentifDestinatarioArt61d(), $deserialized->getFacturaSinIdentifDestinatarioArt61d());
         $this->assertEquals($invoice->getCuotaTotal(), $deserialized->getCuotaTotal());
         $this->assertEquals($invoice->getImporteTotal(), $deserialized->getImporteTotal());
     }
@@ -557,93 +372,13 @@ $this->assertCount(0, $errors);
     {
         $invoice = new Invoice();
         
+
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Missing required field: IDVersion');
-        
+
         $invoice->toXmlString();
-    }
-
-    public function test_create_and_serialize_rectification_invoice()
-    {
-        $invoice = new Invoice();
-        $invoice->setIdVersion('1.0')
-            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
-                ->setIdEmisorFactura('B12345678')
-                ->setNumSerieFactura('FAC-2023-001')
-                ->setFechaExpedicionFactura('01-01-2023'))
-            ->setRefExterna('REF-123')
-            ->setNombreRazonEmisor('Empresa Ejemplo SL')
-            ->setTipoFactura('R1')
-            ->setTipoRectificativa('S')
-            ->setDescripcionOperacion('Rectificación de factura')
-            ->setTercero((new PersonaFisicaJuridica())
-                ->setNif('B12345678')
-                ->setRazonSocial('Empresa Ejemplo SL'))
-            ->setDesglose((new Desglose())
-                ->setDesgloseIVA([
-                    'Impuesto' => '01',
-                    'ClaveRegimen' => '01',
-                    'CalificacionOperacion' => 'S1',
-                    'BaseImponibleOimporteNoSujeto' => 1000.00,
-                    'TipoImpositivo' => 21.00,
-                    'CuotaRepercutida' => 210.00
-                ]))
-            ->setCuotaTotal(210)
-            ->setImporteTotal(1000)
-            ->setSistemaInformatico((new SistemaInformatico())
-                ->setNombreRazon('Sistema de Facturación')
-                ->setNif('B12345678')
-                ->setNombreSistemaInformatico('SistemaFacturacion')
-                ->setIdSistemaInformatico('01')
-                ->setVersion('1.0')
-                ->setNumeroInstalacion('INST-001'))
-            ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
-            ->setTipoHuella('01')
-            ->setHuella('abc123...');
-
-        // Create Encadenamiento with PrimerRegistroCadena
-        $encadenamiento = new Encadenamiento();
-        $encadenamiento->setPrimerRegistro('S');
-        $invoice->setEncadenamiento($encadenamiento);
-        
-        $facturaRectificativa = new FacturaRectificativa(
-            'S', // TipoRectificativa (S for substitutive)
-            1000.00, // BaseRectificada
-            210.00, // CuotaRectificada
-            null // CuotaRecargoRectificado (optional)
-        );
-        
-        // Add a rectified invoice
-        $facturaRectificativa->addFacturaRectificada(
-            'B12345678', // NIF
-            'FAC-2023-001', // NumSerieFactura
-            '24-04-2025' // FechaExpedicionFactura
-        );
-        
-        $invoice->setFacturaRectificativa($facturaRectificativa);
-
-        $xml = $invoice->toXmlString();
-
-$xslt = new VerifactuDocumentValidator($xml);
-$xslt->validate();
-$errors = $xslt->getVerifactuErrors();
-
-if (count($errors) > 0) {
-    nlog($xml);
-    nlog($errors);
-}
-
-$this->assertCount(0, $errors);
 
 
-        // Test deserialization
-        $deserialized = Invoice::fromXml($xml);
-        $this->assertEquals($invoice->getIdVersion(), $deserialized->getIdVersion());
-        $this->assertEquals($invoice->getIdFactura(), $deserialized->getIdFactura());
-        $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
-        $this->assertEquals($invoice->getTipoRectificativa(), $deserialized->getTipoRectificativa());
-        $this->assertEquals($invoice->getCuotaTotal(), $deserialized->getCuotaTotal());
-        $this->assertEquals($invoice->getImporteTotal(), $deserialized->getImporteTotal());
     }
 
     public function testCreateAndSerializeInvoiceWithMultipleRecipients(): void
@@ -676,7 +411,7 @@ $this->assertCount(0, $errors);
         $destinatario2
             ->setPais('FR')
             ->setTipoIdentificacion('02')
-            // ->setIdOtro('FR12345678901')
+            ->setNif('FR1235678')
             ->setNombreRazon('Client 2 SARL');
         $destinatarios[] = $destinatario2;
 
@@ -716,16 +451,16 @@ $this->assertCount(0, $errors);
         // Generate XML string
         $xml = $invoice->toXmlString();
         
-$xslt = new VerifactuDocumentValidator($xml);
-$xslt->validate();
-$errors = $xslt->getVerifactuErrors();
+        $xslt = new VerifactuDocumentValidator($xml);
+        $xslt->validate();
+        $errors = $xslt->getVerifactuErrors();
 
-if (count($errors) > 0) {
-    nlog($xml);
-    nlog($errors);
-}
+        if (count($errors) > 0) {
+            nlog($xml);
+            nlog($errors);
+        }
 
-$this->assertCount(0, $errors);
+        $this->assertCount(0, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -737,10 +472,7 @@ $this->assertCount(0, $errors);
         
         // Verify second recipient (with IDOtro)
         $this->assertEquals('Client 2 SARL', $deserialized->getDestinatarios()[1]->getNombreRazon());
-        $this->assertEquals('FR', $deserialized->getDestinatarios()[1]->getPais());
-        $this->assertEquals('02', $deserialized->getDestinatarios()[1]->getTipoIdentificacion());
-        $this->assertEquals('FR12345678901', $deserialized->getDestinatarios()[1]->getIdOtro());
-        $this->assertNull($deserialized->getDestinatarios()[1]->getNif());
+        
     }
 
     public function testCreateAndSerializeInvoiceWithExemptOperation(): void

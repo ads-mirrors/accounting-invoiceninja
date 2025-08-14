@@ -27,7 +27,6 @@ use App\Services\EDocument\Standards\Verifactu\ResponseProcessor;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
 use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
-use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
 use App\Services\EDocument\Standards\Verifactu\Models\Invoice as VerifactuInvoice;
 
 class VerifactuFeatureTest extends TestCase

@@ -59,7 +59,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     protected string $tipoHuella;
     protected string $huella;
     protected ?string $signature = null;
-    protected ?FacturaRectificativa $facturaRectificativa = null;
     protected ?string $privateKeyPath = null;
     protected ?string $publicKeyPath = null;
     protected ?string $certificatePath = null;
@@ -500,16 +499,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         return $this;
     }
 
-    public function getFacturaRectificativa(): ?FacturaRectificativa
-    {
-        return $this->facturaRectificativa;
-    }
-
-    public function setFacturaRectificativa(FacturaRectificativa $facturaRectificativa): void
-    {
-        $this->facturaRectificativa = $facturaRectificativa;
-    }
-
     /**
      * Helper method to create a rectificative invoice with proper configuration
      * 
@@ -578,7 +567,6 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     }
 
 
-
     /**
      * Validate that the invoice is properly configured for its type
      * 
@@ -589,29 +577,29 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
     {
         // Basic validation for all invoice types
         if (empty($this->idVersion)) {
-            throw new \InvalidArgumentException('IDVersion is required');
+            throw new \InvalidArgumentException('Missing required field: IDVersion');
         }
         
         if (empty($this->nombreRazonEmisor)) {
-            throw new \InvalidArgumentException('NombreRazonEmisor is required');
+            throw new \InvalidArgumentException('Missing required field: NombreRazonEmisor');
         }
         
         if (empty($this->descripcionOperacion)) {
-            throw new \InvalidArgumentException('DescripcionOperacion is required');
+            throw new \InvalidArgumentException('Missing required field: DescripcionOperacion');
         }
         
         if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA && $this->cuotaTotal < 0) {
-            throw new \InvalidArgumentException('CuotaTotal must be a positive number');
+            throw new \InvalidArgumentException('Missing required field: CuotaTotal');
         }
         
         if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA && $this->importeTotal < 0) {
-            throw new \InvalidArgumentException('ImporteTotal must be a positive number');
+            throw new \InvalidArgumentException('Missing required field: ImporteTotal');
         }
         
         // Specific validation for R1 invoices
         if ($this->tipoFactura === self::TIPO_FACTURA_RECTIFICATIVA) {
             if ($this->tipoRectificativa === null) {
-                throw new \InvalidArgumentException('TipoRectificativa is required for R1 invoices');
+                throw new \InvalidArgumentException('Missing required field: TipoRectificativa');
             }
             
             if (!in_array($this->tipoRectificativa, [self::TIPO_RECTIFICATIVA_COMPLETA, self::TIPO_RECTIFICATIVA_SUSTITUTIVA])) {
@@ -620,113 +608,11 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
             
             // For substitutive rectifications, ImporteRectificacion is mandatory
             if ($this->tipoRectificativa === self::TIPO_RECTIFICATIVA_SUSTITUTIVA && $this->importeRectificacion === null) {
-                throw new \InvalidArgumentException('ImporteRectificacion is mandatory for substitutive rectifications (TipoRectificativa = S)');
+                throw new \InvalidArgumentException('Missing required field: ImporteRectificacion');
             }
         }
         
         return true;
-    }
-
-    /**
-     * Set up the rectified invoice information for R1 invoices
-     * 
-     * @param string $nif The NIF of the rectified invoice
-     * @param string $numSerie The series number of the rectified invoice
-     * @param string $fecha The date of the rectified invoice
-     * @return self
-     */
-    public function setRectifiedInvoice(string $nif, string $numSerie, string $fecha): self
-    {
-        if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA) {
-            throw new \InvalidArgumentException('This method can only be used for R1 invoices');
-        }
-        
-        if ($this->facturaRectificativa === null) {
-            // Create FacturaRectificativa with proper values for the rectified amounts
-            // For R1 invoices, we need to set the base and tax amounts that were rectified
-            $baseRectificada = $this->importeTotal ?? 0.0; // Use current invoice total as base
-            $cuotaRectificada = $this->cuotaTotal ?? 0.0;  // Use current invoice tax as tax
-            
-            $this->facturaRectificativa = new FacturaRectificativa(
-                $this->tipoRectificativa ?? 'S', // Default to substitutive if not set
-                $baseRectificada,
-                $cuotaRectificada
-            );
-        }
-        
-        $this->facturaRectificativa->setRectifiedInvoice($nif, $numSerie, $fecha);
-        return $this;
-    }
-
-    /**
-     * Set up the rectified invoice information for R1 invoices using an IDFactura object
-     * 
-     * @param IDFactura $idFactura The IDFactura object of the rectified invoice
-     * @return self
-     */
-    public function setRectifiedInvoiceFromIDFactura(IDFactura $idFactura): self
-    {
-        if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA) {
-            throw new \InvalidArgumentException('This method can only be used for R1 invoices');
-        }
-        
-        if ($this->facturaRectificativa === null) {
-            // Create FacturaRectificativa with proper values for the rectified amounts
-            // For R1 invoices, we need to set the base and tax amounts that were rectified
-            $baseRectificada = $this->importeTotal ?? 0.0; // Use current invoice total as base
-            $cuotaRectificada = $this->cuotaTotal ?? 0.0;  // Use current invoice tax as tax
-            
-            $this->facturaRectificativa = new FacturaRectificativa(
-                $this->tipoRectificativa ?? 'S', // Default to substitutive if not set
-                $baseRectificada,
-                $cuotaRectificada
-            );
-        }
-        
-        $this->facturaRectificativa->setRectifiedInvoiceFromIDFactura($idFactura);
-        return $this;
-    }
-
-    /**
-     * Set the rectified amounts for R1 invoices
-     * 
-     * @param float $baseRectificada The base amount that was rectified
-     * @param float $cuotaRectificada The tax amount that was rectified
-     * @param float|null $cuotaRecargoRectificado The surcharge amount that was rectified (optional)
-     * @return self
-     */
-    public function setRectifiedAmounts(float $baseRectificada, float $cuotaRectificada, ?float $cuotaRecargoRectificado = null): self
-    {
-        if ($this->tipoFactura !== self::TIPO_FACTURA_RECTIFICATIVA) {
-            throw new \InvalidArgumentException('This method can only be used for R1 invoices');
-        }
-        
-        // Store the existing rectified invoice information if available
-        $existingRectifiedInvoice = null;
-        if ($this->facturaRectificativa !== null) {
-            $existingRectifiedInvoice = $this->facturaRectificativa->getFacturasRectificadas();
-        }
-        
-        // Create new FacturaRectificativa with the specified amounts
-        $this->facturaRectificativa = new FacturaRectificativa(
-            $this->tipoRectificativa ?? 'S',
-            $baseRectificada,
-            $cuotaRectificada,
-            $cuotaRecargoRectificado
-        );
-        
-        // Restore the rectified invoice information if it existed
-        if ($existingRectifiedInvoice !== null && !empty($existingRectifiedInvoice)) {
-            foreach ($existingRectifiedInvoice as $rectifiedInvoice) {
-                $this->facturaRectificativa->addFacturaRectificada(
-                    $rectifiedInvoice['nif'],
-                    $rectifiedInvoice['numSerie'],
-                    $rectifiedInvoice['fecha']
-                );
-            }
-        }
-        
-        return $this;
     }
 
     public function setPrivateKeyPath(string $path): self
