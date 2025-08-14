@@ -12,9 +12,10 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
-use RobRichards\XMLSecLibs\XMLSecurityDSig;
-use RobRichards\XMLSecLibs\XMLSecurityKey;
 use Illuminate\Support\Facades\Log;
+use RobRichards\XMLSecLibs\XMLSecurityKey;
+use RobRichards\XMLSecLibs\XMLSecurityDSig;
+use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
 
 class Invoice extends BaseXmlModel implements XmlModelInterface
 {
@@ -342,7 +343,7 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         // Ensure all elements are PersonaFisicaJuridica instances
         if ($destinatarios !== null) {
             foreach ($destinatarios as $destinatario) {
-                if (!($destinatario instanceof PersonaFisicaJuridica)) {
+                if (!($destinatario instanceof PersonaFisicaJuridica || $destinatario instanceof IDOtro)) {
                     throw new \InvalidArgumentException('All recipients must be instances of PersonaFisicaJuridica');
                 }
             }
@@ -961,21 +962,28 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         $root->appendChild($this->createElement($doc, 'DescripcionOperacion', $this->descripcionOperacion));
 
         // 9. Destinatarios (if set)
-        if ($this->destinatarios !== null && count($this->destinatarios) > 0) {
-            $destinatariosElement = $this->createElement($doc, 'Destinatarios');
-            foreach ($this->destinatarios as $destinatario) {
-                $idDestinatarioElement = $this->createElement($doc, 'IDDestinatario');
-                
-                // Add NombreRazon
-                $idDestinatarioElement->appendChild($this->createElement($doc, 'NombreRazon', $destinatario->getNombreRazon()));
-                
-                // Add NIF
-                $idDestinatarioElement->appendChild($this->createElement($doc, 'NIF', $destinatario->getNif()));
-                
-                $destinatariosElement->appendChild($idDestinatarioElement);
-            }
-            $root->appendChild($destinatariosElement);
+        
+// 9. Destinatarios (if set)
+if ($this->destinatarios !== null && count($this->destinatarios) > 0) {
+    $destinatariosElement = $this->createElement($doc, 'Destinatarios');
+    foreach ($this->destinatarios as $destinatario) {
+        $idDestinatarioElement = $this->createElement($doc, 'IDDestinatario');
+
+        // Add NombreRazon
+        $idDestinatarioElement->appendChild($this->createElement($doc, 'NombreRazon', $destinatario->getNombreRazon()));
+
+        if ($destinatario instanceof PersonaFisicaJuridica) {
+            $idDestinatarioElement->appendChild($this->createElement($doc, 'NIF', $destinatario->getNif()));
+        } elseif ($destinatario instanceof IDOtro) {
+            // Use the full IDOtro XML structure
+            $idDestinatarioElement->appendChild($destinatario->toXml($doc));
         }
+
+        $destinatariosElement->appendChild($idDestinatarioElement);
+    }
+    $root->appendChild($destinatariosElement);
+}
+
 
         // 10. Desglose
         if ($this->desglose !== null) {
@@ -1345,46 +1353,45 @@ class Invoice extends BaseXmlModel implements XmlModelInterface
         }
 
         // Parse Destinatarios
-        $destinatariosElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'Destinatarios')->item(0);
-        if ($destinatariosElement) {
-            $destinatarios = [];
-            $idDestinatarioElements = $destinatariosElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDDestinatario');
-            foreach ($idDestinatarioElements as $idDestinatarioElement) {
-                $destinatario = new PersonaFisicaJuridica();
-                
-                // Get NombreRazon
-                $nombreRazonElement = $idDestinatarioElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'NombreRazon')->item(0);
-                if ($nombreRazonElement) {
-                    $destinatario->setNombreRazon($nombreRazonElement->nodeValue);
-                }
-                
-                // Get either NIF or IDOtro
-                $nifElement = $idDestinatarioElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'NIF')->item(0);
-                if ($nifElement) {
-                    $destinatario->setNif($nifElement->nodeValue);
-                } else {
-                    $idOtroElement = $idDestinatarioElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDOtro')->item(0);
-                    if ($idOtroElement) {
-                        $codigoPaisElement = $idOtroElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'CodigoPais')->item(0);
-                        $idTypeElement = $idOtroElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDType')->item(0);
-                        $idElement = $idOtroElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'ID')->item(0);
-                        
-                        if ($codigoPaisElement) {
-                            $destinatario->setPais($codigoPaisElement->nodeValue);
-                        }
-                        if ($idTypeElement) {
-                            $destinatario->setTipoIdentificacion($idTypeElement->nodeValue);
-                        }
-                        if ($idElement) {
-                            $destinatario->setIdOtro($idElement->nodeValue);
-                        }
-                    }
-                }
-                
-                $destinatarios[] = $destinatario;
+        
+
+// Parse Destinatarios
+$destinatariosElement = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'Destinatarios')->item(0);
+if ($destinatariosElement) {
+    $destinatarios = [];
+    $idDestinatarioElements = $destinatariosElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDDestinatario');
+    foreach ($idDestinatarioElements as $idDestinatarioElement) {
+        // Check if it's an IDOtro type first
+        $idOtroElement = $idDestinatarioElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDOtro')->item(0);
+        if ($idOtroElement) {
+            // Create IDOtro object - it doesn't store NombreRazon
+            $destinatario = IDOtro::fromDOMElement($idOtroElement);
+        } else {
+            // Create PersonaFisicaJuridica object
+            $destinatario = new PersonaFisicaJuridica();
+
+            // Get NIF
+            $nifElement = $idDestinatarioElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'NIF')->item(0);
+            if ($nifElement) {
+                $destinatario->setNif($nifElement->nodeValue);
             }
-            $invoice->setDestinatarios($destinatarios);
         }
+
+        // Get NombreRazon from the parent element for both types
+        $nombreRazonElement = $idDestinatarioElement->getElementsByTagNameNS(self::XML_NAMESPACE, 'NombreRazon')->item(0);
+        if ($nombreRazonElement) {
+            if ($destinatario instanceof PersonaFisicaJuridica) {
+                $destinatario->setNombreRazon($nombreRazonElement->nodeValue);
+            }
+            // For IDOtro, we don't set NombreRazon since it doesn't have that property
+        }
+
+        $destinatarios[] = $destinatario;
+    }
+    $invoice->setDestinatarios($destinatarios);
+}
+
+
 
         return $invoice;
     }

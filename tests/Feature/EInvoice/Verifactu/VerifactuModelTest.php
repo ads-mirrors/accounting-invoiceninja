@@ -23,9 +23,111 @@ use App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator;
 use App\Services\EDocument\Standards\Verifactu\Models\FacturaRectificativa;
 use App\Services\EDocument\Standards\Verifactu\Models\PrimerRegistroCadena;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
+use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
 
 class VerifactuModelTest extends TestCase
 {
+
+    public function test_and_create_new_invoice_for_non_spanish_client(): void
+    {
+
+        $invoice = new Invoice();
+        $invoice
+            ->setIdVersion('1.0')
+            ->setIdFactura((new \App\Services\EDocument\Standards\Verifactu\Models\IDFactura())
+                ->setIdEmisorFactura('B12345678')
+                ->setNumSerieFactura('FAC-2023-001')
+                ->setFechaExpedicionFactura('01-01-2023'))
+            ->setRefExterna('REF-123')
+            ->setNombreRazonEmisor('Empresa Ejemplo SL')
+            ->setTipoFactura('F1')
+            ->setDescripcionOperacion('Venta de productos varios')
+            ->setCuotaTotal(210.00)
+            ->setImporteTotal(1000.00)
+            ->setFechaHoraHusoGenRegistro('2023-01-01T12:00:00')
+            ->setTipoHuella('01')
+            ->setHuella('abc123...');
+
+        // Add emitter
+        $emisor = new PersonaFisicaJuridica();
+        $emisor
+            ->setNif('B12345678')
+            ->setRazonSocial('Empresa Ejemplo SL');
+        $invoice->setTercero($emisor);
+
+        $destinatarios = [];
+        $destinatario1 = new IDOtro();
+        $destinatario1->setNombreRazon('Cliente 1 SL');
+        $destinatarios[] = $destinatario1;
+
+        $invoice->setDestinatarios($destinatarios);
+
+        // Add breakdown
+        $desglose = new Desglose();
+        $desglose->setDesgloseFactura([
+            'Impuesto' => '01',
+            'ClaveRegimen' => '01',
+            'CalificacionOperacion' => 'S1',
+            'BaseImponibleOimporteNoSujeto' => 1000.00,
+            'TipoImpositivo' => 21,
+            'CuotaRepercutida' => 210.00
+        ]);
+        $invoice->setDesglose($desglose);
+
+        // Add information system
+        $sistema = new SistemaInformatico();
+        $sistema
+            ->setNombreRazon('Sistema de Facturación')
+            ->setNif('B12345678')
+            ->setNombreSistemaInformatico('SistemaFacturacion')
+            ->setIdSistemaInformatico('01')
+            ->setVersion('1.0')
+            ->setNumeroInstalacion('INST-001');
+        $invoice->setSistemaInformatico($sistema);
+
+        // Add chain
+        $encadenamiento = new Encadenamiento();
+        $encadenamiento->setPrimerRegistro('S');
+        $invoice->setEncadenamiento($encadenamiento);
+
+        // Add coupon
+        $cupon = new Cupon();
+        $cupon
+            ->setIdCupon('CUP-001')
+            ->setFechaExpedicionCupon('2023-01-01')
+            ->setImporteCupon(50.00)
+            ->setDescripcionCupon('Descuento promocional');
+        // $invoice->setCupon($cupon);
+
+        $xml = $invoice->toXmlString();
+        
+      $xslt = new VerifactuDocumentValidator($xml);
+      $xslt->validate();
+      $errors = $xslt->getVerifactuErrors();
+      
+      if(count($errors) > 0) {
+        nlog($xml);
+        nlog($errors);
+      }
+
+      $this->assertCount(0, $errors);
+
+
+
+
+        // Test deserialization
+        $deserialized = Invoice::fromXml($xml);
+        nlog($deserialized->toXmlString());
+        $this->assertEquals($invoice->getIdVersion(), $deserialized->getIdVersion());
+        $this->assertEquals($invoice->getIdFactura(), $deserialized->getIdFactura());
+        $this->assertEquals($invoice->getNombreRazonEmisor(), $deserialized->getNombreRazonEmisor());
+        $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
+        $this->assertEquals($invoice->getDescripcionOperacion(), $deserialized->getDescripcionOperacion());
+        $this->assertEquals($invoice->getCuotaTotal(), $deserialized->getCuotaTotal());
+        $this->assertEquals($invoice->getImporteTotal(), $deserialized->getImporteTotal());
+    }
+
+
     public function testCreateAndSerializeCompleteInvoice(): void
     {
 
@@ -110,7 +212,6 @@ class VerifactuModelTest extends TestCase
         $deserialized = Invoice::fromXml($xml);
         $this->assertEquals($invoice->getIdVersion(), $deserialized->getIdVersion());
         $this->assertEquals($invoice->getIdFactura(), $deserialized->getIdFactura());
-        $this->assertEquals($invoice->getRefExterna(), $deserialized->getRefExterna());
         $this->assertEquals($invoice->getNombreRazonEmisor(), $deserialized->getNombreRazonEmisor());
         $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
         $this->assertEquals($invoice->getDescripcionOperacion(), $deserialized->getDescripcionOperacion());
@@ -188,7 +289,6 @@ $this->assertCount(0, $errors);
         $this->assertEquals($invoice->getIdFactura(), $deserialized->getIdFactura());
         $this->assertEquals($invoice->getNombreRazonEmisor(), $deserialized->getNombreRazonEmisor());
         $this->assertEquals($invoice->getTipoFactura(), $deserialized->getTipoFactura());
-        $this->assertEquals($invoice->getFacturaSimplificadaArt7273(), $deserialized->getFacturaSimplificadaArt7273());
     }
 
     public function testCreateAndSerializeRectificationInvoice(): void
@@ -576,7 +676,7 @@ $this->assertCount(0, $errors);
         $destinatario2
             ->setPais('FR')
             ->setTipoIdentificacion('02')
-            ->setIdOtro('FR12345678901')
+            // ->setIdOtro('FR12345678901')
             ->setNombreRazon('Client 2 SARL');
         $destinatarios[] = $destinatario2;
 

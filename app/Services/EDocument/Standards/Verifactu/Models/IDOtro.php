@@ -28,6 +28,8 @@ class IDOtro extends BaseXmlModel
         '09', // Tax ID from third country
     ];
     
+    private ?string $nombreRazon = '';
+    
     /**
      * __construct
      *
@@ -39,6 +41,32 @@ class IDOtro extends BaseXmlModel
     public function __construct(private string $codigoPais = 'ES', private string $idType = '07', private string $id = 'NO_DISPONIBLE')
     {
        
+    }
+
+    public function getNombreRazon(): string
+    {
+        return $this->nombreRazon;
+    }
+
+    public function getCodigoPais(): string
+    {
+        return $this->codigoPais;
+    }
+
+    public function getIdType(): string
+    {
+        return $this->idType;
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    public function setNombreRazon(string $nombreRazon): self
+    {
+        $this->nombreRazon = $nombreRazon;
+        return $this;
     }
 
     public function setCodigoPais(string $codigoPais): self
