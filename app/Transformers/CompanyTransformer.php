@@ -15,6 +15,7 @@ namespace App\Transformers;
 use stdClass;
 use App\Models\Task;
 use App\Models\User;
+use App\Utils\Ninja;
 use App\Models\Quote;
 use App\Models\Client;
 use App\Models\Credit;
@@ -225,7 +226,7 @@ class CompanyTransformer extends EntityTransformer
             'has_quickbooks_token' => $company->quickbooks ? true : false,
             'is_quickbooks_token_active' => $company->quickbooks?->accessTokenKey ?? false,
             'legal_entity_id' => $company->legal_entity_id ?? null,
-            'microsoft_client_id' => config('services.microsoft.client_id'),
+            'microsoft_client_id' => Ninja::isSelfHost() ? config('services.microsoft.client_id') : '',
         ];
     }
 
