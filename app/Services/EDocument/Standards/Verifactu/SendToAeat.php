@@ -127,7 +127,7 @@ class SendToAeat implements ShouldQueue
         $verifactu = new Verifactu($invoice);
         
         $document = (new RegistroAlta($invoice))->run()->getInvoice();
-
+        $document->setNumSerieFactura($invoice->backup->parent_invoice_number);
         $last_hash = $invoice->company->verifactu_logs()->first();
 
         $huella = $this->cancellationHash($document, $last_hash->hash);

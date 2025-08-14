@@ -27,6 +27,7 @@ use App\Services\EDocument\Standards\Verifactu\Models\IDOtro;
 use App\Services\EDocument\Standards\Verifactu\Models\Desglose;
 use App\Services\EDocument\Standards\Verifactu\Models\IDFactura;
 use App\Services\EDocument\Standards\Verifactu\Models\Encadenamiento;
+use App\Services\EDocument\Standards\Verifactu\Models\DetalleDesglose;
 use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
 use App\Services\EDocument\Standards\Verifactu\Models\SistemaInformatico;
 use App\Services\EDocument\Standards\Verifactu\Models\PersonaFisicaJuridica;
@@ -58,7 +59,9 @@ class RegistroAlta
         '01' => 'IVA (Impuesto sobre el Valor Añadido)', // Value Added Tax - Standard Spanish VAT
         '02' => 'IPSI (Impuesto sobre la Producción, los Servicios y la Importación)', // Production, Services and Import Tax - Ceuta and Melilla
         '03' => 'IGIC (Impuesto General Indirecto Canario)', // Canary Islands General Indirect Tax
-        '05' => 'Otros (Others)' // Other taxes
+        '05' => 'Otros (Others)', // Other taxes
+        '06' => 'IAE', //local taxes - rarely used
+        '07' => 'Non-Vat / Exempt operations'
     ];
 
     private array $clave_regimen_codes = [
@@ -141,9 +144,10 @@ class RegistroAlta
                 ->setNombreRazon($this->invoice->client->present()->name());
         }
         else {
-            $locationData = $this->invoice->location();
+            $locationData = $this->invoice->service()->location();
 
             $destinatario = new IDOtro();
+            $destinatario->setNombreRazon($this->invoice->client->present()->name());
             $destinatario->setCodigoPais($locationData['country_code']);
 
             $br = new \App\DataMapper\Tax\BaseRule();
@@ -168,18 +172,60 @@ class RegistroAlta
 
         foreach ($taxes as $tax) {
 
-            $desglose_iva[] = [
+            $desglose_iva = [
                 'Impuesto' => $this->calculateTaxType($tax['name']), //tax type
-                'ClaveRegimen' => '01', //tax regime classification code
-                'CalificacionOperacion' => 'S1', //operation classification code
-                'BaseImponibleOimporteNoSujeto' => $tax['base_amount'] ?? $this->calc->getNetSubtotal(), // taxable base amount
+                'ClaveRegimen' => $this->calculateRegimeClassification($tax['name']), //tax regime classification code
+                'CalificacionOperacion' => $this->calculateOperationClassification($tax['name']), //operation classification code
+                'BaseImponible' => $tax['base_amount'] ?? $this->calc->getNetSubtotal(), // taxable base amount - fixed: key matches DetalleDesglose::toXml()
                 'TipoImpositivo' => $tax['tax_rate'], // Tax Rate
-                'CuotaRepercutida' => $tax['total'] // Tax Amount
+                'Cuota' => $tax['total'] // Tax Amount - fixed: key matches DetalleDesglose::toXml()
             ];
+
+            $detalle_desglose = new DetalleDesglose();
+            $detalle_desglose->setDesgloseIVA($desglose_iva);
+            $desglose->addDesgloseIVA($detalle_desglose);
 
         };
 
-        $desglose->setDesgloseIVA($desglose_iva);
+        if(count($taxes) == 0) {
+        nlog("tax count = 0");
+            $client_country_code = $this->invoice->client->country->iso_3166_2;
+
+            $impuesto = 'S2';
+            $clave_regimen = '08';
+            $calificacion = 'S1';
+
+            $br = new \App\DataMapper\Tax\BaseRule();
+
+            if (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification != 'individual') {
+                $impuesto = '05';
+                $clave_regimen = '05';
+                $calificacion = 'N2';
+            }            
+            elseif (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification == 'individual') {
+                $impuesto = '08';
+                $clave_regimen = '05';
+                $calificacion = 'N2';
+            }
+            else{
+                $impuesto = '08';
+                $clave_regimen = '01';
+                $calificacion = 'N2';
+            }
+
+            $desglose_iva = [
+                'Impuesto' => $impuesto, //tax type
+                'ClaveRegimen' => $clave_regimen, //tax regime classification code
+                'CalificacionOperacion' => $calificacion, //operation classification code
+                'BaseImponible' => $this->calc->getNetSubtotal(), // taxable base amount - fixed: key matches DetalleDesglose::toXml()
+                
+            ];
+
+            $detalle_desglose = new DetalleDesglose();
+            $detalle_desglose->setDesgloseIVA($desglose_iva);
+            $desglose->addDesgloseIVA($detalle_desglose);
+
+        }
 
         $this->v_invoice->setDesglose($desglose);
 
@@ -261,25 +307,85 @@ class RegistroAlta
         return $this->v_invoice;
     }
 
-    private function calculateTaxType(string $tax_name): string
+    private function calculateRegimeClassification(string $tax_name): string
     {
-        if(stripos($tax_name, 'iva') !== false) {
+        $client_country_code = $this->invoice->client->country->iso_3166_2;
+
+        if($client_country_code == 'ES') {
+
+            if(stripos($tax_name, 'iva') !== false) {
+                return '01';
+            }
+
+            if(stripos($tax_name, 'igic') !== false) {
+                return '03';
+            }
+
+            if(stripos($tax_name, 'ipsi') !== false) {
+                return '02';
+            }
+
+            if(stripos($tax_name, 'otros') !== false) {
+                return '05';
+            }
+
             return '01';
         }
-
-        if(stripos($tax_name, 'igic') !== false) {
-            return '03';
-        }
-
-        if(stripos($tax_name, 'ipsi') !== false) {
-            return '02';
-        }
-
-        if(stripos($tax_name, 'otros') !== false) {
+        
+        $br = new \App\DataMapper\Tax\BaseRule();
+        if (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification != 'individual') {
+            return '08';
+        } elseif (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification == 'individual') {
             return '05';
         }
 
-        return '01';
+        return '07';
+
+    }
+
+    private function calculateTaxType(string $tax_name): string
+    {
+        $client_country_code = $this->invoice->client->country->iso_3166_2;
+
+        if($client_country_code == 'ES') {
+
+            if(stripos($tax_name, 'iva') !== false) {
+                return '01';
+            }
+
+            if(stripos($tax_name, 'igic') !== false) {
+                return '03';
+            }
+
+            if(stripos($tax_name, 'ipsi') !== false) {
+                return '02';
+            }
+
+            if(stripos($tax_name, 'otros') !== false) {
+                return '05';
+            }
+
+            return '01';
+        }
+
+        $br = new \App\DataMapper\Tax\BaseRule();
+        if (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification != 'individual') {
+            return '08';
+        }
+        elseif (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification == 'individual') {
+            return '05';
+        }
+
+        return '07';
+    }
+
+    private function calculateOperationClassification(string $tax_name): string
+    {
+        if($this->invoice->client->country_id == 724 || stripos($tax_name, 'iva') !== false) {
+            return 'S1';
+        }
+
+        return 'N2';
     }
     
 }

@@ -158,12 +158,16 @@ class EntityLevel implements EntityLevelInterface
                 continue;
             }
 
+            if($field == 'vat_number' && $client->classification == 'individual') {
+                continue;
+            }
+
             $errors[] = ['field' => $field, 'label' => ctrans("texts.{$field}")];
 
         }
 
         //If not an individual, you MUST have a VAT number if you are in the EU
-        if (!$this->validString($client->vat_number)) {
+        if ($client->classification != 'individual' && !$this->validString($client->vat_number)) {
             $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
         }
 

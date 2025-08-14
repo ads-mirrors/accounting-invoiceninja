@@ -714,6 +714,7 @@ class InvoiceService
         if($new_model && $this->invoice->amount >= 0) {
             $this->invoice->backup->document_type = 'F1';
             $this->invoice->backup->adjustable_amount = $this->invoice->amount;
+            $this->invoice->backup->parent_invoice_number = $this->invoice->number;
             $this->invoice->saveQuietly();
         }
         elseif(isset($invoice_array['modified_invoice_id'])) {
@@ -726,6 +727,7 @@ class InvoiceService
             //Update the client balance by the delta amount from the previous invoice to this one.
             $this->invoice->backup->parent_invoice_id = $modified_invoice->hashed_id;
             $this->invoice->backup->document_type = 'R2';
+            $this->invoice->backup->parent_invoice_number = $modified_invoice->number;
             $this->invoice->saveQuietly();
 
             $this->invoice->client->service()->updateBalance(round(($this->invoice->amount - $modified_invoice->amount), 2));
