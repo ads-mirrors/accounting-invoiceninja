@@ -1013,6 +1013,9 @@ class PeppolTest extends TestCase
 
         $invoice = $invoice->calc()->getInvoice();
         
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
         $invoice->service()->markSent()->save();
 
 
@@ -1142,6 +1145,10 @@ class PeppolTest extends TestCase
         ]);
 
         $invoice = $invoice->calc()->getInvoice();
+        
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
         $invoice->service()->markSent()->save();
 
         $this->assertEquals(113.05, $invoice->amount);
@@ -1275,6 +1282,10 @@ class PeppolTest extends TestCase
         ]);
 
         $invoice = $invoice->calc()->getInvoice();
+        
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
         $invoice->service()->markSent()->save();
 
         $this->assertEquals(96.39, $invoice->amount);
@@ -1427,6 +1438,10 @@ class PeppolTest extends TestCase
         ]);
 
         $invoice = $invoice->calc()->getInvoice();
+
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
         $invoice->service()->markSent()->save();
 
         $this->assertEquals(107.10, $invoice->amount);
@@ -1578,6 +1593,11 @@ class PeppolTest extends TestCase
         ]);
 
         $invoice = $invoice->calc()->getInvoice();
+
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
+
         $invoice->service()->markSent()->save();
 
         $this->assertEquals(107.1, $invoice->amount);
@@ -1727,6 +1747,10 @@ class PeppolTest extends TestCase
         ]);
 
         $invoice = $invoice->calc()->getInvoice();
+        
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
         $invoice->service()->markSent()->save();
 
         $this->assertEquals(113.05, $invoice->amount);
@@ -1868,6 +1892,10 @@ class PeppolTest extends TestCase
         ]);
 
         $invoice = $invoice->calc()->getInvoice();
+
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
         $invoice->service()->markSent()->save();
 
         $this->assertEquals(119, $invoice->amount);
@@ -1990,6 +2018,10 @@ class PeppolTest extends TestCase
         ]);
 
         $invoice = $invoice->calc()->getInvoice();
+        
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
         $invoice->service()->markSent()->save();
 
         $this->assertEquals(100, $invoice->amount);
@@ -2088,6 +2120,10 @@ class PeppolTest extends TestCase
             'date' => now()->format('Y-m-d')
         ]);
 
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
+
         $invoice->service()->markSent()->save();
 
         $peppol = new Peppol($invoice);
@@ -2120,8 +2156,5 @@ class PeppolTest extends TestCase
         $this->assertCount(0, $errors);
 
     }
-
-
-    
 
 }
