@@ -327,7 +327,7 @@ $this->account->forceDelete();
 
     private function poll($hash)
     {
-        $response = Http::retry(100, 900, throw: false)
+        $response = Http::retry(100, 200, throw: false)
                     ->withHeaders([
                         'X-API-SECRET' => config('ninja.api_secret'),
                         'X-API-TOKEN' => $this->token,
