@@ -157,7 +157,6 @@ class CompanyTransformer extends EntityTransformer
             'matomo_id' => (string) $company->matomo_id ?: '',
             'enabled_item_tax_rates' => (int) $company->enabled_item_tax_rates,
             'client_can_register' => (bool) $company->client_can_register,
-            // 'is_large' => (bool) $company->is_large,
             'is_large' => (bool) $this->isLarge($company),
             'is_disabled' => (bool) $company->is_disabled,
             'enable_shop_api' => (bool) $company->enable_shop_api,
@@ -226,6 +225,7 @@ class CompanyTransformer extends EntityTransformer
             'has_quickbooks_token' => $company->quickbooks ? true : false,
             'is_quickbooks_token_active' => $company->quickbooks?->accessTokenKey ?? false,
             'legal_entity_id' => $company->legal_entity_id ?? null,
+            'microsoft_client_id' => config('services.microsoft.client_id'),
         ];
     }
 
