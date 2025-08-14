@@ -26,6 +26,8 @@ class ResponseProcessor
         try {
             $this->loadXml($xmlResponse);
             
+            nlog($this->dom->saveXML());
+
             return [
                 'success' => $this->isSuccessful(),
                 'status' => $this->getStatus(),
@@ -33,6 +35,7 @@ class ResponseProcessor
                 'warnings' => $this->getWarnings(),
                 'data' => $this->getResponseData(),
                 'metadata' => $this->getMetadata(),
+                'guid' => $this->getGuid(),
                 'raw_response' => $xmlResponse
             ];
         } catch (Exception $e) {
@@ -64,6 +67,11 @@ class ResponseProcessor
         }
         
         $this->root = $this->dom->documentElement;
+    }
+
+    private function getGuid(): ?string
+    {
+        return $this->getElementText('.//tikR:CSV') ?? null;
     }
 
     /**

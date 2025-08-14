@@ -154,6 +154,7 @@ class Verifactu extends AbstractService
             'previous_hash' => $this->_previous_huella,
             'state' => $this->_document->serialize(),
             'response' => $response,
+            'status' => $response['guid'],
         ]);
     }
     /**

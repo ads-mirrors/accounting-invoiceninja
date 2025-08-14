@@ -11,11 +11,15 @@
 
 namespace App\Services\EDocument\Standards\Validation\Verifactu;
 
-use App\Services\EDocument\Standards\Validation\EntityLevelInterface;
+use App\Models\Quote;
 use App\Models\Client;
+use App\Models\Credit;
+use App\Models\Vendor;
 use App\Models\Company;
 use App\Models\Invoice;
+use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\App;
+use App\Services\EDocument\Standards\Validation\EntityLevelInterface;
 
 //@todo - need to implement a rule set for verifactu for validation
 class EntityLevel implements EntityLevelInterface
@@ -168,10 +172,60 @@ class EntityLevel implements EntityLevelInterface
             $errors[] = ['field' => 'email', 'label' => ctrans("texts.email")];
         }
 
-        $delivery_network_supported = $client->checkDeliveryNetwork();
+        return $errors;
 
-        if (is_string($delivery_network_supported)) {
-            $errors[] = ['field' => ctrans("texts.country"), 'label' => $delivery_network_supported];
+    }
+
+    private function testCompanyState(mixed $entity): array
+    {
+
+        $client = false;
+        $vendor = false;
+        $settings_object = false;
+        $company = false;
+
+        if ($entity instanceof Client) {
+            $client = $entity;
+            $company = $entity->company;
+            $settings_object = $client;
+        } elseif ($entity instanceof Company) {
+            $company = $entity;
+            $settings_object = $company;
+        } elseif ($entity instanceof Vendor) {
+            $vendor = $entity;
+            $company = $entity->company;
+            $settings_object = $company;
+        } elseif ($entity instanceof Invoice || $entity instanceof Credit || $entity instanceof Quote) {
+            $client = $entity->client;
+            $company = $entity->company;
+            $settings_object = $entity->client;
+        } elseif ($entity instanceof PurchaseOrder) {
+            $vendor = $entity->vendor;
+            $company = $entity->company;
+            $settings_object = $company;
+        }
+
+        $errors = [];
+
+        foreach ($this->company_settings_fields as $field) {
+
+            if ($this->validString($settings_object->getSetting($field))) {
+                continue;
+            }
+
+            $errors[] = ['field' => $field, 'label' => ctrans("texts.{$field}")];
+
+        }
+
+        //If not an individual, you MUST have a VAT number
+        if ($company->getSetting('classification') != 'individual' && !$this->validString($company->getSetting('vat_number'))) {
+            $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+        } elseif ($company->getSetting('classification') == 'individual' && !$this->validString($company->getSetting('id_number'))) {
+            $errors[] = ['field' => 'id_number', 'label' => ctrans("texts.id_number")];
+        }
+
+        if(!$this->isValidSpanishVAT($company->getSetting('vat_number'))) {
+            $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
         }
 
         return $errors;

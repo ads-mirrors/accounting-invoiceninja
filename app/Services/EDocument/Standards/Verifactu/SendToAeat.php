@@ -72,12 +72,6 @@ class SendToAeat implements ShouldQueue
 
         $invoice = Invoice::withTrashed()->find($this->invoice_id);
 
-        // if($invoice->client->country->iso_3166_2 != 'ES') {
-        //     $invoice->backup->guid = 'NOT_ES';
-        //     $invoice->saveQuietly();
-        //     return;
-        // }
-
         switch($this->action) {
             case 'create':
                 $this->createInvoice($invoice);
@@ -113,6 +107,11 @@ class SendToAeat implements ShouldQueue
         $message = '';
         if (isset($response['errors'][0]['message'])) {
             $message = $response['errors'][0]['message'];
+        }
+
+        if($response['success']) {
+            $invoice->backup->guid = $response['guid'];
+            $invoice->saveQuietly();
         }
 
         $this->writeActivity($invoice, $response['success'] ? Activity::VERIFACTU_INVOICE_SENT : Activity::VERIFACTU_INVOICE_SENT_FAILURE, $message);
@@ -154,6 +153,10 @@ class SendToAeat implements ShouldQueue
                 $parent->backup->child_invoice_ids = $parent->backup->child_invoice_ids->reject(fn($id) => $id === $invoice->hashed_id);
                 $parent->saveQuietly();
             }
+
+            $invoice->backup->guid = $response['guid'];
+            $invoice->saveQuietly();
+
         }
 
         if(isset($response['errors'][0]['message'])){
