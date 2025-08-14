@@ -24,7 +24,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 class CloneQuoteToInvoiceFactoryTest extends TestCase
 {
     use MockAccountData;
-    use DatabaseTransactions;
+    // use DatabaseTransactions;
 
     protected function setUp(): void
     {
