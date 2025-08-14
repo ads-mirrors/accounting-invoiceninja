@@ -931,7 +931,10 @@ class CompanySettings extends BaseSettings
     {
         $notification = new stdClass();
         $notification->email = [];
-        $notification->email = ['invoice_sent_all', 'payment_success_all', 'payment_manual_all'];
+
+        if(Ninja::isSelfHost()) {
+            $notification->email = ['invoice_sent_all', 'payment_success_all', 'payment_manual_all'];
+        }
 
         return $notification;
     }
