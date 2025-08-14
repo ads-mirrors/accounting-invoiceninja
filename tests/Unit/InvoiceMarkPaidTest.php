@@ -117,6 +117,7 @@ class InvoiceMarkPaidTest extends TestCase
         $line_items[] = $item;
 
 
+        /** @var \App\Models\Invoice $i */
         $i = Invoice::factory()->create([
             'discount' => 0,
             'tax_name1' => '',

@@ -76,7 +76,7 @@ class PdfServiceTest extends TestCase
 
         $this->makeTestData();
 
-        if(config('ninja.is_travis')) {
+        if (config('ninja.testvars.travis')) {
             $this->markTestSkipped();
         }
         
