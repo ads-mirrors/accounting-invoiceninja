@@ -23,6 +23,7 @@ use App\DataMapper\Tax\TaxModel;
 use App\DataMapper\ClientSettings;
 use App\DataMapper\CompanySettings;
 use App\Factory\CompanyUserFactory;
+use App\Repositories\InvoiceRepository;
 use InvoiceNinja\EInvoice\EInvoice;
 use InvoiceNinja\EInvoice\Symfony\Encode;
 use App\Services\EDocument\Standards\Peppol;
@@ -245,6 +246,8 @@ class PeppolTest extends TestCase
 
         $ii = $invoice->calc()->getInvoice();
 
+        $repo = new InvoiceRepository();
+        $ii = $repo->save([], $ii);
         $this->assertEquals(floatval(11898.81), $ii->amount);
 
         $company = $entity_data['company'];
@@ -301,6 +304,9 @@ class PeppolTest extends TestCase
         $invoice = $entity_data['invoice'];
         $invoice->number = null;
         $invoice->save();
+
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
 
         $data = [
             'entity' => 'invoices',
@@ -511,6 +517,11 @@ class PeppolTest extends TestCase
         ];
         $invoice->save();
 
+        
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
+
         $company = $entity_data['company'];
         $settings = $company->settings;
 
@@ -628,6 +639,9 @@ class PeppolTest extends TestCase
             $invoice = $data['invoice'];
             $invoice = $invoice->calc()->getInvoice();
 
+            $repo = new InvoiceRepository();
+            $invoice = $repo->save([], $invoice);
+
             $invoice->e_invoice = [
                 'Invoice' => [
                     'InvoicePeriod' => [
@@ -670,6 +684,10 @@ class PeppolTest extends TestCase
 
             $invoice = $data['invoice'];
             $invoice = $invoice->calc()->getInvoice();
+
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
 
             $invoice->e_invoice = [
                 'Invoice' => [
@@ -720,6 +738,9 @@ class PeppolTest extends TestCase
 
             $invoice = $data['invoice'];
             $invoice = $invoice->calc()->getInvoice();
+            
+            $repo = new InvoiceRepository();
+            $invoice = $repo->save([], $invoice);
 
             $storecove = new Storecove();
             $p = new Peppol($invoice);
@@ -850,6 +871,10 @@ class PeppolTest extends TestCase
 
         $invoice = $invoice->calc()->getInvoice();
         $invoice->service()->markSent()->save();
+
+        $repo = new InvoiceRepository();
+        $invoice = $repo->save([], $invoice);
+
 
         $this->assertEquals(100, $invoice->amount);
 
