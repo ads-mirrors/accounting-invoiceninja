@@ -53,7 +53,7 @@ class LateFeeTest extends TestCase
 
         $this->makeTestData();
 
-        $this->withoutExceptionHandling();
+        // $this->withoutExceptionHandling();
 
     }
 
@@ -370,12 +370,12 @@ class LateFeeTest extends TestCase
 
         $this->assertEquals(2, count($i->line_items));
 
-        try{
+        // try{
             $i->service()->autoBill();
-        }
-        catch(\Exception $e){
-            nlog($e->getMessage());
-        }
+        // }
+        // catch(\Exception $e){
+        //     nlog($e->getMessage());
+        // }
 
         $i = $i->fresh();
 

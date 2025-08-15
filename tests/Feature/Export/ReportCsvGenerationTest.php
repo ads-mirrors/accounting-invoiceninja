@@ -920,11 +920,25 @@ $this->account->forceDelete();
             'balance' => 100,
             'number' => '12345',
             'status_id' => 2,
-            'discount' => 10,
+            'discount' => 0,
             'po_number' => '1234',
             'public_notes' => 'Public',
             'private_notes' => 'Private',
             'terms' => 'Terms',
+             'tax_rate1' => 0,
+            'tax_rate2' => 0,
+            'tax_rate3' => 0,
+            'line_items' => [
+                [
+                    'quantity' => 1,
+                    'product_key' => 'product_key',
+                    'notes' => 'notes',
+                    'cost' => 100,
+                    'custom_value1' => 'Custom 1',
+                    'custom_value2' => 'Custom 2',
+                    'custom_value3' => 'Custom 3',
+                ]
+            ]
             ]);
 
         $invoice->client->balance = 100;
@@ -1284,6 +1298,20 @@ $this->account->forceDelete();
            'public_notes' => 'Public',
            'private_notes' => 'Private',
            'terms' => 'Terms',
+            'tax_rate1' => 0,
+            'tax_rate2' => 0,
+            'tax_rate3' => 0,
+            'line_items' => [
+                [
+                    'quantity' => 1,
+                    'product_key' => 'product_key',
+                    'notes' => 'notes',
+                    'cost' => 100,
+                    'custom_value1' => 'Custom 1',
+                    'custom_value2' => 'Custom 2',
+                    'custom_value3' => 'Custom 3',
+                ]
+            ]
        ]);
 
        $repo = new InvoiceRepository();
@@ -1455,7 +1483,7 @@ $this->account->forceDelete();
            'balance' => 50,
            'number' => '1234',
            'status_id' => 2,
-           'discount' => 10,
+           'discount' => 0,
            'po_number' => '1234',
            'public_notes' => 'Public',
            'private_notes' => 'Private',
