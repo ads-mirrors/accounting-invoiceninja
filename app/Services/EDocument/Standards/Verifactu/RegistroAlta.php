@@ -138,17 +138,18 @@ class RegistroAlta
         $destinatarios = [];
         $destinatario = new PersonaFisicaJuridica();
 
+        //Spanish NIF/VAT
         if($this->invoice->client->country_id == 724 && strlen($this->invoice->client->vat_number ?? '') > 5) {
             $destinatario
                 ->setNif($this->invoice->client->vat_number)
                 ->setNombreRazon($this->invoice->client->present()->name());
         }
-        elseif($this->invoice->client->country_id == 724) {
+        elseif($this->invoice->client->country_id == 724) { // Spanish Passport
             
             $destinatario = new IDOtro();
             $destinatario->setNombreRazon($this->invoice->client->present()->name());
             $destinatario->setCodigoPais('ES')
-                        ->setIdType('06')
+                        ->setIdType('03')
                         ->setId($this->invoice->client->id_number);
 
         }
@@ -197,7 +198,7 @@ class RegistroAlta
         };
 
         if(count($taxes) == 0) {
-        nlog("tax count = 0");
+            
             $client_country_code = $this->invoice->client->country->iso_3166_2;
 
             $impuesto = 'S2';
@@ -216,9 +217,9 @@ class RegistroAlta
                 $clave_regimen = '05';
                 $calificacion = 'N2';
             }
-            else{
-                $impuesto = '08';
-                $clave_regimen = '01';
+            else{ //Non-EU
+                $impuesto = '05';
+                $clave_regimen = '05';
                 $calificacion = 'N2';
             }
 
@@ -227,7 +228,6 @@ class RegistroAlta
                 'ClaveRegimen' => $clave_regimen, //tax regime classification code
                 'CalificacionOperacion' => $calificacion, //operation classification code
                 'BaseImponible' => $this->calc->getNetSubtotal(), // taxable base amount - fixed: key matches DetalleDesglose::toXml()
-                
             ];
 
             $detalle_desglose = new DetalleDesglose();

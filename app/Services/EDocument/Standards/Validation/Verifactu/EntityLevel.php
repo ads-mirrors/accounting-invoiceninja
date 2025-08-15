@@ -31,7 +31,7 @@ class EntityLevel implements EntityLevelInterface
         // 'city',
         // 'state',
         // 'postal_code',
-        'vat_number',
+        // 'vat_number',
         'country_id',
     ];
 
@@ -164,36 +164,32 @@ class EntityLevel implements EntityLevelInterface
                 continue;
             }
 
-            if($field == 'vat_number' && $client->classification == 'individual') {
-                continue;
-            }
+            // if($field == 'vat_number' && $client->classification == 'individual') {
+            //     continue;
+            // }
 
             $errors[] = ['field' => $field, 'label' => ctrans("texts.{$field}")];
 
         }
 
-
+        /** Spanish Client Validation requirements */
         if ($client->country_id == 724) {
 
-            if (in_array($client->classification, ['','individual']) && strlen($client->id_number ?? '') == 0) {
+            if (in_array($client->classification, ['','individual']) && strlen($client->id_number ?? '') == 0 && strlen($client->vat_number ?? '') == 0) {
                 $errors[] = ['field' => 'id_number', 'label' => ctrans("texts.id_number")];
-            } elseif (strlen($client->vat_number ?? '')) {
+            } elseif (!in_array($client->classification, ['','individual']) && strlen($client->vat_number ?? '')) {
                 $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
             }
 
         }
-        else{
-            //If not an individual, you MUST have a VAT number if you are in the EU
-            if (!in_array($client->classification,['','individual']) && !$this->validString($client->vat_number)) {
-                $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
-            }
 
-            // //Primary contact email is present.
-            // if ($client->present()->email() == 'No Email Set') {
-            //     $errors[] = ['field' => 'email', 'label' => ctrans("texts.email")];
-            // }
+        // else{
+        //     //If not an individual, you MUST have a VAT number if you are in the EU
+        //     if (!in_array($client->classification,['','individual']) && !$this->validString($client->vat_number)) {
+        //         $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+        //     }
 
-        }
+        // }
 
         return $errors;
 
