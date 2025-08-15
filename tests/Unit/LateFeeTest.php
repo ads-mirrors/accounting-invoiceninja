@@ -350,6 +350,8 @@ class LateFeeTest extends TestCase
 
         $i = $i->calc()->getInvoice();
 
+        $repo = new \App\Repositories\InvoiceRepository();
+        $repo->save([], $i);
         $this->assertEquals(3, count($i->line_items));
         $this->assertEquals(21, $i->amount);
 
