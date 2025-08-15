@@ -56,10 +56,11 @@ class PaymentScheduleRequest extends Request
         $input['is_paused'] = false;
         $input['parameters']['auto_bill'] = (bool) isset($input['parameters']['auto_bill']) ? $input['parameters']['auto_bill'] : false;
 
-        $input['parameters']['schedule'] = [];
-
         if(isset($input['parameters']['schedule']) && is_array($input['parameters']['schedule']) && count($input['parameters']['schedule']) > 0) {
             $input['parameters']['schedule'] = $input['parameters']['schedule'];
+        }
+        else{
+            $input['parameters']['schedule'] = [];
         }
 
         if (isset($input['schedule']) && is_array($input['schedule']) && count($input['schedule']) > 0) {
