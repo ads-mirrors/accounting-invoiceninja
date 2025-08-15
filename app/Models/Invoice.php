@@ -29,6 +29,7 @@ use App\Helpers\Invoice\InvoiceSumInclusive;
 use App\Utils\Traits\Invoice\ActionsInvoice;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Events\Invoice\InvoiceReminderWasEmailed;
+use App\DataMapper\InvoiceBackup;
 use App\Utils\Number;
 
 /**
@@ -38,6 +39,7 @@ use App\Utils\Number;
  * @property object|null $e_invoice
  * @property int $client_id
  * @property int $user_id
+ * @property int|null $location_id
  * @property int|null $assigned_user_id
  * @property int $company_id
  * @property int $status_id
@@ -54,7 +56,7 @@ use App\Utils\Number;
  * @property string|null $due_date
  * @property bool $is_deleted
  * @property object|array|string $line_items
- * @property object|null $backup
+ * @property InvoiceBackup $backup
  * @property object|null $sync
  * @property string|null $footer
  * @property string|null $public_notes
@@ -125,6 +127,9 @@ use App\Utils\Number;
  * @property-read int|null $tasks_count
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor
+ * @property-read \App\Models\Location|null $location
+ * @property-read \App\Models\Quote|null $quote
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VerifactuLog> $verifactu_logs
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Credit> $credits
@@ -203,7 +208,7 @@ class Invoice extends BaseModel
 
     protected $casts = [
         'line_items' => 'object',
-        'backup' => 'object',
+        'backup' => InvoiceBackup::class,
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
@@ -239,9 +244,9 @@ class Invoice extends BaseModel
 
     public const STATUS_REVERSED = 6;
 
-    public const STATUS_OVERDUE = -1; //status < 4 || < 3 && !is_deleted && !trashed() && due_date < now()
+    public const STATUS_OVERDUE = -1; // status < 4 || < 3 && !is_deleted && !trashed() && due_date < now()
 
-    public const STATUS_UNPAID = -2; //status < 4 || < 3 && !is_deleted && !trashed()
+    public const STATUS_UNPAID = -2; // status < 4 || < 3 && !is_deleted && !trashed()
 
     public function toSearchableArray()
     {
@@ -398,6 +403,11 @@ class Invoice extends BaseModel
     public function credits(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Credit::class);
+    }
+
+    public function verifactu_logs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(VerifactuLog::class)->orderBy('id', 'desc');
     }
 
     public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany

@@ -2,22 +2,23 @@
 
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
+use App\Services\EDocument\Standards\Verifactu\Models\RegistroAnterior;
+
 class Encadenamiento extends BaseXmlModel
 {
     protected ?string $primerRegistro = null;
-    protected ?EncadenamientoFacturaAnterior $registroAnterior = null;
-    protected ?EncadenamientoFacturaAnterior $registroPosterior = null;
+    protected ?RegistroAnterior $registroAnterior = null;
+    protected ?RegistroAnterior $registroPosterior = null;
 
     public function toXml(\DOMDocument $doc): \DOMElement
     {
         $root = $this->createElement($doc, 'Encadenamiento');
 
-        if ($this->primerRegistro !== null) {
-            $root->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
-        }
-
         if ($this->registroAnterior !== null) {
             $root->appendChild($this->registroAnterior->toXml($doc));
+        } else {
+            // Always include PrimerRegistro if no RegistroAnterior is set
+            $root->appendChild($this->createElement($doc, 'PrimerRegistro', 'S'));
         }
 
         if ($this->registroPosterior !== null) {
@@ -53,7 +54,7 @@ class Encadenamiento extends BaseXmlModel
             // Handle RegistroAnterior
             $registroAnterior = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'RegistroAnterior')->item(0);
             if ($registroAnterior) {
-                $encadenamiento->setRegistroAnterior(EncadenamientoFacturaAnterior::fromDOMElement($registroAnterior));
+                $encadenamiento->setRegistroAnterior(RegistroAnterior::fromDOMElement($registroAnterior));
             }
             
             return $encadenamiento;
@@ -76,7 +77,7 @@ class Encadenamiento extends BaseXmlModel
         // Handle RegistroAnterior
         $registroAnterior = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'RegistroAnterior')->item(0);
         if ($registroAnterior) {
-            $encadenamiento->setRegistroAnterior(EncadenamientoFacturaAnterior::fromDOMElement($registroAnterior));
+            $encadenamiento->setRegistroAnterior(RegistroAnterior::fromDOMElement($registroAnterior));
         }
         
         return $encadenamiento;
@@ -96,120 +97,25 @@ class Encadenamiento extends BaseXmlModel
         return $this;
     }
 
-    public function getRegistroAnterior(): ?EncadenamientoFacturaAnterior
+    public function getRegistroAnterior(): ?RegistroAnterior
     {
         return $this->registroAnterior;
     }
 
-    public function setRegistroAnterior(?EncadenamientoFacturaAnterior $registroAnterior): self
+    public function setRegistroAnterior(?RegistroAnterior $registroAnterior): self
     {
         $this->registroAnterior = $registroAnterior;
         return $this;
     }
 
-    public function getRegistroPosterior(): ?EncadenamientoFacturaAnterior
+    public function getRegistroPosterior(): ?RegistroAnterior
     {
         return $this->registroPosterior;
     }
 
-    public function setRegistroPosterior(?EncadenamientoFacturaAnterior $registroPosterior): self
+    public function setRegistroPosterior(?RegistroAnterior $registroPosterior): self
     {
         $this->registroPosterior = $registroPosterior;
-        return $this;
-    }
-}
-
-class EncadenamientoFacturaAnterior extends BaseXmlModel
-{
-    protected string $idEmisorFactura;
-    protected string $numSerieFactura;
-    protected string $fechaExpedicionFactura;
-    protected string $huella;
-
-    public function toXml(\DOMDocument $doc): \DOMElement
-    {
-        $root = $this->createElement($doc, 'RegistroAnterior');
-
-        $root->appendChild($this->createElement($doc, 'IDEmisorFactura', $this->idEmisorFactura));
-        $root->appendChild($this->createElement($doc, 'NumSerieFactura', $this->numSerieFactura));
-        $root->appendChild($this->createElement($doc, 'FechaExpedicionFactura', $this->fechaExpedicionFactura));
-        $root->appendChild($this->createElement($doc, 'Huella', $this->huella));
-
-        return $root;
-    }
-
-    public static function fromDOMElement(\DOMElement $element): self
-    {
-        $registroAnterior = new self();
-        
-        // Handle IDEmisorFactura
-        $idEmisorFactura = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'IDEmisorFactura')->item(0);
-        if ($idEmisorFactura) {
-            $registroAnterior->setIdEmisorFactura($idEmisorFactura->nodeValue);
-        }
-        
-        // Handle NumSerieFactura
-        $numSerieFactura = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'NumSerieFactura')->item(0);
-        if ($numSerieFactura) {
-            $registroAnterior->setNumSerieFactura($numSerieFactura->nodeValue);
-        }
-        
-        // Handle FechaExpedicionFactura
-        $fechaExpedicionFactura = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'FechaExpedicionFactura')->item(0);
-        if ($fechaExpedicionFactura) {
-            $registroAnterior->setFechaExpedicionFactura($fechaExpedicionFactura->nodeValue);
-        }
-        
-        // Handle Huella
-        $huella = $element->getElementsByTagNameNS(self::XML_NAMESPACE, 'Huella')->item(0);
-        if ($huella) {
-            $registroAnterior->setHuella($huella->nodeValue);
-        }
-        
-        return $registroAnterior;
-    }
-
-    public function getIdEmisorFactura(): string
-    {
-        return $this->idEmisorFactura;
-    }
-
-    public function setIdEmisorFactura(string $idEmisorFactura): self
-    {
-        $this->idEmisorFactura = $idEmisorFactura;
-        return $this;
-    }
-
-    public function getNumSerieFactura(): string
-    {
-        return $this->numSerieFactura;
-    }
-
-    public function setNumSerieFactura(string $numSerieFactura): self
-    {
-        $this->numSerieFactura = $numSerieFactura;
-        return $this;
-    }
-
-    public function getFechaExpedicionFactura(): string
-    {
-        return $this->fechaExpedicionFactura;
-    }
-
-    public function setFechaExpedicionFactura(string $fechaExpedicionFactura): self
-    {
-        $this->fechaExpedicionFactura = $fechaExpedicionFactura;
-        return $this;
-    }
-
-    public function getHuella(): string
-    {
-        return $this->huella;
-    }
-
-    public function setHuella(string $huella): self
-    {
-        $this->huella = $huella;
         return $this;
     }
 } 

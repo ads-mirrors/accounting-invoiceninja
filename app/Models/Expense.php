@@ -74,6 +74,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $documents_count
  * @property-read mixed $hashed_id
  * @property-read \App\Models\PaymentType|null $payment_type
+ * @property-read \App\Models\Currency|null $invoice_currency
  * @property-read \App\Models\Project|null $project
  * @property-read \App\Models\PurchaseOrder|null $purchase_order
  * @property-read \App\Models\User $user

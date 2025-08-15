@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Invoice Ninja (https://invoiceninja.com).
+ *
+ * @link https://github.com/invoiceninja/invoiceninja source repository
+ *
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ *
+ * @license https://www.elastic.co/licensing/elastic-license
+ */
+
 namespace App\Services\EDocument\Standards\Verifactu\Models;
 
 use App\Services\EDocument\Standards\Verifactu\Models\BaseXmlModel;
@@ -12,7 +22,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
     protected ?string $nombre = null;
     protected ?string $razonSocial = null;
     protected ?string $tipoIdentificacion = null;
-    protected ?string $idOtro = null;
+    protected ?IDOtro $idOtro = null;
     protected ?string $pais = null;
 
     public function getNif(): ?string
@@ -84,12 +94,12 @@ class PersonaFisicaJuridica extends BaseXmlModel
         return $this;
     }
 
-    public function getIdOtro(): ?string
+    public function getIdOtro(): IDOtro
     {
         return $this->idOtro;
     }
 
-    public function setIdOtro(?string $idOtro): self
+    public function setIdOtro(IDOtro $idOtro): self
     {
         $this->idOtro = $idOtro;
         return $this;
@@ -135,7 +145,7 @@ class PersonaFisicaJuridica extends BaseXmlModel
         }
 
         if ($this->idOtro !== null) {
-            $root->appendChild($this->createElement($doc, 'IDOtro', $this->idOtro));
+            $root->appendChild($this->idOtro->toXml($doc));
         }
 
         if ($this->pais !== null) {

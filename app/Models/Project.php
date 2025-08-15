@@ -1,4 +1,13 @@
 <?php
+/**
+ * Invoice Ninja (https://invoiceninja.com).
+ *
+ * @link https://github.com/invoiceninja/invoiceninja source repository
+ *
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
+ *
+ * @license https://www.elastic.co/licensing/elastic-license
+ */
 
 namespace App\Models;
 
@@ -31,6 +40,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property bool $is_deleted
  * @property string|null $number
  * @property string $color
+ * @property int|null $current_hours
  * @property-read \App\Models\Client|null $client
  * @property-read \App\Models\Company $company
  * @property-read int|null $documents_count
@@ -53,6 +63,9 @@ use Laracasts\Presenter\PresentableTrait;
  * @method static \Illuminate\Database\Eloquent\Builder|Project withoutTrashed()
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Task> $tasks
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Invoice> $invoices
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Quote> $quotes
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Expense> $expenses
  * @mixin \Eloquent
  */
 class Project extends BaseModel
@@ -129,17 +142,17 @@ class Project extends BaseModel
         return $this->hasMany(Task::class);
     }
 
-    public function expenses(): HasMany
+    public function expenses(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Expense::class);
     }
 
-    public function invoices(): HasMany
+    public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Invoice::class)->withTrashed();
     }
 
-    public function quotes(): HasMany
+    public function quotes(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Quote::class);
     }

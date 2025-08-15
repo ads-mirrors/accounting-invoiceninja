@@ -5573,6 +5573,18 @@ $lang = array(
     'invalid_csv_data' => 'Invalid CSV data, your import was cancelled.',
     'selected_products' => 'Selected Products',
     'create_company_error_unauthorized' => 'You are not authorized to create a company. Only the account owner can create a company.',
+    'restore_disabled_verifactu' => 'You cannot restore an invoice once it has been deleted',
+    'delete_disabled_verifactu' => 'You cannot delete an invoice once it has been cancelled or modified',
+    'rectify' => 'Rectificar',
+    'verifactu_invoice_send_success' => 'Invoice :invoice for :client sent to AEAT successfully',
+    'verifactu_invoice_sent_failure' => 'Invoice :invoice for :client failed to send to AEAT :notes',
+    'verifactu_cancellation_send_success' => 'Invoice cancellation for :invoice sent to AEAT successfully',
+    'verifactu_cancellation_send_failure' => 'Invoice cancellation for :invoice failed to send to AEAT :notes',
+    'verifactu' => 'Verifactu',
+    'activity_150' => 'E-Invoice :invoice for :client sent to AEAT successfully',
+    'activity_151' => 'E-Invoice :invoice for :client failed to send to AEAT :notes',
+    'activity_152' => 'Invoice cancellation for :invoice sent to AEAT successfully',
+    'activity_153' => 'Invoice cancellation for :invoice failed to send to AEAT :notes',
 );
 
 return $lang;

@@ -39,6 +39,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string|null $plan_expires
  * @property string|null $user_agent
  * @property string|null $key
+ * @property string|null $e_invoice_token
  * @property int|null $payment_id
  * @property int $default_company_id
  * @property string|null $trial_started
@@ -71,6 +72,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string|null $account_sms_verification_number
  * @property bool $account_sms_verified
  * @property string|null $bank_integration_account_id
+ * @property string|null $e_invoicing_token
  * @property bool $is_trial
  * @property int $e_invoice_quota
  * @property-read int|null $bank_integrations_count

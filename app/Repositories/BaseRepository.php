@@ -328,6 +328,11 @@ class BaseRepository
                     nlog($e->getMessage());
                 }
             }
+
+            /** Verifactu modified invoice check */
+            if($model->company->verifactuEnabled()) {
+                $model->service()->modifyVerifactuWorkflow($data, $this->new_model)->save();
+            }
         }
 
         if ($model instanceof Credit) {
