@@ -50,7 +50,7 @@ class PreviewReport implements ShouldQueue
             $report = $export->run();
         }
 
-        Cache::put($this->hash, base64_encode($report), 60 * 60);
+        Cache::put($this->hash, $report, 60 * 60);
     }
 
     /**
@@ -59,7 +59,7 @@ class PreviewReport implements ShouldQueue
     public function failed(\Throwable $exception = null)
     {
         if($exception) {
-            nlog("EXCEPTION:: PreviewReport:: could not preview report for" . $exception->getMessage());
+            nlog("EXCEPTION:: PreviewReport:: could not preview report for " . $exception->getMessage());
         }
     }
 }
