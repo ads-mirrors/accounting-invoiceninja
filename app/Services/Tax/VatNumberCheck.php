@@ -22,7 +22,12 @@ class VatNumberCheck
 
     public function run()
     {
-        return $this->checkvat_number();
+        if(strlen($this->vat_number ?? '') == ){
+            $this->response = ['valid' => false, 'error' => 'No VAT number provided'];
+        }
+        else{
+            return $this->checkvat_number();
+        }
     }
 
     private function checkvat_number(): self
