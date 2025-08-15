@@ -271,6 +271,8 @@ class LateFeeTest extends TestCase
     public function testLateFeeRemovals()
     {
 
+        config(['queue.default' => 'sync']);
+        
         $data = [];
         $data[1]['min_limit'] = -1;
         $data[1]['max_limit'] = -1;

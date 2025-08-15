@@ -22,8 +22,9 @@ class VatNumberCheck
 
     public function run()
     {
-        if(strlen($this->vat_number ?? '') == ){
+        if(strlen($this->vat_number ?? '') == 0){
             $this->response = ['valid' => false, 'error' => 'No VAT number provided'];
+            return $this;
         }
         else{
             return $this->checkvat_number();
