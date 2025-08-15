@@ -119,30 +119,27 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
      */
     private function translateXsdError(string $message): string
     {
+        // Handle missing child element error specifically
+        if (preg_match('/Missing child element\(s\)\. Expected is \( ([^)]+) \)/', $message, $matches)) {
+            $expectedElement = trim($matches[1]);
+            $message = "Missing required child element: $expectedElement";
+        }
+        
         // Common error patterns and their translations
         $errorTranslations = [
-            // Missing child elements
-            '/Missing child element\(s\)\. Expected is \( ([^)]+) \)/' => 'Faltan elementos requeridos: $1',
-            '/Missing child element\(s\)\. Expected is \( ([^)]+) \)/' => 'Missing required elements: $1',
-            
             // Element not found
-            '/Element ([^:]+): ([^:]+) not found/' => 'Elemento no encontrado: $2',
             '/Element ([^:]+): ([^:]+) not found/' => 'Element not found: $2',
             
             // Invalid content
-            '/Element ([^:]+): ([^:]+) has invalid content/' => 'Contenido inválido en elemento: $2',
             '/Element ([^:]+): ([^:]+) has invalid content/' => 'Invalid content in element: $2',
             
             // Required attribute missing
-            '/The attribute ([^:]+) is required/' => 'Atributo requerido faltante: $1',
             '/The attribute ([^:]+) is required/' => 'Required attribute missing: $1',
             
             // Value not allowed
-            '/Value ([^:]+) is not allowed/' => 'Valor no permitido: $1',
             '/Value ([^:]+) is not allowed/' => 'Value not allowed: $1',
             
             // Pattern validation failed
-            '/Element ([^:]+): ([^:]+) is not a valid value of the atomic type/' => 'Valor inválido para el elemento: $2',
             '/Element ([^:]+): ([^:]+) is not a valid value of the atomic type/' => 'Invalid value for element: $2',
         ];
         
@@ -174,6 +171,7 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
             'FechaExpedicionFacturaEmisor' => 'FechaExpedicionFacturaEmisor (Emitter Invoice Issue Date)',
         ];
         
+        // Apply element translations
         foreach ($elementTranslations as $element => $translation) {
             $message = str_replace($element, $translation, $message);
         }
@@ -449,5 +447,163 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
     public function getVerifactuErrors(): array
     {
         return $this->getErrors();
+    }
+
+    /**
+     * Get detailed error information with suggestions for fixing common issues
+     * 
+     * @return array Detailed error information with context and suggestions
+     */
+    public function getDetailedErrors(): array
+    {
+        $detailedErrors = [];
+        
+        foreach ($this->errors as $errorType => $errors) {
+            foreach ($errors as $error) {
+                $detailedErrors[] = [
+                    'type' => $errorType,
+                    'message' => $error,
+                    'context' => $this->getErrorContext($error),
+                    'suggestion' => $this->getErrorSuggestion($error),
+                    'severity' => $this->getErrorSeverity($errorType)
+                ];
+            }
+        }
+        
+        return $detailedErrors;
+    }
+
+    /**
+     * Get context information for an error
+     * 
+     * @param string $error The error message
+     * @return string Context information
+     */
+    private function getErrorContext(string $error): string
+    {
+        if (strpos($error, 'Desglose') !== false) {
+            return 'The Desglose (Tax Breakdown) element requires a DetalleDesglose (Tax Detail) child element to specify the tax breakdown structure.';
+        }
+        
+        if (strpos($error, 'TipoFactura') !== false) {
+            return 'The TipoFactura (Invoice Type) element specifies the type of invoice being processed (e.g., F1 for regular invoice, R1 for modification).';
+        }
+        
+        if (strpos($error, 'DescripcionOperacion') !== false) {
+            return 'The DescripcionOperacion (Operation Description) element provides a description of the business operation being documented.';
+        }
+        
+        if (strpos($error, 'ImporteTotal') !== false) {
+            return 'The ImporteTotal (Total Amount) element contains the total amount of the invoice including all taxes.';
+        }
+        
+        if (strpos($error, 'FacturasRectificadas') !== false) {
+            return 'The FacturasRectificadas (Corrected Invoices) element is required for modification invoices to reference the original invoices being corrected.';
+        }
+        
+        return 'This error indicates a structural issue with the XML document that prevents it from conforming to the Verifactu schema requirements.';
+    }
+
+    /**
+     * Get suggestions for fixing an error
+     * 
+     * @param string $error The error message
+     * @return string Suggestion for fixing the error
+     */
+    private function getErrorSuggestion(string $error): string
+    {
+        if (strpos($error, 'Missing child element') !== false && strpos($error, 'DetalleDesglose') !== false) {
+            return 'Add a DetalleDesglose element within the Desglose element to specify the tax breakdown details. Example: <DetalleDesglose><TipoImpositivo>21</TipoImpositivo><BaseImponible>100.00</BaseImponible><CuotaRepercutida>21.00</CuotaRepercutida></DetalleDesglose>';
+        }
+        
+        if (strpos($error, 'TipoFactura') !== false) {
+            return 'Ensure the TipoFactura element contains a valid value: F1 (regular invoice), F2 (simplified invoice), F3 (modification), or R1 (modification).';
+        }
+        
+        if (strpos($error, 'DescripcionOperacion') !== false) {
+            return 'Add a DescripcionOperacion element with a clear description of the business operation, such as "Venta de mercancías" or "Prestación de servicios".';
+        }
+        
+        if (strpos($error, 'ImporteTotal') !== false) {
+            return 'Ensure the ImporteTotal element contains a valid numeric value representing the total invoice amount including taxes.';
+        }
+        
+        if (strpos($error, 'FacturasRectificadas') !== false) {
+            return 'For modification invoices, add the FacturasRectificadas element with at least one IDFacturaRectificada containing the original invoice details.';
+        }
+        
+        return 'Review the XML structure against the Verifactu schema requirements and ensure all required elements are present with valid content.';
+    }
+
+    /**
+     * Get error severity level
+     * 
+     * @param string $errorType The type of error
+     * @return string Severity level
+     */
+    private function getErrorSeverity(string $errorType): string
+    {
+        return match($errorType) {
+            'xsd' => 'high',
+            'structure' => 'medium',
+            'business' => 'low',
+            'general' => 'medium',
+            default => 'medium'
+        };
+    }
+
+    /**
+     * Get a user-friendly summary of validation errors
+     * 
+     * @return string Summary of validation errors
+     */
+    public function getErrorSummary(): string
+    {
+        if (empty($this->errors)) {
+            return 'Document validation passed successfully.';
+        }
+        
+        $summary = [];
+        $totalErrors = 0;
+        
+        foreach ($this->errors as $errorType => $errors) {
+            $count = count($errors);
+            $totalErrors += $count;
+            
+            $typeLabel = match($errorType) {
+                'xsd' => 'Schema Validation Errors',
+                'structure' => 'Structural Errors',
+                'business' => 'Business Rule Violations',
+                'general' => 'General Errors',
+                default => ucfirst($errorType) . ' Errors'
+            };
+            
+            $summary[] = "$typeLabel: $count";
+        }
+        
+        $summaryText = "Validation failed with $totalErrors total error(s):\n";
+        $summaryText .= implode(', ', $summary);
+        
+        return $summaryText;
+    }
+
+    /**
+     * Get errors formatted for display in logs or user interfaces
+     * 
+     * @return array Formatted errors grouped by type
+     */
+    public function getFormattedErrors(): array
+    {
+        $formatted = [];
+        
+        foreach ($this->errors as $errorType => $errors) {
+            $formatted[$errorType] = [
+                'count' => count($errors),
+                'messages' => $errors,
+                'severity' => $this->getErrorSeverity($errorType)
+            ];
+        }
+        
+        return $formatted;
     }
 } 
