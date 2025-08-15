@@ -134,6 +134,9 @@ use Laracasts\Presenter\PresentableTrait;
  * @property \App\DataMapper\QuickbooksSettings|null $quickbooks
  * @property boolean $smtp_verify_peer
  * @property int|null $legal_entity_id
+ * @property bool $invoice_task_item_description
+ * @property bool $show_task_item_description
+ * @property bool $invoice_task_project_header
  * @property-read \App\Models\Account $account
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read int|null $activities_count

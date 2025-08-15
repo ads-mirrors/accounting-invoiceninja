@@ -121,12 +121,14 @@ use App\Utils\Number;
  * @property-read int|null $payments_count
  * @property-read mixed $pivot
  * @property-read \App\Models\Project|null $project
+ * @property-read \App\Models\Quote|null $quote
  * @property-read \App\Models\RecurringInvoice|null $recurring_invoice
  * @property-read \App\Models\Subscription|null $subscription
  * @property-read \App\Models\Task|null $task
  * @property-read int|null $tasks_count
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor
+ * @property-read \App\Models\Location|null $location
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TransactionEvent> $transaction_events
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger

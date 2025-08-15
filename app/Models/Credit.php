@@ -118,6 +118,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \App\Models\User $user
  * @property \App\Models\Client $client
  * @property \App\Models\Vendor|null $vendor
+ * @property-read \App\Models\Location|null $location
  * @property-read mixed $pivot
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger

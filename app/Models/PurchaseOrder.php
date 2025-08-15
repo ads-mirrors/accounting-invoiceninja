@@ -89,6 +89,9 @@ use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
  * @property int|null $updated_at
  * @property int|null $expense_id
  * @property int|null $currency_id
+ * @property int|null $location_id
+ * @property int|null $invoice_id
+ * @property object|null $tax_data
  * @property-read int|null $activities_count
  * @property \App\Models\User|null $assigned_user
  * @property \App\Models\Client|null $client

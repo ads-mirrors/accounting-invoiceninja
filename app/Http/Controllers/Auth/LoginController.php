@@ -113,7 +113,6 @@ class LoginController extends BaseController
                 ->increment()
                 ->batch();
 
-
             $ip = '';
 
             if (request()->hasHeader('Cf-Connecting-Ip')) {
@@ -330,15 +329,15 @@ class LoginController extends BaseController
             Auth::login($existing_login_user, false);
             /** @var \App\Models\User $user */
 
-            $user = auth()->user();
+            // $user = auth()->user();
 
-            $user->update([
+            $existing_login_user->update([
                 'oauth_user_id' => $user->id,
                 'oauth_provider_id' => $provider,
             ]);
 
             /** @var \App\Models\CompanyUser $cu */
-            $cu = $this->hydrateCompanyUser($user);
+            $cu = $this->hydrateCompanyUser($existing_login_user);
 
             if ($cu->count() == 0) {
                 return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
@@ -378,22 +377,20 @@ class LoginController extends BaseController
 
         $account = (new CreateAccount($new_account, request()->getClientIp()))->handle();
 
-        Auth::login($account->default_company->owner(), false);
+        $account_user = $account->default_company->owner();
+        Auth::login($account_user, false);
 
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
-
-        $user->email_verified_at = now();
-        $user->save();
+        $account_user->email_verified_at = now();
+        $account_user->save();
 
         /** @var \App\Models\CompanyUser $cu */
-        $cu = $this->hydrateCompanyUser($user);
+        $cu = $this->hydrateCompanyUser($account_user);
 
         if ($cu->count() == 0) {
             return response()->json(['message' => 'User found, but not attached to any companies, please see your administrator'], 400);
         }
 
-        if (Ninja::isHosted() && !$cu->first()->is_owner && !auth()->user()->account->isEnterprisePaidClient()) {
+        if (Ninja::isHosted() && !$cu->first()->is_owner && !$account_user->account->isEnterprisePaidClient()) {
             return response()->json(['message' => 'Pro / Free accounts only the owner can log in. Please upgrade'], 403);
         }
 

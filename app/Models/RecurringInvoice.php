@@ -109,6 +109,7 @@ use App\Models\Presenters\RecurringInvoicePresenter;
  * @property-read \App\Models\Subscription|null $subscription
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor
+ * @property-read \App\Models\Location|null $location
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\RecurringInvoiceFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|RecurringInvoice filter(\App\Filters\QueryFilters $filters)
