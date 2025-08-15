@@ -62,6 +62,7 @@ class EntityLevel implements EntityLevelInterface
     {
                 
         $this->init($client->locale());
+
         $this->errors['client'] = $this->testClientState($client);
         $this->errors['passes'] = count($this->errors['client']) == 0;
 
@@ -89,12 +90,20 @@ class EntityLevel implements EntityLevelInterface
         $this->errors['client'] = $this->testClientState($invoice->client);
         $this->errors['company'] = $this->testCompanyState($invoice->client); // uses client level settings which is what we want
 
+
         if (count($this->errors['client']) > 0) {
 
             $this->errors['passes'] = false;
             return $this->errors;
 
         }
+
+        // $this->errors['invoice'][] = 'test error';
+
+        $this->errors['passes'] = count($this->errors['invoice']) === 0 && count($this->errors['company']) === 0; //no need to check client as we are using client level settings
+
+        return $this->errors;
+
 
 
         // $p = new Peppol($invoice);
@@ -137,9 +146,6 @@ class EntityLevel implements EntityLevelInterface
         
         // $this->checkNexus($invoice->client);
 
-        $this->errors['passes'] = count($this->errors['invoice']) == 0 && count($this->errors['client']) == 0 && count($this->errors['company']) == 0;
-
-        return $this->errors;
 
     }
 
@@ -166,14 +172,27 @@ class EntityLevel implements EntityLevelInterface
 
         }
 
-        //If not an individual, you MUST have a VAT number if you are in the EU
-        if ($client->classification != 'individual' && !$this->validString($client->vat_number)) {
-            $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
-        }
 
-        //Primary contact email is present.
-        if ($client->present()->email() == 'No Email Set') {
-            $errors[] = ['field' => 'email', 'label' => ctrans("texts.email")];
+        if ($client->country_id == 724) {
+
+            if (in_array($client->classification, ['','individual']) && strlen($client->id_number ?? '') == 0) {
+                $errors[] = ['field' => 'id_number', 'label' => ctrans("texts.id_number")];
+            } elseif (strlen($client->vat_number ?? '')) {
+                $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+            }
+
+        }
+        else{
+            //If not an individual, you MUST have a VAT number if you are in the EU
+            if (!in_array($client->classification,['','individual']) && !$this->validString($client->vat_number)) {
+                $errors[] = ['field' => 'vat_number', 'label' => ctrans("texts.vat_number")];
+            }
+
+            // //Primary contact email is present.
+            // if ($client->present()->email() == 'No Email Set') {
+            //     $errors[] = ['field' => 'email', 'label' => ctrans("texts.email")];
+            // }
+
         }
 
         return $errors;

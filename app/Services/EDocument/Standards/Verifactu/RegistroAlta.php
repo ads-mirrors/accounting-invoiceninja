@@ -138,10 +138,19 @@ class RegistroAlta
         $destinatarios = [];
         $destinatario = new PersonaFisicaJuridica();
 
-        if($this->invoice->client->country_id == 724) {
+        if($this->invoice->client->country_id == 724 && strlen($this->invoice->client->vat_number ?? '') > 5) {
             $destinatario
                 ->setNif($this->invoice->client->vat_number)
                 ->setNombreRazon($this->invoice->client->present()->name());
+        }
+        elseif($this->invoice->client->country_id == 724) {
+            
+            $destinatario = new IDOtro();
+            $destinatario->setNombreRazon($this->invoice->client->present()->name());
+            $destinatario->setCodigoPais('ES')
+                        ->setIdType('06')
+                        ->setId($this->invoice->client->id_number);
+
         }
         else {
             $locationData = $this->invoice->service()->location();
