@@ -29,7 +29,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 class EInvoiceTest extends TestCase
 {
     use MockAccountData;
-    // use DatabaseTransactions;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -73,7 +73,6 @@ class EInvoiceTest extends TestCase
         $this->travelTo(now()->addYears(2));
 
         $data = $this->getExpiredPurchases([$company->company_key], true);
-
 
         $this->assertEquals(100, $data['purchased']);
         $this->assertEquals(-50, $data['sent'] + $data['received']);

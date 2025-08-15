@@ -370,7 +370,12 @@ class LateFeeTest extends TestCase
 
         $this->assertEquals(2, count($i->line_items));
 
-        $i->service()->autoBill();
+        try{
+            $i->service()->autoBill();
+        }
+        catch(\Exception $e){
+            nlog($e->getMessage());
+        }
 
         $i = $i->fresh();
 

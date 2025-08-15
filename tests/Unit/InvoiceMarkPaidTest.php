@@ -11,36 +11,114 @@
 
 namespace Tests\Unit;
 
-use App\DataMapper\InvoiceItem;
-use App\Factory\InvoiceFactory;
-use App\Factory\InvoiceItemFactory;
-use App\Helpers\Invoice\InvoiceSum;
-use App\Helpers\Invoice\InvoiceSumInclusive;
+use Tests\TestCase;
+use App\Models\User;
+use App\Models\Account;
+use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\Payment;
-use App\Repositories\InvoiceRepository;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\MockAccountData;
-use Tests\TestCase;
+use App\Models\CompanyToken;
+use App\DataMapper\InvoiceItem;
+use App\Factory\InvoiceFactory;
+use App\DataMapper\CompanySettings;
+use App\Factory\CompanyUserFactory;
+use App\Factory\InvoiceItemFactory;
+use App\Helpers\Invoice\InvoiceSum;
+use App\Repositories\InvoiceRepository;
+use Illuminate\Database\Eloquent\Model;
+use App\Helpers\Invoice\InvoiceSumInclusive;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class InvoiceMarkPaidTest extends TestCase
 {
     use MockAccountData;
-    // use DatabaseTransactions;
+    use DatabaseTransactions;
 
     public $invoice;
+    public $company;
+
+    public $user;
+
+    public $payload;
+
+    public $account;
+
+    public $client;
+
+    public $token;
+
+    public $cu;
+    public $faker;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->makeTestData();
+        // $this->makeTestData();
+
+        $this->faker = \Faker\Factory::create();
+
+        Model::reguard();
+    }
+
+    private function buildData()
+    {
+        if($this->account)
+            $this->account->forceDelete();
+        
+        /** @var \App\Models\Account $account */
+        $this->account = Account::factory()->create([
+            'hosted_client_count' => 1000,
+            'hosted_company_count' => 1000,
+        ]);
+
+        $this->account->num_users = 3;
+        $this->account->save();
+
+        $this->user = User::factory()->create([
+            'account_id' => $this->account->id,
+            'confirmation_code' => 'xyz123',
+            'email' => $this->faker->unique()->safeEmail(),
+        ]);
+
+        $settings = CompanySettings::defaults();
+        $settings->client_online_payment_notification = false;
+        $settings->client_manual_payment_notification = false;
+
+        $this->company = Company::factory()->create([
+            'account_id' => $this->account->id,
+            'settings' => $settings,
+        ]);
+
+        $this->company->settings = $settings;
+        $this->company->save();
+
+        $this->cu = CompanyUserFactory::create($this->user->id, $this->company->id, $this->account->id);
+        $this->cu->is_owner = true;
+        $this->cu->is_admin = true;
+        $this->cu->is_locked = false;
+        $this->cu->save();
+
+        $this->token = \Illuminate\Support\Str::random(64);
+
+        $company_token = new CompanyToken();
+        $company_token->user_id = $this->user->id;
+        $company_token->company_id = $this->company->id;
+        $company_token->account_id = $this->account->id;
+        $company_token->name = 'test token';
+        $company_token->token = $this->token;
+        $company_token->is_system = true;
+
+        $company_token->save();
+
     }
 
     public function testInvoiceMarkPaidFromDraft()
     {
 
-        
+        $this->buildData();
+
         $c = \App\Models\Client::factory()->create([
             'user_id' => $this->user->id,
             'company_id' => $this->company->id,
@@ -75,6 +153,9 @@ class InvoiceMarkPaidTest extends TestCase
 
         $i->calc()->getInvoice();
 
+        $repo = new InvoiceRepository();
+        $repo->save([], $i);
+
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
@@ -92,8 +173,7 @@ class InvoiceMarkPaidTest extends TestCase
         $this->assertEquals(10, $i->paid_to_date);
         $this->assertEquals(4, $i->status_id);
 
-
-        $c->forceDelete();
+$this->account->delete();
 
     }
 
@@ -101,6 +181,7 @@ class InvoiceMarkPaidTest extends TestCase
     public function testInvoiceMarkPaidFromDraftBulk()
     {
 
+        $this->buildData();
         
         $c = \App\Models\Client::factory()->create([
             'user_id' => $this->user->id,
@@ -137,6 +218,9 @@ class InvoiceMarkPaidTest extends TestCase
 
         $i->calc()->getInvoice();
 
+        $repo = new InvoiceRepository();
+        $repo->save([], $i);
+
         $data = [
             'action' => 'mark_paid',
             'ids' => [$i->hashed_id]
@@ -161,6 +245,8 @@ class InvoiceMarkPaidTest extends TestCase
 
 
         $c->forceDelete();
+
+        $this->account->delete();
     }
 
 }

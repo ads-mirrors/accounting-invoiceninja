@@ -42,7 +42,7 @@ use InvoiceNinja\EInvoice\Models\FatturaPA\FatturaElettronicaHeaderType\FatturaE
 
 class PeppolTest extends TestCase
 {
-    // use DatabaseTransactions;
+    use DatabaseTransactions;
     use MockAccountData;
 
     protected int $iterations = 10;
