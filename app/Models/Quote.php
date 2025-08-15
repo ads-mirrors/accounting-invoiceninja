@@ -96,6 +96,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $reminder3_sent
  * @property string|null $reminder_last_sent
  * @property float $paid_to_date
+ * @property object|null $tax_data
  * @property int|null $subscription_id
  * @property \App\Models\User|null $assigned_user
  * @property \App\Models\Client $client
@@ -111,6 +112,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read \App\Models\Project|null $project
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor
+ * @property-read \App\Models\Location|null $location
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Backup> $history

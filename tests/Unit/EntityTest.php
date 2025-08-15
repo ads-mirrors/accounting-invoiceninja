@@ -89,17 +89,6 @@ class EntityTest extends TestCase
 
     protected function tearDown(): void
     {
-        
-            
-        // $this->company->company_users->each(function ($company_user) {
-        //     $company_user->user->forceDelete();
-        //     $company_user->forceDelete();
-        // });
-
-        // // Clean up any resources or reset state if necessary
-        // $this->account->delete();
-
-
         parent::tearDown();
     }
 }

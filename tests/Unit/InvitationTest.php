@@ -11,18 +11,20 @@
 
 namespace Tests\Unit;
 
-use App\Factory\InvoiceInvitationFactory;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Validation\ValidationException;
-use Tests\MockAccountData;
 use Tests\TestCase;
+use Tests\MockAccountData;
+use App\Utils\Traits\MakesHash;
+use Illuminate\Database\Eloquent\Model;
+use App\Factory\InvoiceInvitationFactory;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+
 
 class InvitationTest extends TestCase
 {
     use MockAccountData;
-    // use DatabaseTransactions;
+    use DatabaseTransactions;
     use MakesHash;
 
     protected function setUp(): void
@@ -36,6 +38,8 @@ class InvitationTest extends TestCase
         );
 
         $this->withoutExceptionHandling();
+
+        Model::reguard();
     }
 
     public function testInvitationSanity()
@@ -63,7 +67,7 @@ class InvitationTest extends TestCase
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
-        ])->putJson('/api/v1/invoices/'.$this->invoice->hashed_id, $this->invoice->toArray());
+        ])->putJson('/api/v1/invoices/'.$this->invoice->hashed_id, $data);
 
         $response->assertStatus(200);
 

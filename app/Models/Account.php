@@ -75,6 +75,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property bool $is_trial
  * @property int $e_invoice_quota
  * @property int $docuninja_num_users
+ * @property string|null $e_invoicing_token
  * @property-read int|null $bank_integrations_count
  * @property-read int|null $companies_count
  * @property-read int|null $company_users_count

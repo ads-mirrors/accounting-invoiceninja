@@ -125,7 +125,7 @@ class TaxPeriodReport extends BaseExport
                         ->map(function ($group) {
                             return $group->first();
                         })->each(function ($pp){
-                            nlog($pp->paymentable->id. " - Paid Updater");
+                            // nlog($pp->paymentable->id. " - Paid Updater");
                             (new InvoiceTransactionEventEntryCash())->run($pp->paymentable, \Carbon\Carbon::parse($pp->created_at)->startOfMonth()->format('Y-m-d'), \Carbon\Carbon::parse($pp->created_at)->endOfMonth()->format('Y-m-d'));
                         });
 
