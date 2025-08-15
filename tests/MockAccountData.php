@@ -67,6 +67,7 @@ use App\DataMapper\ClientRegistrationFields;
 use App\Jobs\Company\CreateCompanyTaskStatuses;
 use App\Repositories\RecurringInvoiceRepository;
 use App\Factory\InvoiceToRecurringInvoiceFactory;
+use App\Repositories\CreditRepository;
 
 /**
  * Class MockAccountData.
@@ -211,17 +212,13 @@ trait MockAccountData
             Artisan::call('db:seed', ['--force' => true]);
         }
 
-
         app()->singleton('currencies', function ($app) {
 
             $resource = Currency::query()->orderBy('name')->get();
-
             Cache::forever('currencies', $resource);
-
             return $resource;
 
         });
-
 
         $this->faker = \Faker\Factory::create();
         $fake_email = $this->faker->email();
@@ -566,27 +563,30 @@ trait MockAccountData
         $this->credit->number = $this->getNextCreditNumber($this->client, $this->credit);
 
 
-        CreditInvitation::factory()->create([
-            'user_id' => $user_id,
-            'company_id' => $this->company->id,
-            'client_contact_id' => $contact->id,
-            'credit_id' => $this->credit->id,
-        ]);
+        // CreditInvitation::factory()->create([
+        //     'user_id' => $user_id,
+        //     'company_id' => $this->company->id,
+        //     'client_contact_id' => $contact->id,
+        //     'credit_id' => $this->credit->id,
+        // ]);
 
-        CreditInvitation::factory()->create([
-            'user_id' => $user_id,
-            'company_id' => $this->company->id,
-            'client_contact_id' => $contact2->id,
-            'credit_id' => $this->credit->id,
-        ]);
+        // CreditInvitation::factory()->create([
+        //     'user_id' => $user_id,
+        //     'company_id' => $this->company->id,
+        //     'client_contact_id' => $contact2->id,
+        //     'credit_id' => $this->credit->id,
+        // ]);
 
-        $this->credit->setRelation('client', $this->client);
-        $this->credit->setRelation('company', $this->company);
+        // $this->credit->setRelation('client', $this->client);
+        // $this->credit->setRelation('company', $this->company);
 
-        $this->credit->save();
+        // $this->credit->save();
 
-        $this->credit->service()->createInvitations()->markSent();
+        $repo = new CreditRepository();
+        $repo->save([], $this->credit);
 
+        // $this->credit->service()->createInvitations()->markSent();
+        // $this->credit->save();
 
         $this->purchase_order = PurchaseOrderFactory::create($this->company->id, $user_id);
         $this->purchase_order->vendor_id = $this->vendor->id;
@@ -650,19 +650,25 @@ trait MockAccountData
         $this->credit->ledger()->updateCreditBalance($this->credit->balance)->save();
         $this->credit->number = $this->getNextCreditNumber($this->client, $this->credit);
 
-        CreditInvitation::factory()->create([
-            'user_id' => $user_id,
-            'company_id' => $this->company->id,
-            'client_contact_id' => $contact->id,
-            'credit_id' => $this->credit->id,
-        ]);
+        $this->credit->save();
 
-        CreditInvitation::factory()->create([
-            'user_id' => $user_id,
-            'company_id' => $this->company->id,
-            'client_contact_id' => $contact2->id,
-            'credit_id' => $this->credit->id,
-        ]);
+        
+        $repo = new CreditRepository();
+        $repo->save([], $this->credit);
+
+        // CreditInvitation::factory()->create([
+        //     'user_id' => $user_id,
+        //     'company_id' => $this->company->id,
+        //     'client_contact_id' => $contact->id,
+        //     'credit_id' => $this->credit->id,
+        // ]);
+
+        // CreditInvitation::factory()->create([
+        //     'user_id' => $user_id,
+        //     'company_id' => $this->company->id,
+        //     'client_contact_id' => $contact2->id,
+        //     'credit_id' => $this->credit->id,
+        // ]);
 
         $this->bank_integration = BankIntegration::factory()->create([
             'user_id' => $user_id,
@@ -705,17 +711,17 @@ trait MockAccountData
             'company_id' => $this->company->id,
         ]);
 
-        $invitations = CreditInvitation::whereCompanyId($this->credit->company_id)
-                                        ->whereCreditId($this->credit->id);
+        // $invitations = CreditInvitation::whereCompanyId($this->credit->company_id)
+        //                                 ->whereCreditId($this->credit->id);
 
-        $this->credit->setRelation('invitations', $invitations);
+        // $this->credit->setRelation('invitations', $invitations);
 
-        $this->credit->service()->markSent();
+        // $this->credit->service()->markSent();
 
-        $this->credit->setRelation('client', $this->client);
-        $this->credit->setRelation('company', $this->company);
+        // $this->credit->setRelation('client', $this->client);
+        // $this->credit->setRelation('company', $this->company);
 
-        $this->credit->save();
+        // $this->credit->save();
 
         $contacts = $this->invoice->client->contacts;
 

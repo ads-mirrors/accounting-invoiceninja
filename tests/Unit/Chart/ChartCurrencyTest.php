@@ -31,7 +31,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 class ChartCurrencyTest extends TestCase
 {
     use MockAccountData;
-    // use DatabaseTransactions;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
@@ -111,7 +111,7 @@ class ChartCurrencyTest extends TestCase
             'tax_rate1' => 0,
             'tax_rate2' => 0,
             'tax_rate3' => 0,
-'discount' => 0,
+            'discount' => 0,
         ]);
 
         $i2 = Invoice::factory()->create([
@@ -134,7 +134,7 @@ class ChartCurrencyTest extends TestCase
             'tax_rate1' => 0,
             'tax_rate2' => 0,
             'tax_rate3' => 0,
-'discount' => 0,
+            'discount' => 0,
         ]);
 
         $repo = new InvoiceRepository();
@@ -144,14 +144,12 @@ class ChartCurrencyTest extends TestCase
         $i1->service()->markPaid()->save();
         $i2->service()->markPaid()->save();
 
-
-$this->assertEquals(100, $i1->amount);
-$this->assertEquals(100, $i2->amount);
+        $this->assertEquals(100, $i1->amount);
+        $this->assertEquals(100, $i2->amount);
 
         $cs = new ChartService($company, $this->user, true);
         $results = $cs->totals('1970-01-01', '2050-01-01');
 
-        nlog($results);
         $this->assertCount(2, $results['currencies']);
 
         $this->assertEquals('USD', $results['currencies'][1]);

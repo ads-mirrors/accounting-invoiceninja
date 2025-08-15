@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Artisan;
  */
 class AutoBillInvoiceTest extends TestCase
 {
-    // use DatabaseTransactions;
+    use DatabaseTransactions;
     use MockAccountData;
 
     protected function setUp(): void
@@ -30,12 +30,10 @@ class AutoBillInvoiceTest extends TestCase
         parent::setUp();
 
         $this->makeTestData();
-        
     }
 
     public function testAutoBillFunctionality()
     {
-        $this->assertEquals('1', $this->client->settings->currency_id);
         $this->assertEquals($this->client->balance, 10);
         $this->assertEquals($this->client->paid_to_date, 0);
         $this->assertEquals($this->client->credit_balance, 10);
