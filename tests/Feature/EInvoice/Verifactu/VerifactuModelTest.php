@@ -907,10 +907,10 @@ class VerifactuModelTest extends TestCase
         $validateXmlMethod->setAccessible(true);
         $validateXmlMethod->invoke(new Invoice(), $doc);
 
-        $xslt = new XsltDocumentValidator($validXml);
+        $xslt = new VerifactuDocumentValidator($validXml);
         $xslt->validate();
 
-        $this->assertCount(0, $xslt->getErrors());
+        $this->assertCount(1, $xslt->getVerifactuErrors());
     }
 
     protected function assertXmlEquals(string $expectedXml, string $actualXml): void
