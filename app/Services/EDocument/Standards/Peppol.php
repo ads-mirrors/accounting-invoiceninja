@@ -717,6 +717,10 @@ class Peppol extends AbstractService
             $tax_type = 'G'; //Free export item, VAT not charged
             $reason_code = 'vatex-eu-g';
             $reason = 'Export outside the EU';
+        } elseif($this->invoice->client->country->iso_3166_2 == $this->company->country()->iso_3166_2) {
+            $tax_type = 'E';
+            $reason_code = "vatex-eu-o";
+            $reason = 'Services outside scope of tax';
         } else {
             $tax_type = 'O';
             $reason_code = "vatex-eu-o";

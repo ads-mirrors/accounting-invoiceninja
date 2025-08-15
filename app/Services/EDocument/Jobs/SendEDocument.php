@@ -250,11 +250,11 @@ class SendEDocument implements ShouldQueue
             nlog($exception->getMessage());
         }
 
-        config(['queue.failed.driver' => null]);
+        // config(['queue.failed.driver' => null]);
     }
 
     public function middleware()
     {
-        return [new WithoutOverlapping($this->entity.$this->id.$this->db)];
+        return [(new WithoutOverlapping($this->entity.$this->id.$this->db))->releaseAfter(60)->expireAfter(60)];
     }
 }

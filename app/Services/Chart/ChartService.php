@@ -94,7 +94,6 @@ class ChartService
             $data[$key]['expenses'] = $this->getExpenseChartQuery($start_date, $end_date, $key);
         }
 
-
         $data[999]['invoices'] = $this->getAggregateInvoiceChartQuery($start_date, $end_date);
         $data[999]['outstanding'] = $this->getAggregateOutstandingChartQuery($start_date, $end_date);
         $data[999]['payments'] = $this->getAggregatePaymentChartQuery($start_date, $end_date);
