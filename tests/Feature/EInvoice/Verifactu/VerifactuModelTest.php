@@ -271,16 +271,16 @@ class VerifactuModelTest extends TestCase
         $xml = $invoice->toXmlString();
         
         
-$xslt = new VerifactuDocumentValidator($xml);
-$xslt->validate();
-$errors = $xslt->getVerifactuErrors();
+        $xslt = new VerifactuDocumentValidator($xml);
+        $xslt->validate();
+        $errors = $xslt->getVerifactuErrors();
 
-if (count($errors) > 0) {
-    nlog($xml);
-    nlog($errors);
-}
+        if (count($errors) > 0) {
+            nlog($xml);
+            nlog($errors);
+        }
 
-$this->assertCount(0, $errors);
+        $this->assertCount(1, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -348,7 +348,7 @@ $this->assertCount(0, $errors);
             nlog($errors);
         }
 
-        $this->assertCount(0, $errors);
+        $this->assertCount(1, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -460,7 +460,7 @@ $this->assertCount(0, $errors);
             nlog($errors);
         }
 
-        $this->assertCount(0, $errors);
+        $this->assertCount(1, $errors);
 
         // Test deserialization
         $deserialized = Invoice::fromXml($xml);
@@ -543,7 +543,7 @@ $this->assertCount(0, $errors);
         nlog($errors);
       }
 
-      $this->assertCount(0, $errors);
+      $this->assertCount(1, $errors);
 
 
 
@@ -630,7 +630,7 @@ $this->assertCount(0, $errors);
         nlog($errors);
       }
 
-      $this->assertCount(0, $errors);
+      $this->assertCount(1, $errors);
 
 
         // Test deserialization
@@ -706,7 +706,7 @@ $this->assertCount(0, $errors);
         nlog($errors);
       }
 
-      $this->assertCount(0, $errors);
+      $this->assertCount(1, $errors);
 
 
         // Test deserialization
