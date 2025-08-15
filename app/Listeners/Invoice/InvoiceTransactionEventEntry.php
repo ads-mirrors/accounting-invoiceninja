@@ -118,7 +118,7 @@ class InvoiceTransactionEventEntry
         return new TransactionEventMetadata([
             'tax_report' => [
                 'tax_details' => $details,
-                'payment_history' => $this->payments->toArray() ?? [],
+                'payment_history' => $this->payments->toArray() ?? [], //@phpstan-ignore-line
                 'tax_summary' => [
                     'total_taxes' => $invoice->total_taxes,
                     'total_paid' => $this->getTotalTaxPaid($invoice),

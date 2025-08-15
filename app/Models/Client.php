@@ -87,6 +87,9 @@ use Illuminate\Contracts\Translation\HasLocalePreference;
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Company $company
  * @property-read \App\Models\Country|null $country
+ * @property-read \App\Models\Industry|null $industry
+ * @property-read \App\Models\Country|null $shipping_country
+ * @property-read \App\Models\Size|null $size
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClientContact> $contacts

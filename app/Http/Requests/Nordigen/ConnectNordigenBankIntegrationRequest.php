@@ -60,6 +60,7 @@ class ConnectNordigenBankIntegrationRequest extends Request
     /**
      * @return array{
      *   user_id: int,
+     *   bank_account_id?: string,
      *   company_key: string,
      *   context: string,
      *   is_react: bool,

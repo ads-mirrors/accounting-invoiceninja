@@ -66,19 +66,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property float $tax_amount3
  * @property bool $uses_inclusive_taxes
  * @property bool $calculate_tax_by_amount
+ * @property-read int|null $documents_count
+ * @property-read mixed $hashed_id
  * @property-read \App\Models\User|null $assigned_user
  * @property-read \App\Models\ExpenseCategory|null $category
  * @property-read \App\Models\Client|null $client
  * @property-read \App\Models\Company $company
  * @property-read \App\Models\Currency|null $currency
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
- * @property-read int|null $documents_count
- * @property-read mixed $hashed_id
  * @property-read \App\Models\PaymentType|null $payment_type
  * @property-read \App\Models\Project|null $project
  * @property-read \App\Models\PurchaseOrder|null $purchase_order
  * @property-read \App\Models\User $user
  * @property-read \App\Models\Vendor|null $vendor
+ * @property-read \App\Models\Currency|null $invoice_currency
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel company()
  * @method static \Illuminate\Database\Eloquent\Builder|BaseModel exclude($columns)
  * @method static \Database\Factories\ExpenseFactory factory($count = null, $state = [])

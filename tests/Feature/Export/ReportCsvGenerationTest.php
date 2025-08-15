@@ -650,6 +650,21 @@ $this->account->forceDelete();
             'public_notes' => 'Public5',
             'private_notes' => 'Private5',
             'terms' => 'Terms5',
+            'tax_rate1' => 0,
+            'tax_rate2' => 0,
+            'tax_rate3' => 0,
+            'discount' => 0,
+            'line_items' => [
+                [
+                    'quantity' => 1,
+                    'product_key' => 'product_key',
+                    'notes' => 'notes',
+                    'cost' => 1000,
+                    'custom_value1' => 'Custom 1',
+                    'custom_value2' => 'Custom 2',
+                    'custom_value3' => 'Custom 3',
+                ]
+            ]
             ]);
 
 

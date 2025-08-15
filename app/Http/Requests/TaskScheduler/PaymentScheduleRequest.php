@@ -150,6 +150,7 @@ class PaymentScheduleRequest extends Request
             RecurringInvoice::FREQUENCY_ANNUALLY => $date->startOfDay()->addYear(),
             RecurringInvoice::FREQUENCY_TWO_YEARS => $date->startOfDay()->addYears(2),
             RecurringInvoice::FREQUENCY_THREE_YEARS => $date->startOfDay()->addYears(3),
+            default => $date->startOfDay()->addMonthNoOverflow(),
         };
     }
 }

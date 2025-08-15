@@ -123,6 +123,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property string|null $inbound_mailbox_blacklist
  * @property string|null $e_invoice_certificate_passphrase
  * @property string|null $e_invoice_certificate
+ * @property object|null $origin_tax_data
  * @property int $deleted_at
  * @property string|null $smtp_username
  * @property string|null $smtp_password

@@ -39,7 +39,8 @@ class ProtectedDownloadController extends BaseController
         return response()->streamDownload(function () use ($hashed_path) {
             $stream = Storage::readStream($hashed_path);
             
-            if ($stream === false) {
+            // if($stream ===false){
+            if ($stream === null) {
                 throw new SystemError('Unable to read file', 500);
             }
 

@@ -101,6 +101,8 @@ use App\Events\PurchaseOrder\PurchaseOrderWasEmailed;
  * @property \App\Models\User $user
  * @property \App\Models\Vendor $vendor
  * @property \App\Models\PurchaseOrderInvitation $invitation
+ * @property \App\Models\Currency|null $currency
+ * @property \App\Models\Location|null $location
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder exclude($columns)
  * @method static \Database\Factories\PurchaseOrderFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|PurchaseOrder filter(\App\Filters\QueryFilters $filters)

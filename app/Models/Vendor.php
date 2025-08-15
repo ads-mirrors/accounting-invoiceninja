@@ -59,6 +59,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $language_id
  * @property int|null $last_login
  * @property bool $is_tax_exempt
+ * @property string|null $classification
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read int|null $activities_count
  * @property-read \App\Models\Language|null $language

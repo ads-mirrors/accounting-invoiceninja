@@ -50,9 +50,7 @@ class UpdateExchangeRatesTest extends TestCase
 
         UpdateExchangeRates::dispatchSync();
 
-        $gbp_currency = app('currencies')->first(function ($item) {
-            return $item->id == 2;
-        });
+        $gbp_currency = \App\Models\Currency::find(2);
 
         $this->assertEquals($currency_api->rates->GBP, $gbp_currency->exchange_rate);
 
