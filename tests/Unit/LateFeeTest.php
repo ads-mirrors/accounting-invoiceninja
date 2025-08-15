@@ -271,6 +271,10 @@ class LateFeeTest extends TestCase
     public function testLateFeeRemovals()
     {
 
+        if(!config('ninja.testvars.stripe')){
+            $this->markTestSkipped('Stripe is not enabled');
+        }
+
         config(['queue.default' => 'sync']);
         
         $data = [];
