@@ -9,7 +9,7 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-namespace Tests\Feature\Import\CSV;
+namespace Tests\Feature\Import\XLS;
 
 use App\Import\Providers\Csv;
 use App\Import\Transformer\BaseTransformer;
