@@ -201,23 +201,25 @@ class RegistroAlta
             
             $client_country_code = $this->invoice->client->country->iso_3166_2;
 
+            /** By Default we assume a Spanish transaction */
             $impuesto = 'S2';
             $clave_regimen = '08';
             $calificacion = 'S1';
 
             $br = new \App\DataMapper\Tax\BaseRule();
 
+            /** EU B2B */
             if (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification != 'individual') {
                 $impuesto = '05';
                 $clave_regimen = '05';
                 $calificacion = 'N2';
-            }            
+            } /** EU B2C */   
             elseif (in_array($client_country_code, $br->eu_country_codes) && $this->invoice->client->classification == 'individual') {
                 $impuesto = '08';
                 $clave_regimen = '05';
                 $calificacion = 'N2';
             }
-            else{ //Non-EU
+            else { /** Non-EU */
                 $impuesto = '05';
                 $clave_regimen = '05';
                 $calificacion = 'N2';

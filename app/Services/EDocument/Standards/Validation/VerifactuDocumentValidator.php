@@ -79,16 +79,110 @@ class VerifactuDocumentValidator extends XsltDocumentValidator
                 libxml_clear_errors();
 
                 foreach ($errors as $error) {
-                    $this->errors['xsd'][] = sprintf(
-                        'Line %d: %s',
-                        $error->line,
-                        trim($error->message)
-                    );
+                    $this->errors['xsd'][] = $this->formatXsdError($error);
                 }
             }
         }
 
         return $this;
+    }
+
+    /**
+     * Format XSD validation errors to be more human-readable
+     * 
+     * @param \LibXMLError $error The libxml error object
+     * @return string Formatted error message
+     */
+    private function formatXsdError(\LibXMLError $error): string
+    {
+        $message = trim($error->message);
+        $line = $error->line;
+        
+        // Remove long namespace URLs to make errors more readable
+        $message = preg_replace(
+            '/\{https:\/\/www2\.agenciatributaria\.gob\.es\/static_files\/common\/internet\/dep\/aplicaciones\/es\/aeat\/tike\/cont\/ws\/[^}]+\}/',
+            '',
+            $message
+        );
+        
+        // Clean up the message and make it more user-friendly
+        $message = $this->translateXsdError($message);
+        
+        return sprintf('Line %d: %s', $line, $message);
+    }
+
+    /**
+     * Translate XSD error messages to more user-friendly Spanish/English descriptions
+     * 
+     * @param string $message The original XSD error message
+     * @return string Translated and improved error message
+     */
+    private function translateXsdError(string $message): string
+    {
+        // Common error patterns and their translations
+        $errorTranslations = [
+            // Missing child elements
+            '/Missing child element\(s\)\. Expected is \( ([^)]+) \)/' => 'Faltan elementos requeridos: $1',
+            '/Missing child element\(s\)\. Expected is \( ([^)]+) \)/' => 'Missing required elements: $1',
+            
+            // Element not found
+            '/Element ([^:]+): ([^:]+) not found/' => 'Elemento no encontrado: $2',
+            '/Element ([^:]+): ([^:]+) not found/' => 'Element not found: $2',
+            
+            // Invalid content
+            '/Element ([^:]+): ([^:]+) has invalid content/' => 'Contenido inválido en elemento: $2',
+            '/Element ([^:]+): ([^:]+) has invalid content/' => 'Invalid content in element: $2',
+            
+            // Required attribute missing
+            '/The attribute ([^:]+) is required/' => 'Atributo requerido faltante: $1',
+            '/The attribute ([^:]+) is required/' => 'Required attribute missing: $1',
+            
+            // Value not allowed
+            '/Value ([^:]+) is not allowed/' => 'Valor no permitido: $1',
+            '/Value ([^:]+) is not allowed/' => 'Value not allowed: $1',
+            
+            // Pattern validation failed
+            '/Element ([^:]+): ([^:]+) is not a valid value of the atomic type/' => 'Valor inválido para el elemento: $2',
+            '/Element ([^:]+): ([^:]+) is not a valid value of the atomic type/' => 'Invalid value for element: $2',
+        ];
+        
+        // Apply translations
+        foreach ($errorTranslations as $pattern => $replacement) {
+            if (preg_match($pattern, $message, $matches)) {
+                $message = preg_replace($pattern, $replacement, $message);
+                break;
+            }
+        }
+        
+        // Clean up common element names and make them more readable
+        $elementTranslations = [
+            'Desglose' => 'Desglose (Tax Breakdown)',
+            'DetalleDesglose' => 'DetalleDesglose (Tax Detail)',
+            'TipoFactura' => 'TipoFactura (Invoice Type)',
+            'DescripcionOperacion' => 'DescripcionOperacion (Operation Description)',
+            'ImporteTotal' => 'ImporteTotal (Total Amount)',
+            'RegistroAlta' => 'RegistroAlta (Registration Record)',
+            'RegistroAnulacion' => 'RegistroAnulacion (Cancellation Record)',
+            'FacturasRectificadas' => 'FacturasRectificadas (Corrected Invoices)',
+            'IDFacturaRectificada' => 'IDFacturaRectificada (Corrected Invoice ID)',
+            'IDEmisorFactura' => 'IDEmisorFactura (Invoice Emitter ID)',
+            'NumSerieFactura' => 'NumSerieFactura (Invoice Series Number)',
+            'FechaExpedicionFactura' => 'FechaExpedicionFactura (Invoice Issue Date)',
+            'Impuestos' => 'Impuestos (Taxes)',
+            'DetalleIVA' => 'DetalleIVA (VAT Detail)',
+            'CuotaRepercutida' => 'CuotaRepercutida (Recharged Tax Amount)',
+            'FechaExpedicionFacturaEmisor' => 'FechaExpedicionFacturaEmisor (Emitter Invoice Issue Date)',
+        ];
+        
+        foreach ($elementTranslations as $element => $translation) {
+            $message = str_replace($element, $translation, $message);
+        }
+        
+        // Remove extra whitespace and clean up the message
+        $message = preg_replace('/\s+/', ' ', $message);
+        $message = trim($message);
+        
+        return $message;
     }
 
     /**

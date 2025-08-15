@@ -98,6 +98,26 @@ class EntityLevel implements EntityLevelInterface
 
         }
 
+        $_invoice = (new \App\Services\EDocument\Standards\Verifactu\RegistroAlta($invoice))->run()->getInvoice();
+        $xml = $_invoice->toXmlString();
+
+        $xslt = new \App\Services\EDocument\Standards\Validation\VerifactuDocumentValidator($xml);
+        $xslt->validate();
+        $errors = $xslt->getVerifactuErrors();
+        nlog($errors);
+        
+        if (isset($errors['stylesheet']) && count($errors['stylesheet']) > 0) {
+            $this->errors['invoice'] = array_merge($this->errors['invoice'], $errors['stylesheet']);
+        }
+
+        if (isset($errors['general']) && count($errors['general']) > 0) {
+            $this->errors['invoice'] = array_merge($this->errors['invoice'], $errors['general']);
+        }
+
+        if (isset($errors['xsd']) && count($errors['xsd']) > 0) {
+            $this->errors['invoice'] = array_merge($this->errors['invoice'], $errors['xsd']);
+        }
+
         // $this->errors['invoice'][] = 'test error';
 
         $this->errors['passes'] = count($this->errors['invoice']) === 0 && count($this->errors['company']) === 0; //no need to check client as we are using client level settings
