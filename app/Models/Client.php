@@ -926,7 +926,12 @@ class Client extends BaseModel implements HasLocalePreference
     {
         return $this->company->company_key.'/';
     }
-
+    
+    /**
+     * document_filepath
+     * @deprecated. not used.
+     * @return string
+     */
     public function document_filepath(): string
     {
         return $this->company->company_key.'/documents/';
