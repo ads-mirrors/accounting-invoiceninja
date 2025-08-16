@@ -34,19 +34,19 @@ class ReportExportController extends BaseController
             return response()->json(['message' => 'Still working.....'], 409);
         }
 
-        $report = base64_decode($report);
+        // $report = base64_decode($report);
 
-        Cache::forget($hash);
+        // Cache::forget($hash);
 
-        if($this->isXlsxData($report)){
+        // if($this->isXlsxData($report)){
         
-            return response($report, 200, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition' => 'inline; filename="report.xlsx"',
-                'Content-Length' => strlen($report)
-            ]);
+        //     return response($report, 200, [
+        //         'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        //         'Content-Disposition' => 'inline; filename="report.xlsx"',
+        //         'Content-Length' => strlen($report)
+        //     ]);
 
-        }
+        // }
 
         // Check if the content starts with PDF signature (%PDF-)
         $isPdf = str_starts_with(trim($report), '%PDF-');
