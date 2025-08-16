@@ -265,6 +265,7 @@ class ExpenseExport extends BaseExport
                 $entity['expense.net_amount'] = round($expense->amount, $precision) - $total_tax_amount;
             } else {
                 $entity['expense.net_amount'] = round($expense->amount, $precision);
+                $entity['expense.amount'] = round($expense->amount, $precision) + $total_tax_amount;
             }
 
         } else {
@@ -274,7 +275,8 @@ class ExpenseExport extends BaseExport
                 $entity['expense.net_amount'] = round(($expense->amount - round($total_tax_amount, $precision)), $precision);
             } else {
                 $total_tax_amount = ($expense->amount * (($expense->tax_rate1 ?? 0) / 100)) + ($expense->amount * (($expense->tax_rate2 ?? 0) / 100)) + ($expense->amount * (($expense->tax_rate3 ?? 0) / 100));
-                $entity['expense.net_amount'] = round(($expense->amount + round($total_tax_amount, $precision)), $precision);
+                $entity['expense.net_amount'] = round($expense->amount, $precision);
+                $entity['expense.amount'] = round($expense->amount, $precision) + $total_tax_amount;
             }
         }
 
