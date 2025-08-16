@@ -75,7 +75,7 @@ class Handler extends ExceptionHandler
     ];
 
     protected $hostedDontReport = [
-        MaxAttemptsExceededException::class,
+        // MaxAttemptsExceededException::class,
         CommandNotFoundException::class,
         ValidationException::class,
         ModelNotFoundException::class,
