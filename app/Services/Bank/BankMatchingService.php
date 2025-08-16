@@ -32,7 +32,7 @@ class BankMatchingService implements ShouldQueue
 
     public $timeout = 3600;
 
-    public function __construct(public $company_id, public $db)
+    public function __construct(public int $company_id, public string $db)
     {
     }
 
