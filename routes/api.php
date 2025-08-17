@@ -26,3 +26,10 @@ Route::group(['middleware' => ['throttle:300,1', 'api_db', 'token_auth', 'locale
 });
 
 Route::fallback([BaseController::class, 'notFound'])->middleware('throttle:404');
+
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'message' => 'API is healthy',
+    ]);
+})->middleware('throttle:20,1');
