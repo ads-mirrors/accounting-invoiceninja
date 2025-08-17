@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -87,9 +88,9 @@ class CreateEDocument implements ShouldQueue
                 case "XInvoice-BasicWL":
                 case "XInvoice-Basic":
 
-                //New implementation now the default 2025-02-04 - requires zugferd_version_two=false to disable
-                $zugferd = (new ZugferdEDocument($this->document))->run();
-                
+                    //New implementation now the default 2025-02-04 - requires zugferd_version_two=false to disable
+                    $zugferd = (new ZugferdEDocument($this->document))->run();
+
                     return $this->returnObject ? $zugferd->xdocument : $zugferd->getXml();
                 case "Facturae_3.2":
                 case "Facturae_3.2.1":

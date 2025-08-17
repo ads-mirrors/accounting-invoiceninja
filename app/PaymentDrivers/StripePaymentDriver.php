@@ -127,8 +127,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             );
 
             Stripe::setApiKey($this->company_gateway->getConfigField('apiKey'));
-            // Stripe::setApiVersion('2022-11-15');
-            Stripe::setAPiVersion('2023-08-16');
+            Stripe::setAPiVersion('2023-10-16');
         }
 
         return $this;
@@ -550,7 +549,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
 
         //Search by email
         $searchResults = \Stripe\Customer::all([
-            'email' => $this->client->present()->email(),
+            'email' => (string)$this->client->present()->email(),
             'limit' => 2,
             'starting_after' => null,
         ], $this->stripe_connect_auth);
@@ -651,13 +650,13 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
                 'amount' => $this->convertToStripeAmount($amount, $this->client->currency()->precision, $this->client->currency()),
             ], $meta);
 
-            if (in_array($response->status, [$response::STATUS_SUCCEEDED, 'pending'])) {
+            if (in_array($response->status, ['succeeded', 'pending'])) {
                 SystemLogger::dispatch(['server_response' => $response, 'data' => request()->all()], SystemLog::CATEGORY_GATEWAY_RESPONSE, SystemLog::EVENT_GATEWAY_SUCCESS, SystemLog::TYPE_STRIPE, $this->client, $this->client->company);
 
                 return [
                     'transaction_reference' => $response->charge,
                     'transaction_response' => json_encode($response),
-                    'success' => $response->status == $response::STATUS_SUCCEEDED ? true : false,
+                    'success' => in_array($response->status, ['succeeded', 'pending']) ? true : false,
                     'description' => $response->metadata,
                     'code' => $response,
                 ];
@@ -1035,25 +1034,48 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         }, $string);
     }
 
-    public function auth(): bool
+    public function auth(): string
     {
+
         $this->init();
 
         try {
-            $this->verifyConnect();
-            return true;
-        } catch (\Exception $e) {
+            if ($this->stripe_connect) {
+                // Verify Connect configuration
+                if (!strlen($this->company_gateway->getConfigField('account_id')) > 1) {
+                    return 'error';
+                }
 
+                // Test Connect API access
+                \Stripe\Account::retrieve(
+                    $this->company_gateway->getConfigField('account_id'),
+                    $this->stripe_connect_auth
+                );
+            } else {
+                // Test regular API key access
+                $api_key = $this->company_gateway->getConfigField('apiKey');
+
+                if (empty($api_key)) {
+                    return 'error';
+                }
+
+                $b = \Stripe\Balance::retrieve(); // Simple API call to verify credentials
+
+            }
+
+            return 'ok';
+        } catch (\Throwable $th) {
+            nlog("Stripe auth error: " . $th->getMessage());
+            return 'error';
         }
 
-        return false;
 
     }
 
     /**
      * @inheritDoc
      */
-    public function setHeadless(bool $headless): self 
+    public function setHeadless(bool $headless): self
     {
         $this->headless = $headless;
 

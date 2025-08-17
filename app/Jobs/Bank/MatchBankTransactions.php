@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Credit Ninja (https://invoiceninja.com).
  *
@@ -170,6 +171,12 @@ class MatchBankTransactions implements ShouldQueue
 
             if ($expense && !$expense->transaction_id) {
                 $expense->transaction_id = $this->bt->id;
+                $expense->payment_date = $this->bt->date;
+
+                if (empty($expense->transaction_reference)) {
+                    $expense->transaction_reference = $this->bt->description;
+                }
+
                 $expense->save();
 
                 $this->bt->expense_id = $this->coalesceExpenses($expense->hashed_id);
@@ -324,7 +331,7 @@ class MatchBankTransactions implements ShouldQueue
                         ->setCalculatedStatus()
                         ->save();
 
-                        
+
                     event('eloquent.updated: App\Models\Invoice', $this->invoice);
                 }
             });
@@ -459,6 +466,6 @@ class MatchBankTransactions implements ShouldQueue
 
     public function middleware()
     {
-        return [new WithoutOverlapping($this->company->account->bank_integration_account_id)];
+        return [(new WithoutOverlapping($this->company->account->bank_integration_account_id))->releaseAfter(60)];
     }
 }

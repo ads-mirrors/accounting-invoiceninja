@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -32,6 +33,7 @@ use App\Models\Webhook;
 use App\Utils\TempFile;
 use App\Models\Activity;
 use App\Models\Document;
+use App\Models\Location;
 use App\Libraries\MultiDB;
 use App\Models\TaskStatus;
 use App\Models\CompanyUser;
@@ -136,6 +138,7 @@ class CompanyImport implements ShouldQueue
         'client_contacts',
         'vendors',
         'vendor_contacts',
+        'locations',
         'projects',
         'products',
         'company_gateways',
@@ -303,12 +306,20 @@ class CompanyImport implements ShouldQueue
 
         $json = JsonMachine::fromFile($this->file_path, '/'.$key, new ExtJsonDecoder());
 
+        try {
+            $iterator_array = iterator_to_array($json);
+        } catch (\Throwable $th) {
+            nlog("Key '{$key}' does not exist in JSON file: " . $th->getMessage());
+            return [];
+        }
+
         if ($force_array) {
-            return iterator_to_array($json);
+            return $iterator_array;
         }
 
         return $json;
-    }
+
+        }
 
     public function handle()
     {
@@ -396,16 +407,14 @@ class CompanyImport implements ShouldQueue
 
                             $t_id = false;
 
-                            try{
+                            try {
                                 $t_id = $this->transformId('tasks', $value->task_id);
-                            }
-                            catch(\Exception $e){
+                            } catch (\Exception $e) {
                             }
 
                             if ($t_id && $t = Task::withTrashed()->where('company_id', $this->company->id)->where('id', $t_id)->first()) {
                                 $items[$key]->task_id = $t->hashed_id;
-                            }
-                            else {
+                            } else {
                                 $items[$key]->task_id = null;
                             }
 
@@ -416,16 +425,14 @@ class CompanyImport implements ShouldQueue
                         if (isset($value->expense_id) && strlen($value->expense_id) > 1) {
 
                             $e_id = false;
-                            try{
+                            try {
                                 $e_id = $this->transformId('expenses', $value->expense_id);
-                            }
-                            catch(\Exception $e){
+                            } catch (\Exception $e) {
                             }
 
                             if ($e = Expense::withTrashed()->where('company_id', $this->company->id)->where('id', $e_id)->first()) {
                                 $items[$key]->expense_id = $e->hashed_id;
-                            }
-                            else {
+                            } else {
                                 $items[$key]->expense_id = null;
                             }
 
@@ -677,17 +684,17 @@ class CompanyImport implements ShouldQueue
             return $this;
         }
 
-        if(file_exists($logo_path)) {
-           
+        if (file_exists($logo_path)) {
+
             $path = (new \App\Jobs\Util\UploadAvatar($logo_path, $this->company->company_key))->handle();
-            
+
             if ($path) {
                 $settings = $this->company->settings;
                 $settings->company_logo = $path;
                 $this->company->settings = $settings;
                 $this->company->save();
             }
-    
+
         }
 
         return $this;
@@ -911,6 +918,21 @@ class CompanyImport implements ShouldQueue
         return $this;
     }
 
+    private function import_locations()
+    {
+        $this->ids['locations'] = [];
+        
+        $this->genericImport(
+            Location::class,
+            ['user_id', 'company_id', 'id', 'hashed_id', 'client_id', 'vendor_id'],
+            [['users' => 'user_id'], ['clients' => 'client_id'], ['vendors' => 'vendor_id']],
+            'locations',
+            'name'
+        );
+
+        return $this;
+    }
+
     private function import_projects()
     {
         $this->genericImport(
@@ -990,7 +1012,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             RecurringInvoice::class,
-            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id','subscription_id','project_id','vendor_id','status'],
+            ['user_id', 'assigned_user_id', 'company_id', 'id', 'hashed_id', 'client_id','subscription_id','project_id','vendor_id', 'status', 'location_id'],
             [
                 ['subscriptions' => 'subscription_id'],
                 ['users' => 'user_id'],
@@ -998,7 +1020,7 @@ class CompanyImport implements ShouldQueue
                 ['clients' => 'client_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
-                ['clients' => 'client_id'],
+                ['locations' => 'location_id'],
             ],
             'recurring_invoices',
             'number'
@@ -1029,7 +1051,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Invoice::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'sync'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'sync', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1038,6 +1060,7 @@ class CompanyImport implements ShouldQueue
                 ['subscriptions' => 'subscription_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
+                ['locations' => 'location_id'],
             ],
             'invoices',
             'number'
@@ -1067,13 +1090,14 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             PurchaseOrder::class,
-            ['user_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'vendor_id', 'subscription_id','client_id'],
+            ['user_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'vendor_id', 'subscription_id','client_id', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
                 ['recurring_invoices' => 'recurring_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
+                ['locations' => 'location_id'],
             ],
             'purchase_orders',
             'number'
@@ -1104,7 +1128,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Quote::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1113,6 +1137,7 @@ class CompanyImport implements ShouldQueue
                 ['subscriptions' => 'subscription_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
+                ['locations' => 'location_id'],
             ],
             'quotes',
             'number'
@@ -1143,7 +1168,7 @@ class CompanyImport implements ShouldQueue
     {
         $this->genericImport(
             Credit::class,
-            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status'],
+            ['user_id', 'client_id', 'company_id', 'id', 'hashed_id', 'recurring_id','status', 'location_id'],
             [
                 ['users' => 'user_id'],
                 ['users' => 'assigned_user_id'],
@@ -1152,6 +1177,7 @@ class CompanyImport implements ShouldQueue
                 ['subscriptions' => 'subscription_id'],
                 ['projects' => 'project_id'],
                 ['vendors' => 'vendor_id'],
+                ['locations' => 'location_id'],
             ],
             'credits',
             'number'
@@ -1360,14 +1386,14 @@ class CompanyImport implements ShouldQueue
                 }
 
             } elseif (file_exists("{$this->root_file_path}documents/{$document->url}")) {
-                
-                $success = Storage::disk(config('filesystems.default'))->put($new_document_url, file_get_contents("{$this->root_file_path}documents/{$document->url}"));
-            
-                if(!$success)
-                    continue;
 
-            }
-            else {
+                $success = Storage::disk(config('filesystems.default'))->put($new_document_url, file_get_contents("{$this->root_file_path}documents/{$document->url}"));
+
+                if (!$success) {
+                    continue;
+                }
+
+            } else {
                 continue;
             }
 
@@ -1430,14 +1456,21 @@ class CompanyImport implements ShouldQueue
 
         //foreach ($this->backup_file->users as $user)
         foreach ((object)$this->getObject("users") as $user) {
-            if (User::withTrashed()->where('email', $user->email)->where('account_id', '!=', $this->account->id)->exists()) {
-                throw new ImportCompanyFailed("{$user->email} is already in the system attached to a different account");
+
+            if($userX = MultiDB::hasUser(['email' => $user->email])) { //ensures that we do no inject existing users into the new account.
+            
+                if($userX->account_id != $this->account->id) {
+                    throw new ImportCompanyFailed("{$userX->email} is already in the system attached to a different account");
+                }
+                
             }
 
+            MultiDB::setDb($this->company->db);
+
             $user_array = (array)$user;
-            unset($user_array['laravel_through_key']);
-            unset($user_array['hashed_id']);
-            unset($user_array['id']);
+            unset($user_array['laravel_through_key']); //@phpstan-ignore-line
+            unset($user_array['hashed_id']); //@phpstan-ignore-line
+            unset($user_array['id']); //@phpstan-ignore-line
 
             /*Make sure we are searching for archived users also and restore if we find them.*/
 
@@ -1736,18 +1769,16 @@ class CompanyImport implements ShouldQueue
             $new_obj->save(['timestamps' => false]);
 
             if ($new_obj instanceof CompanyLedger || $new_obj instanceof EInvoicingToken) {
-            } 
-            elseif ($new_obj instanceof Backup) {
-                
-                if(is_file("{$this->root_file_path}backups/{$obj->filename}")) {
+            } elseif ($new_obj instanceof Backup) {
+
+                if (is_file("{$this->root_file_path}backups/{$obj->filename}")) {
                     $file = file_get_contents("{$this->root_file_path}backups/{$obj->filename}");
                     $new_obj->filename = str_replace($this->old_company_key, $this->company->company_key, $obj->filename);
                     $new_obj->save();
                     $new_obj = $new_obj->fresh();
                     $new_obj->storeBackupFile($file);
                 }
-            }
-            else {
+            } else {
                 $this->ids["{$object_property}"]["{$obj->hashed_id}"] = $new_obj->id;
             }
         }
@@ -1954,10 +1985,10 @@ class CompanyImport implements ShouldQueue
 
         if (! array_key_exists($resource, $this->ids)) {
 
-            if($this->import_notifications_enabled){
+            if ($this->import_notifications_enabled) {
                 $this->sendImportMail("The Import failed due to missing data in the import file. Resource {$resource} not available.");
             }
-            
+
             throw new \Exception("Resource {$resource} not available.");
         }
 
@@ -1967,8 +1998,11 @@ class CompanyImport implements ShouldQueue
             if ($resource == 'users') {
                 return $this->company_owner->id;
             }
+            
+            if($resource == 'locations')
+                return null;
 
-            if($this->import_notifications_enabled){
+            if ($this->import_notifications_enabled) {
                 $this->sendImportMail("The Import failed due to missing data in the import file. Key {$old} not found in {$resource}.");
             }
 

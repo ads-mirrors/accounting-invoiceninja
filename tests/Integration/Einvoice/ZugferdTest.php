@@ -199,6 +199,65 @@ class ZugferdTest extends TestCase
     }
 
 
+    public function testDeTodeTaxExempt()
+    {
+        
+        $scenario = [
+            'company_vat' => 'DE923356489',
+            'company_country' => 'DE',
+            'client_country' => 'DE',
+            'client_vat' => 'DE923356488',
+            'classification' => 'business',
+            'has_valid_vat' => true,
+            'over_threshold' => true,
+            'legal_entity_id' => 290868,
+        ];
+
+        $data = $this->setupTestData($scenario);
+
+        $invoice = $data['invoice'];
+
+        $repo = new InvoiceRepository();
+
+        foreach($this->inclusive_scenarios as $scenario){
+
+            $invoice_data = json_decode($scenario, true);
+
+            $line_items = $invoice_data['line_items'];
+
+            foreach ($line_items as &$item) {
+                $item['tax_rate1'] = 0;
+                $item['tax_name1'] = 'VAT';
+                $item['tax_id'] = '5';
+            }
+            unset($item);
+
+            $invoice_data['line_items'] = array_values($line_items);
+
+            $invoice_data['uses_inclusive_taxes'] = false;
+
+            $invoice = $repo->save($invoice_data, $invoice);
+            $invoice = $invoice->calc()->getInvoice();
+
+            $xml = $invoice->service()->getEInvoice();
+
+            $validator = new \App\Services\EDocument\Standards\Validation\XsltDocumentValidator($xml);
+            $validator->setStyleSheets([$this->zug_16931]);
+            $validator->setXsd('/Services/EDocument/Standards/Validation/Zugferd/Schema/XSD/CrossIndustryInvoice_100pD22B.xsd');
+            $validator->validate();
+
+            if (count($validator->getErrors()) > 0) {
+            
+                nlog($invoice->withoutRelations()->toArray());
+                nlog($xml);
+                nlog($validator->getErrors());
+            }
+
+            $this->assertCount(0, $validator->getErrors());
+
+
+        }
+    }
 
     public function testDeToNlReverseTax()
     {

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * App\Models\Client
+ * App\Models\Location
  *
  * @property int $id
  * @property int $company_id
@@ -60,12 +60,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read \App\Models\Vendor|null $vendor
  * @property-read \App\Models\Company $company
  * @property-read \App\Models\Country|null $country
- * 
+ *
  * @mixin \Eloquent
  */
 class Location extends BaseModel
 {
-    
     use SoftDeletes;
     use Filterable;
     use Excludable;
