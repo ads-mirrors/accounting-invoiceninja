@@ -228,7 +228,7 @@
         },
         {
             "type": "path",
-            "url": "https://github.com/invoiceninja/admin-api"
+            "url": "../admin-api"
         }
     ],
     "minimum-stability": "dev",
