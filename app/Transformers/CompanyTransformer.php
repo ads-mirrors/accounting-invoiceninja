@@ -226,7 +226,6 @@ class CompanyTransformer extends EntityTransformer
             'has_quickbooks_token' => $company->quickbooks ? true : false,
             'is_quickbooks_token_active' => $company->quickbooks?->accessTokenKey ?? false,
             'legal_entity_id' => $company->legal_entity_id ?? null,
-            'microsoft_client_id' => Ninja::isSelfHost() ? config('services.microsoft.client_id') : '',
         ];
     }
 
