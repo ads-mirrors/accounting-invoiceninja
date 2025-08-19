@@ -139,10 +139,12 @@ class DeletePayment
 
                     // 2025-03-26 - If we are deleting a negative payment, then there is an edge case where the paid to date will be reduced further down.
                     // for this scenario, we skip the update to the client paid to date at this point.
+
+                    //2025-08-19 - if there is an unapplied amount, we need to subtract it from the paid to date.
                     $this->payment
                          ->client
                          ->service()
-                         ->updateBalanceAndPaidToDate($net_deletable, ($net_deletable * -1) > 0 ? 0 : ($net_deletable * -1)) // if negative, set to 0, the paid to date will be reduced further down.
+                         ->updateBalanceAndPaidToDate($net_deletable, ($net_deletable * -1) > 0 ? 0 : ($net_deletable * -1 - ($this->payment->amount - $this->payment->applied))) // if negative, set to 0, the paid to date will be reduced further down.
                          ->save();
 
                     if (abs(floatval($paymentable_invoice->balance) - floatval($paymentable_invoice->amount)) < 0.005) {
@@ -172,6 +174,7 @@ class DeletePayment
 
             $reduced_paid_to_date = $this->payment->amount < 0 ? $this->payment->amount * -1 : min(0, ($this->payment->amount - $this->payment->refunded - $this->_paid_to_date_deleted) * -1);
 
+            nlog("reduced paid to date: {$reduced_paid_to_date}");
             if($reduced_paid_to_date != 0) {
                 $this->payment
                     ->client
