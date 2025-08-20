@@ -40,6 +40,10 @@ class TwilioController extends BaseController
      */
     public function generate(GenerateSmsRequest $request)
     {
+        
+        nlog('generateSmsResetCode');
+        nlog($request->all());
+
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
@@ -149,6 +153,7 @@ class TwilioController extends BaseController
      */
     public function generate2faResetCode(Generate2faRequest $request)
     {
+        nlog('generate2faResetCode');
         nlog($request->all());
 
         $user = User::where('email', $request->email)->first();
