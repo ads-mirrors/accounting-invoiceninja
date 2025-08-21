@@ -92,7 +92,7 @@ class DeletePayment
         
             $invoice_ids = $this->payment->invoices()->pluck('invoices.id')->toArray();
 
-            $this->total_payment_amount = $this->payment->amount + ($this->payment->paymentables->where('paymentable_type', 'App\Models\Credit')->sum('amount') - $this->payment->paymentables->where('paymentable_type', 'App\Models\Credit')->sum('refunded'));
+            $this->total_payment_amount = ($this->payment->amount-$this->payment->refunded) + ($this->payment->paymentables->where('paymentable_type', 'App\Models\Credit')->sum('amount') - $this->payment->paymentables->where('paymentable_type', 'App\Models\Credit')->sum('refunded'));
             
             $this->payment->invoices()->each(function ($paymentable_invoice) {
                 $net_deletable = $paymentable_invoice->pivot->amount - $paymentable_invoice->pivot->refunded;
