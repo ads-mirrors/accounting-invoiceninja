@@ -171,8 +171,6 @@ class ClassificationTest extends TestCase
 
         $this->company->settings = $settings;
 
-        nlog($settings);
-        
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
