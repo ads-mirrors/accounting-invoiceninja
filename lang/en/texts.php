@@ -5618,7 +5618,7 @@ $lang = array(
     'ses_topic_arn_help' => 'The SES topic (optional, only for webhook tracking)',
     'ses_region_help' => 'The AWS region, ie us-east-1',
 'ses_secret_key' => 'SES Secret Key',
-'ses_access_key_id' => 'SES Access Key ID'
+'ses_access_key' => 'SES Access Key ID'
 );
 
 return $lang;

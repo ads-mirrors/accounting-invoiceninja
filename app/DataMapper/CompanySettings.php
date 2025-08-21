@@ -531,14 +531,14 @@ class CompanySettings extends BaseSettings
     public bool $unlock_invoice_documents_after_payment = false;
 
     public string $ses_secret_key = '';
-    public string $ses_access_key_id = '';
+    public string $ses_access_key = '';
     public string $ses_region = '';
     public string $ses_topic_arn = '';
 
     public static $casts = [
         'ses_topic_arn' => 'string',
         'ses_secret_key' => 'string',
-        'ses_access_key_id' => 'string',
+        'ses_access_key' => 'string',
         'ses_region' => 'string',
         'unlock_invoice_documents_after_payment' => 'bool',
         'preference_product_notes_for_html_view' => 'bool',
