@@ -55,7 +55,6 @@ class SNSController extends BaseController
             $payload = $request->getContent();
             $headers = $request->headers->all();
             
-
             // Parse the SNS payload
             $snsData = json_decode($payload, true);
             
@@ -460,17 +459,12 @@ class SNSController extends BaseController
         }
 
         // Resolve the company and get their specific SES topic ARN if configured
-        $company = $this->resolveCompany($companyKey);
-        if (!$company) {
-            nlog('SNS Notification: Company not found', ['company_key' => $companyKey]);
-            return response()->json(['error' => 'Company not found'], 400);
-        }
+        $this->resolveCompany($companyKey);
 
-        // Override the topic ARN with company-specific setting if available
-        $this->updateTopicArnForCompany($company);
 
         // Validate the SES payload structure
         $validationResult = $this->validateSESPayload($sesData);
+
         if (!$validationResult['valid']) {
             nlog('SNS Notification: SES payload validation failed', [
                 'errors' => $validationResult['errors'],
@@ -480,35 +474,11 @@ class SNSController extends BaseController
             return response()->json(['error' => 'Invalid SES payload', 'details' => $validationResult['errors']], 400);
         }
 
-        nlog('SNS Notification: Processing SES data', [
-            'notification_type' => $sesData['notificationType'] ?? $sesData['eventType'] ?? 'unknown',
-            'message_id' => $sesData['mail']['messageId'] ?? 'unknown',
-            'company_key' => $companyKey,
-            'company_id' => $company->id,
-            'topic_arn' => $this->expectedTopicArn ?: 'using_company_specific'
-        ]);
-
         // Dispatch the SES webhook job for processing
-        try {
-            SESWebhook::dispatch($sesData);
-            
-            nlog('SNS Notification: SES webhook job dispatched successfully', [
-                'company_key' => $companyKey,
-                'company_id' => $company->id,
-                'message_id' => $sesData['mail']['messageId'] ?? 'unknown'
-            ]);
-            
-            return response()->json(['status' => 'webhook_processed']);
-            
-        } catch (\Exception $e) {
-            nlog('SNS Notification: Failed to dispatch SES webhook job', [
-                'error' => $e->getMessage(),
-                'company_key' => $companyKey,
-                'company_id' => $company->id
-            ]);
-            
-            return response()->json(['error' => 'Failed to process webhook'], 500);
-        }
+        SESWebhook::dispatch($sesData);
+        
+        return response()->json([],200);
+        
     }
 
     /**
@@ -772,14 +742,6 @@ class SNSController extends BaseController
             }
         }
 
-        nlog('SNS: No company key found in any location', [
-            'mail_headers_exists' => isset($sesData['mail']['headers']),
-            'mail_common_headers_exists' => isset($sesData['mail']['commonHeaders']),
-            'bounce_exists' => isset($sesData['bounce']),
-            'complaint_exists' => isset($sesData['complaint']),
-            'delivery_exists' => isset($sesData['delivery'])
-        ]);
-
         return null;
     }
 
@@ -809,84 +771,22 @@ class SNSController extends BaseController
         return true;
     }
 
-    /**
-     * Resolve company by company key
-     * 
-     * @param string $companyKey
-     * @return \App\Models\Company|null
-     */
-    private function resolveCompany(string $companyKey): ?\App\Models\Company
+    private function resolveCompany(string $companyKey): void
     {
         try {
+            MultiDB::findAndSetDbByCompanyKey($companyKey);
+            
             // Use MultiDB to find the company
             $company = \App\Models\Company::where('company_key', $companyKey)->first();
             
-            if ($company) {
-                nlog('SNS: Company resolved successfully', [
-                    'company_key' => $companyKey,
-                    'company_id' => $company->id,
-                    'company_name' => $company->name ?? 'unknown'
-                ]);
-                return $company;
-            }
-            
-            nlog('SNS: Company not found', ['company_key' => $companyKey]);
-            return null;
-            
-        } catch (\Exception $e) {
-            nlog('SNS: Error resolving company', [
-                'company_key' => $companyKey,
-                'error' => $e->getMessage()
-            ]);
-            return null;
-        }
-    }
-
-    /**
-     * Update topic ARN based on company settings
-     * 
-     * @param \App\Models\Company $company
-     * @return void
-     */
-    private function updateTopicArnForCompany(\App\Models\Company $company): void
-    {
-        try {
-            // Check if company has SES topic ARN configured
-            $companyTopicArn = $company->settings->ses_topic_arn ?? null;
-            
-            if ($companyTopicArn) {
-                $this->expectedTopicArn = $companyTopicArn;
-                nlog('SNS: Using company-specific topic ARN', [
-                    'company_id' => $company->id,
-                    'company_key' => $company->company_key,
-                    'topic_arn' => $companyTopicArn
-                ]);
-            } else {
-                nlog('SNS: No company-specific topic ARN found, using global default', [
-                    'company_id' => $company->id,
-                    'company_key' => $company->company_key,
-                    'global_topic_arn' => config('services.sns.topic_arn', 'not_set')
-                ]);
+            if($company && $company->settings->email_sending_method === 'client_ses' && strlen($company->settings->ses_topic_arn ?? '') > 2) {
+                $this->expectedTopicArn = $company->settings->ses_topic_arn;
             }
             
         } catch (\Exception $e) {
-            nlog('SNS: Error updating topic ARN for company', [
-                'company_id' => $company->id,
-                'company_key' => $company->company_key,
-                'error' => $e->getMessage()
-            ]);
-            // Keep the global default if there's an error
+           
         }
     }
 
-    /**
-     * Check if the expected topic ARN is company-specific.
-     * 
-     * @return bool
-     */
-    private function isCompanySpecificTopicArn(): bool
-    {
-        $globalTopicArn = config('services.sns.topic_arn', '');
-        return !empty($this->expectedTopicArn) && $this->expectedTopicArn !== $globalTopicArn;
-    }
+
 }
