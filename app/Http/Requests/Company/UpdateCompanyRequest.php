@@ -110,6 +110,10 @@ class UpdateCompanyRequest extends Request
         //         },
         //     ];
 
+        $rules['settings.ses_secret_key'] = 'required_if:settings.email_sending_method,client_ses';
+        $rules['settings.ses_access_key_id'] = 'required_if:settings.email_sending_method,client_ses';
+        $rules['settings.ses_region'] = 'required_if:settings.email_sending_method,client_ses';
+
         return $rules;
     }
 

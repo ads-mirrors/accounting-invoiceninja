@@ -21,6 +21,8 @@ use App\Utils\TempFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 /**
  * Class SNSController.
@@ -30,8 +32,14 @@ use Illuminate\Support\Facades\Log;
  */
 class SNSController extends BaseController
 {
+    /**
+     * Expected SNS Topic ARN for validation
+     */
+    private string $expectedTopicArn;
+
     public function __construct()
     {
+        $this->expectedTopicArn = config('services.ses.topic_arn');
     }
 
     /**
@@ -47,10 +55,6 @@ class SNSController extends BaseController
             $payload = $request->getContent();
             $headers = $request->headers->all();
             
-            nlog('SNS Webhook received', [
-                'headers' => $headers,
-                'payload_size' => strlen($payload)
-            ]);
 
             // Parse the SNS payload
             $snsData = json_decode($payload, true);
@@ -92,7 +96,6 @@ class SNSController extends BaseController
                 return response()->json(['status' => 'unsubscribe_confirmed']);
             }
 
-            nlog('SNS Webhook: Unknown message type', ['type' => $snsMessageType]);
             return response()->json(['error' => 'Unknown message type'], 400);
 
         } catch (\Exception $e) {
@@ -106,7 +109,7 @@ class SNSController extends BaseController
     }
 
     /**
-     * Verify SNS message signature
+     * Verify SNS message signature using full AWS SNS validation
      * 
      * @param Request $request
      * @param string $payload
@@ -115,13 +118,69 @@ class SNSController extends BaseController
     private function verifySNSSignature(Request $request, string $payload): bool
     {
         try {
-            // Get required headers for signature verification
-            $signatureVersion = $request->header('x-amz-sns-message-type') ? 
-                $request->header('x-amz-sns-message-type') : '1';
+            // Parse the SNS message
+            $snsData = json_decode($payload, true);
+            if (!$snsData) {
+                nlog('SNS: Invalid JSON payload for signature verification');
+                return false;
+            }
+
+            // Check required SNS fields
+            $requiredFields = ['Type', 'MessageId', 'TopicArn', 'Timestamp', 'SigningCertURL'];
+            foreach ($requiredFields as $field) {
+                if (!isset($snsData[$field])) {
+                    nlog('SNS: Missing required field for signature verification', ['field' => $field]);
+                    return false;
+                }
+            }
+
+            // Validate Topic ARN if configured
+            if (!empty($this->expectedTopicArn) && $snsData['TopicArn'] !== $this->expectedTopicArn) {
+                
+                return false;
+            } elseif (!empty($this->expectedTopicArn)) {
+                
+            } 
+
+            // Check for replay attacks (messages older than 15 minutes)
+            $messageTimestamp = strtotime($snsData['Timestamp']);
+            $currentTimestamp = time();
+            if (($currentTimestamp - $messageTimestamp) > 900) { // 15 minutes
+                return false;
+            }
+
+            // Get the signing certificate
+            $certificate = $this->fetchSigningCertificate($snsData['SigningCertURL']);
+            if (!$certificate) {
+                return false;
+            }
+
+            // Verify the signature
+            $signatureValid = $this->verifyMessageSignature($snsData, $certificate, $payload);
             
-            // For now, we'll implement basic verification
-            // In production, you should implement full AWS SNS signature verification
-            // This requires fetching the signing certificate from AWS and verifying the signature
+            return $signatureValid;
+
+        } catch (\Exception $e) {
+            nlog('SNS: Error during signature verification', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Fallback to basic validation if full verification fails
+            return $this->fallbackBasicValidation($request, $payload);
+        }
+    }
+
+    /**
+     * Fallback basic validation when full signature verification fails
+     * 
+     * @param Request $request
+     * @param string $payload
+     * @return bool
+     */
+    private function fallbackBasicValidation(Request $request, string $payload): bool
+    {
+        try {
             
             // Basic checks
             $requiredHeaders = [
@@ -132,7 +191,7 @@ class SNSController extends BaseController
             
             foreach ($requiredHeaders as $header) {
                 if (!$request->header($header)) {
-                    nlog('SNS: Missing required header for signature verification', ['header' => $header]);
+                    nlog('SNS: Missing required header for basic validation', ['header' => $header]);
                     return false;
                 }
             }
@@ -140,25 +199,199 @@ class SNSController extends BaseController
             // Check if the payload contains valid AWS SNS structure
             $snsData = json_decode($payload, true);
             if (!isset($snsData['Type']) || !isset($snsData['MessageId']) || !isset($snsData['TopicArn'])) {
-                nlog('SNS: Invalid SNS message structure for signature verification');
                 return false;
             }
-            
-            // For production, implement full signature verification:
-            // 1. Extract the signing certificate URL from the message
-            // 2. Fetch the certificate from AWS
-            // 3. Verify the signature using the certificate
-            // 4. Check the signature timestamp for replay attacks
-            
-            // For now, we'll do basic validation and log that full verification is needed
-            nlog('SNS: Basic signature validation passed - consider implementing full AWS SNS signature verification for production');
             
             return true;
             
         } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Fetch and cache the SNS signing certificate
+     * 
+     * @param string $certUrl
+     * @return string|false
+     */
+    private function fetchSigningCertificate(string $certUrl): string|false
+    {
+        // Validate the certificate URL is from AWS
+        if (!$this->isValidAWSCertificateUrl($certUrl)) {
+            nlog('SNS: Invalid certificate URL', ['url' => $certUrl]);
+            return false;
+        }
+
+        // Check cache first
+        $cacheKey = 'sns_cert_' . md5($certUrl);
+        $cachedCert = Cache::get($cacheKey);
+        if ($cachedCert) {
+            nlog('SNS: Using cached certificate');
+            return $cachedCert;
+        }
+
+        try {
+            // Fetch the certificate
+            $response = Http::timeout(10)->get($certUrl);
+            
+            if ($response->successful()) {
+                $certificate = $response->body();
+                
+                // Validate certificate format
+                if ($this->isValidCertificate($certificate)) {
+                    // Cache for 24 hours (AWS certificates are long-lived)
+                    Cache::put($cacheKey, $certificate, 86400);
+                    nlog('SNS: Certificate fetched and cached successfully');
+                    return $certificate;
+                } else {
+                    nlog('SNS: Invalid certificate format received');
+                    return false;
+                }
+            } else {
+                nlog('SNS: Failed to fetch certificate', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            nlog('SNS: Error fetching certificate', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    /**
+     * Verify the message signature using the certificate
+     * 
+     * @param array $snsData
+     * @param string $certificate
+     * @param string $payload
+     * @return bool
+     */
+    private function verifyMessageSignature(array $snsData, string $certificate, string $payload): bool
+    {
+        try {
+            // Extract the signature
+            $signature = $snsData['Signature'] ?? '';
+            if (empty($signature)) {
+                nlog('SNS: Missing signature in message');
+                return false;
+            }
+
+            // Create the string to sign
+            $stringToSign = $this->createStringToSign($snsData);
+            
+            // Decode the signature
+            $decodedSignature = base64_decode($signature, true);
+            if ($decodedSignature === false || $decodedSignature === '') {
+                nlog('SNS: Invalid signature encoding');
+                return false;
+            }
+
+            // Verify using OpenSSL
+            $publicKey = openssl_pkey_get_public($certificate);
+            if ($publicKey === false) {
+                nlog('SNS: Failed to load public key from certificate');
+                return false;
+            }
+
+            $verificationResult = openssl_verify(
+                $stringToSign,
+                $decodedSignature,
+                $publicKey,
+                OPENSSL_ALGO_SHA1
+            );
+
+            openssl_free_key($publicKey);
+
+            if ($verificationResult === 1) {
+                nlog('SNS: Signature verification successful');
+                return true;
+            } elseif ($verificationResult === 0) {
+                nlog('SNS: Signature verification failed');
+                return false;
+            } else {
+                nlog('SNS: Error during signature verification');
+                return false;
+            }
+
+        } catch (\Exception $e) {
             nlog('SNS: Error during signature verification', ['error' => $e->getMessage()]);
             return false;
         }
+    }
+
+    /**
+     * Create the string to sign according to AWS SNS specification
+     * 
+     * @param array $snsData
+     * @return string
+     */
+    private function createStringToSign(array $snsData): string
+    {
+        $fields = [
+            'Message',
+            'MessageId',
+            'Subject',
+            'Timestamp',
+            'TopicArn',
+            'Type'
+        ];
+
+        $stringToSign = '';
+        foreach ($fields as $field) {
+            if (isset($snsData[$field])) {
+                $stringToSign .= $field . "\n" . $snsData[$field] . "\n";
+            }
+        }
+
+        return $stringToSign;
+    }
+
+    /**
+     * Validate that the certificate URL is from AWS
+     * 
+     * @param string $url
+     * @return bool
+     */
+    private function isValidAWSCertificateUrl(string $url): bool
+    {
+        $parsedUrl = parse_url($url);
+        
+        if (!$parsedUrl || !isset($parsedUrl['host'])) {
+            return false;
+        }
+
+        // Check if it's an AWS domain
+        $validDomains = [
+            'sns.us-east-1.amazonaws.com',
+            'sns.us-east-2.amazonaws.com',
+            'sns.us-west-1.amazonaws.com',
+            'sns.us-west-2.amazonaws.com',
+            'sns.eu-west-1.amazonaws.com',
+            'sns.eu-central-1.amazonaws.com',
+            'sns.ap-southeast-1.amazonaws.com',
+            'sns.ap-southeast-2.amazonaws.com',
+            'sns.ap-northeast-1.amazonaws.com',
+            'sns.sa-east-1.amazonaws.com'
+        ];
+
+        return in_array($parsedUrl['host'], $validDomains);
+    }
+
+    /**
+     * Validate certificate format
+     * 
+     * @param string $certificate
+     * @return bool
+     */
+    private function isValidCertificate(string $certificate): bool
+    {
+        // Check if it looks like a valid X.509 certificate
+        return strpos($certificate, '-----BEGIN CERTIFICATE-----') !== false &&
+               strpos($certificate, '-----END CERTIFICATE-----') !== false &&
+               strlen($certificate) > 1000; // Reasonable minimum size
     }
 
     /**
@@ -216,22 +449,7 @@ class SNSController extends BaseController
             return response()->json(['error' => 'Invalid SES message format'], 400);
         }
 
-        // Validate the SES payload structure
-        $validationResult = $this->validateSESPayload($sesData);
-        if (!$validationResult['valid']) {
-            nlog('SNS Notification: SES payload validation failed', [
-                'errors' => $validationResult['errors'],
-                'payload' => $sesData
-            ]);
-            return response()->json(['error' => 'Invalid SES payload', 'details' => $validationResult['errors']], 400);
-        }
-
-        nlog('SNS Notification: Processing SES data', [
-            'notification_type' => $sesData['notificationType'] ?? $sesData['eventType'] ?? 'unknown',
-            'message_id' => $sesData['mail']['messageId'] ?? 'unknown'
-        ]);
-
-        // Extract company key from SES data
+        // Extract company key from SES data early
         $companyKey = $this->extractCompanyKeyFromSES($sesData);
         
         if (!$companyKey) {
@@ -241,12 +459,42 @@ class SNSController extends BaseController
             return response()->json(['error' => 'No company key found'], 400);
         }
 
+        // Resolve the company and get their specific SES topic ARN if configured
+        $company = $this->resolveCompany($companyKey);
+        if (!$company) {
+            nlog('SNS Notification: Company not found', ['company_key' => $companyKey]);
+            return response()->json(['error' => 'Company not found'], 400);
+        }
+
+        // Override the topic ARN with company-specific setting if available
+        $this->updateTopicArnForCompany($company);
+
+        // Validate the SES payload structure
+        $validationResult = $this->validateSESPayload($sesData);
+        if (!$validationResult['valid']) {
+            nlog('SNS Notification: SES payload validation failed', [
+                'errors' => $validationResult['errors'],
+                'payload' => $sesData,
+                'company_key' => $companyKey
+            ]);
+            return response()->json(['error' => 'Invalid SES payload', 'details' => $validationResult['errors']], 400);
+        }
+
+        nlog('SNS Notification: Processing SES data', [
+            'notification_type' => $sesData['notificationType'] ?? $sesData['eventType'] ?? 'unknown',
+            'message_id' => $sesData['mail']['messageId'] ?? 'unknown',
+            'company_key' => $companyKey,
+            'company_id' => $company->id,
+            'topic_arn' => $this->expectedTopicArn ?: 'using_company_specific'
+        ]);
+
         // Dispatch the SES webhook job for processing
         try {
             SESWebhook::dispatch($sesData);
             
             nlog('SNS Notification: SES webhook job dispatched successfully', [
                 'company_key' => $companyKey,
+                'company_id' => $company->id,
                 'message_id' => $sesData['mail']['messageId'] ?? 'unknown'
             ]);
             
@@ -255,7 +503,8 @@ class SNSController extends BaseController
         } catch (\Exception $e) {
             nlog('SNS Notification: Failed to dispatch SES webhook job', [
                 'error' => $e->getMessage(),
-                'company_key' => $companyKey
+                'company_key' => $companyKey,
+                'company_id' => $company->id
             ]);
             
             return response()->json(['error' => 'Failed to process webhook'], 500);
@@ -558,5 +807,86 @@ class SNSController extends BaseController
         }
         
         return true;
+    }
+
+    /**
+     * Resolve company by company key
+     * 
+     * @param string $companyKey
+     * @return \App\Models\Company|null
+     */
+    private function resolveCompany(string $companyKey): ?\App\Models\Company
+    {
+        try {
+            // Use MultiDB to find the company
+            $company = \App\Models\Company::where('company_key', $companyKey)->first();
+            
+            if ($company) {
+                nlog('SNS: Company resolved successfully', [
+                    'company_key' => $companyKey,
+                    'company_id' => $company->id,
+                    'company_name' => $company->name ?? 'unknown'
+                ]);
+                return $company;
+            }
+            
+            nlog('SNS: Company not found', ['company_key' => $companyKey]);
+            return null;
+            
+        } catch (\Exception $e) {
+            nlog('SNS: Error resolving company', [
+                'company_key' => $companyKey,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Update topic ARN based on company settings
+     * 
+     * @param \App\Models\Company $company
+     * @return void
+     */
+    private function updateTopicArnForCompany(\App\Models\Company $company): void
+    {
+        try {
+            // Check if company has SES topic ARN configured
+            $companyTopicArn = $company->settings->ses_topic_arn ?? null;
+            
+            if ($companyTopicArn) {
+                $this->expectedTopicArn = $companyTopicArn;
+                nlog('SNS: Using company-specific topic ARN', [
+                    'company_id' => $company->id,
+                    'company_key' => $company->company_key,
+                    'topic_arn' => $companyTopicArn
+                ]);
+            } else {
+                nlog('SNS: No company-specific topic ARN found, using global default', [
+                    'company_id' => $company->id,
+                    'company_key' => $company->company_key,
+                    'global_topic_arn' => config('services.sns.topic_arn', 'not_set')
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            nlog('SNS: Error updating topic ARN for company', [
+                'company_id' => $company->id,
+                'company_key' => $company->company_key,
+                'error' => $e->getMessage()
+            ]);
+            // Keep the global default if there's an error
+        }
+    }
+
+    /**
+     * Check if the expected topic ARN is company-specific.
+     * 
+     * @return bool
+     */
+    private function isCompanySpecificTopicArn(): bool
+    {
+        $globalTopicArn = config('services.sns.topic_arn', '');
+        return !empty($this->expectedTopicArn) && $this->expectedTopicArn !== $globalTopicArn;
     }
 }
