@@ -11,6 +11,7 @@
 |
 */
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SNSController;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\PingController;
 use App\Http\Controllers\SmtpController;
@@ -413,7 +414,7 @@ Route::group(['middleware' => ['throttle:api', 'token_auth', 'valid_json','local
     Route::post('settings/enable_two_factor', [TwoFactorController::class, 'enableTwoFactor']);
     Route::post('settings/disable_two_factor', [TwoFactorController::class, 'disableTwoFactor']);
 
-    Route::post('verify', [TwilioController::class, 'generate'])->name('verify.generate')->middleware('throttle:3,1');
+    Route::post('verify', [TwilioController::class, 'generate'])->name('verify.generate')->middleware('throttle:1,1');
     Route::post('verify/confirm', [TwilioController::class, 'confirm'])->name('verify.confirm');
 
     Route::resource('vendors', VendorController::class); // name = (vendors. index / create / show / update / destroy / edit
@@ -478,6 +479,7 @@ Route::match(['get', 'post'], 'payment_notification_webhook/{company_key}/{compa
     ->name('payment_notification_webhook');
 
 Route::post('api/v1/postmark_webhook', [PostMarkController::class, 'webhook'])->middleware('throttle:5000,1');
+Route::post('api/v1/sns_webhook', [SNSController::class, 'webhook'])->middleware('throttle:5000,1');
 Route::post('api/v1/postmark_inbound_webhook', [PostMarkController::class, 'inboundWebhook'])->middleware('throttle:1000,1');
 Route::post('api/v1/mailgun_webhook', [MailgunController::class, 'webhook'])->middleware('throttle:1000,1');
 Route::post('api/v1/mailgun_inbound_webhook', [MailgunController::class, 'inboundWebhook'])->middleware('throttle:1000,1');
