@@ -42,7 +42,6 @@ class PDF extends FPDI
             $this->Cell($this->GetPageWidth(), 5, $trans, 0, 0, 'R');
         } else {
             $this->SetX(0);
-            // $this->SetX(config('ninja.pdf_page_numbering_y_alignment')); // 10mm from left edge
             $this->Cell($this->GetPageWidth(), 5, $trans, 0, 0, 'C');
         }
     }
