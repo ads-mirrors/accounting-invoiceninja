@@ -128,9 +128,6 @@ class DeletePayment
                     }
 
                 }
-                elseif ($paymentable_invoice->status_id == Invoice::STATUS_REVERSED) {
-                    //do not mutate anything at this level!
-                }
                 elseif (! $paymentable_invoice->is_deleted) {
                     $paymentable_invoice->restore();
 
@@ -175,6 +172,10 @@ class DeletePayment
 
             });
 
+        }
+        elseif(floatval($this->payment->amount) == floatval($this->payment->applied)) {
+        //     //If there are no invoices associated with the payment, we should not be updating the clients paid to date amount 
+            $this->update_client_paid_to_date = false;
         }
 
         //sometimes the payment is NOT created properly, this catches the payment and prevents the paid to date reducing inappropriately.
