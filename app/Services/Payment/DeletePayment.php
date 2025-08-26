@@ -127,7 +127,11 @@ class DeletePayment
                         $paymentable_invoice->delete();
                     }
 
-                } elseif (! $paymentable_invoice->is_deleted) {
+                }
+                elseif ($paymentable_invoice->status_id == Invoice::STATUS_REVERSED) {
+                    //do not mutate anything at this level!
+                }
+                elseif (! $paymentable_invoice->is_deleted) {
                     $paymentable_invoice->restore();
 
                     $paymentable_invoice->service()
