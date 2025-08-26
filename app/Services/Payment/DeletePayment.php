@@ -174,7 +174,9 @@ class DeletePayment
 
         }
         elseif(floatval($this->payment->amount) == floatval($this->payment->applied)) {
-        //     //If there are no invoices associated with the payment, we should not be updating the clients paid to date amount 
+            // If there are no invoices associated with the payment, we should not be updating the clients paid to date amount
+            // The edge case handled here is when an invoice has been "reversed" an associated credit note is created, this is effectively the same 
+            // payment which can then be used _again_. So the first payment of a reversed invoice should NEVER reduce the paid to date amount.
             $this->update_client_paid_to_date = false;
         }
 
