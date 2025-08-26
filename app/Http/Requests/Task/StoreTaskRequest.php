@@ -133,7 +133,7 @@ class StoreTaskRequest extends Request
             }
         }
 
-        if (!isset($input['time_log']) || empty($input['time_log']) || $input['time_log'] == '{}') {
+        if (!isset($input['time_log']) || empty($input['time_log']) || $input['time_log'] == '{}' || $input['time_log'] == '[""]') {
             $input['time_log'] = json_encode([]);
         }
 
