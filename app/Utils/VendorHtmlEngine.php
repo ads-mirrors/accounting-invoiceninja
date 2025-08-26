@@ -117,7 +117,7 @@ class VendorHtmlEngine
         if (! $this->vendor->currency()) {
             throw new Exception(debug_backtrace()[1]['function'], 1);
         }
-
+        
         App::forgetInstance('translator');
         $t = app('translator');
         App::setLocale($this->vendor->locale());
