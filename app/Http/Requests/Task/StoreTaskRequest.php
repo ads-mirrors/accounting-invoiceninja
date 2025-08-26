@@ -114,6 +114,31 @@ class StoreTaskRequest extends Request
             $this->files->set('file', [$this->file('file')]);
         }
 
+        if(isset($input['time_log']) &&is_string($input['time_log'])) {
+            $input['time_log'] = json_decode($input['time_log'], true);
+        }
+
+        if(isset($input['time_log']) && is_array($input['time_log'])) {
+        
+            $time_logs = $input['time_log'];
+
+            foreach($time_logs as &$time_log) {
+                
+                if (is_string($time_log)) {
+                    continue; //catch if it isn't even a proper time log
+                }
+
+                $time_log[0] = intval($time_log[0]);
+                $time_log[1] = intval($time_log[1]);
+                $time_log[2] = strval($time_log[2] ?? '');
+                $time_log[3] = boolval($time_log[3] ?? true);
+
+            }
+
+            $input['time_log'] = json_encode($time_logs);
+
+        }
+
         /* Ensure the project is related */
         if (array_key_exists('project_id', $input) && isset($input['project_id'])) {
             $project = Project::withTrashed()->where('id', $input['project_id'])->company()->first();

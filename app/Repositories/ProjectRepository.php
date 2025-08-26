@@ -58,7 +58,10 @@ class ProjectRepository extends BaseRepository
                             $item->task_id = $task->hashed_id;
                             $item->tax_id = (string) Product::PRODUCT_TYPE_SERVICE;
                             $item->type_id = '2';
-
+                            $item->custom_value1 = $task->custom_value1;
+                            $item->custom_value2 = $task->custom_value2;
+                            $item->custom_value3 = $task->custom_value3;
+                            $item->custom_value4 = $task->custom_value4;
                             $lines[] = $item;
                         }
 
@@ -86,6 +89,10 @@ class ProjectRepository extends BaseRepository
                     $item->tax_id = (string) Product::PRODUCT_TYPE_PHYSICAL;
                     $item->expense_id = $expense->hashed_id;
                     $item->type_id = '1';
+                    $item->custom_value1 = $expense->custom_value1;
+                    $item->custom_value2 = $expense->custom_value2;
+                    $item->custom_value3 = $expense->custom_value3;
+                    $item->custom_value4 = $expense->custom_value4;
 
                     $lines[] = $item;
                 });
