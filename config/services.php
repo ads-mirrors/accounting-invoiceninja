@@ -77,6 +77,9 @@ return [
         'secret' => env('SES_AWS_SECRET_ACCESS_KEY'),
         'region' => env('SES_REGION', 'us-east-1'),
         'topic_arn' => env('SES_TOPIC_ARN', ''),
+        'from' => [
+            'address' => env('SES_FROM_ADDRESS', ''),
+        ],
     ],
 
     'sparkpost' => [
