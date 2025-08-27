@@ -22,6 +22,7 @@ use App\Http\ValidationRules\ValidSettingsRule;
 use App\Http\ValidationRules\Company\ValidSubdomain;
 use App\Http\ValidationRules\Company\ValidExpenseMailbox;
 use App\Http\ValidationRules\EInvoice\ValidCompanyScheme;
+use App\Rules\CommaSeparatedEmails;
 
 class UpdateCompanyRequest extends Request
 {
@@ -110,9 +111,11 @@ class UpdateCompanyRequest extends Request
         //         },
         //     ];
 
-        $rules['settings.ses_secret_key'] = 'required_if:settings.email_sending_method,client_ses';
-        $rules['settings.ses_access_key'] = 'required_if:settings.email_sending_method,client_ses';
-        $rules['settings.ses_region'] = 'required_if:settings.email_sending_method,client_ses';
+        $rules['settings.ses_secret_key'] = 'required_if:settings.email_sending_method,client_ses'; //ses specific rules
+        $rules['settings.ses_access_key'] = 'required_if:settings.email_sending_method,client_ses'; //ses specific rules
+        $rules['settings.ses_region'] = 'required_if:settings.email_sending_method,client_ses'; //ses specific rules
+        $rules['settings.reply_to_email'] = 'sometimes|nullable|email'; // ensures that the reply to email address is a valid email address
+        $rules['settings.bcc_email'] = ['sometimes', 'nullable', new \App\Rules\CommaSeparatedEmails]; //ensure that the BCC's are valid comma separated emails
 
         return $rules;
     }
