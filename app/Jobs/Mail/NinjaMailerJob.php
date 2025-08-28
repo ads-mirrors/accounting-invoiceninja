@@ -346,17 +346,12 @@ class NinjaMailerJob implements ShouldQueue
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->nmo->settings));
 
-        if(Ninja::isHosted() && $this->nmo?->transport == 'default') {
-            $this->mailer = config('mail.default');
-            return $this;
-        }
-
-        /** Force free/trials onto specific mail driver */
-        if ($this->nmo->settings->email_sending_method == 'default' && $this->company->account->isNewHostedAccount()) {
+        if(Ninja::isHosted() && $this->nmo?->transport == 'default' && ($this->company->account->isNewHostedAccount() || !$this->company->account->isPaid())) {
             $this->mailer = 'mailgun';
             $this->setHostedMailgunMailer();
             return $this;
         }
+
 
         if (Ninja::isHosted() && $this->company->account->isPaid() && $this->nmo->settings->email_sending_method == 'default') {
             //check if outlook.
@@ -398,10 +393,6 @@ class NinjaMailerJob implements ShouldQueue
             case 'mailgun':
                 $this->mailer = 'mailgun';
                 $this->setHostedMailgunMailer();
-                return $this;
-            case 'ses':
-                $this->mailer = 'ses';
-                $this->setHostedSesMailer();
                 return $this;
             case 'gmail':
                 $this->mailer = 'gmail';
@@ -584,20 +575,6 @@ class NinjaMailerJob implements ShouldQueue
 
     }
 
-    private function setHostedSesMailer()
-    {
-
-        if (property_exists($this->nmo->settings, 'email_from_name') && strlen($this->nmo->settings->email_from_name) > 1) {
-            $email_from_name = $this->nmo->settings->email_from_name;
-        } else {
-            $email_from_name = $this->company->present()->name();
-        }
-
-        $this->nmo
-            ->mailable
-            ->from(config('services.ses.from.address'), $email_from_name);
-
-    }
     /**
      * Configures Mailgun using client supplied secret
      * as the Mailer

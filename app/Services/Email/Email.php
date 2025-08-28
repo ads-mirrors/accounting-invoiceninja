@@ -546,20 +546,7 @@ class Email implements ShouldQueue
 
     }
 
-    private function setHostedSesMailer()
-    {
-                
-        if (property_exists($this->email_object->settings, 'email_from_name') && strlen($this->email_object->settings->email_from_name) > 1) {
-            $email_from_name = $this->email_object->settings->email_from_name;
-        } else {
-            $email_from_name = $this->company->present()->name();
-        }
 
-        $this->mailable
-            ->from(config('services.ses.from.address'), $email_from_name);
-
-    }
-    
     /**
      * Sets the mail driver to use and applies any specific configuration
      * the the mailable
@@ -568,7 +555,7 @@ class Email implements ShouldQueue
     {
 
         /** Force free/trials onto specific mail driver */
-        if ($this->email_object->settings->email_sending_method == 'default' && $this->company->account->isNewHostedAccount()) {
+        if ($this->email_object->settings->email_sending_method == 'default' && (!$this->company->account->isPaid() || $this->company->account->isNewHostedAccount())) {
             $this->mailer = 'mailgun';
             $this->setHostedMailgunMailer();
             return $this;
@@ -613,10 +600,6 @@ class Email implements ShouldQueue
             case 'mailgun':
                 $this->mailer = 'mailgun';
                 $this->setHostedMailgunMailer();
-                return $this;
-            case 'ses':
-                $this->mailer = 'ses';
-                $this->setHostedSesMailer();
                 return $this;
             case 'gmail':
                 $this->mailer = 'gmail';
