@@ -36,6 +36,8 @@ class Merge extends AbstractService
         nlog("balance pre {$this->client->balance}");
         nlog("paid_to_date pre {$this->client->paid_to_date}");
 
+        $mergeable_client = $this->mergable_client->present()->name();
+
         $this->client->balance += $this->mergable_client->balance;
         $this->client->paid_to_date += $this->mergable_client->paid_to_date;
         $this->client->save();
@@ -71,10 +73,13 @@ class Merge extends AbstractService
             }
         });
 
+
         $this->mergable_client->forceDelete();
 
         $this->client->credit_balance = $this->client->service()->getCreditBalance();
         $this->client->saveQuietly();
+
+        event(new \App\Events\Client\ClientWasMerged($mergeable_client, $this->client, $this->client->company, \App\Utils\Ninja::eventVars()));
 
         return $this->client;
     }

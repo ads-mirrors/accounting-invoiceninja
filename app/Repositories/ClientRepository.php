@@ -147,6 +147,12 @@ class ClientRepository extends BaseRepository
     public function purge($client)
     {
 
+        $purged_client = $client->present()->name();
+        $user = auth()->user() ?? $client->user;
+        $company = $client->company;
+        
+        event(new \App\Events\Client\ClientWasPurged($purged_client, $user, $company, \App\Utils\Ninja::eventVars()));
+        
         nlog("Purging client id => {$client->id} => {$client->number}");
 
         $client->contacts()->forceDelete();
