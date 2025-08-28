@@ -79,7 +79,7 @@ class Merge extends AbstractService
         $this->client->credit_balance = $this->client->service()->getCreditBalance();
         $this->client->saveQuietly();
 
-        event(new \App\Events\Client\ClientWasMerged($mergeable_client, $this->client, $this->client->company, \App\Utils\Ninja::eventVars()));
+        event(new \App\Events\Client\ClientWasMerged($mergeable_client, $this->client, $this->client->company, \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
 
         return $this->client;
     }

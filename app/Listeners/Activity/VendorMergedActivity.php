@@ -48,7 +48,7 @@ class VendorMergedActivity implements ShouldQueue
 
         $user_id = array_key_exists('user_id', $event->event_vars)
             ? $event->event_vars['user_id']
-            : $event->client->user_id;
+            : $event->vendor->user_id;
 
         $fields->vendor_id = $vendor->id;
         $fields->user_id = $user_id;

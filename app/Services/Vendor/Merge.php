@@ -58,7 +58,7 @@ class Merge extends AbstractService
 
         $this->mergable_vendor->forceDelete();
 
-        event(new \App\Events\Vendor\VendorWasMerged($_mergeable_vendor, $this->vendor, $this->vendor->company, \App\Utils\Ninja::eventVars()));
+        event(new \App\Events\Vendor\VendorWasMerged($_mergeable_vendor, $this->vendor, $this->vendor->company, \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
 
         return $this->vendor;
     }

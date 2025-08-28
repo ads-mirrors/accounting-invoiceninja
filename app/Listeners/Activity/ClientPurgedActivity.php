@@ -42,20 +42,17 @@ class ClientPurgedActivity implements ShouldQueue
     {
         MultiDB::setDb($event->company->db);
 
-        $client = $event->client;
-
         $fields = new stdClass();
 
         $user_id = array_key_exists('user_id', $event->event_vars)
             ? $event->event_vars['user_id']
-            : $event->client->user_id;
+            : $event->user->id;
 
-        $fields->client_id = $client->id;
         $fields->user_id = $user_id;
-        $fields->company_id = $client->company_id;
+        $fields->company_id = $event->company->id;
         $fields->activity_type_id = Activity::PURGE_CLIENT;
         $fields->notes = $event->purged_client;
 
-        $this->activity_repo->save($fields, $client, $event->event_vars);
+        $this->activity_repo->save($fields, $event->user, $event->event_vars);
     }
 }

@@ -150,8 +150,8 @@ class ClientRepository extends BaseRepository
         $purged_client = $client->present()->name();
         $user = auth()->user() ?? $client->user;
         $company = $client->company;
-        
-        event(new \App\Events\Client\ClientWasPurged($purged_client, $user, $company, \App\Utils\Ninja::eventVars()));
+
+        event(new \App\Events\Client\ClientWasPurged($purged_client, $user, $company, \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
         
         nlog("Purging client id => {$client->id} => {$client->number}");
 
