@@ -45,6 +45,9 @@ class Merge extends AbstractService
         nlog("balance post {$this->client->balance}");
         nlog("paid_to_date post {$this->client->paid_to_date}");
 
+        $event_vars = \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null);
+        $event_vars['client_hash'] = $this->mergable_client->client_hash;
+
         $this->updateLedger($this->mergable_client->balance);
 
         $this->mergable_client->activities()->update(['client_id' => $this->client->id]);
@@ -79,7 +82,7 @@ class Merge extends AbstractService
         $this->client->credit_balance = $this->client->service()->getCreditBalance();
         $this->client->saveQuietly();
 
-        event(new \App\Events\Client\ClientWasMerged($mergeable_client, $this->client, $this->client->company, \App\Utils\Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
+        event(new \App\Events\Client\ClientWasMerged($mergeable_client, $this->client, $this->client->company, $event_vars));
 
         return $this->client;
     }
