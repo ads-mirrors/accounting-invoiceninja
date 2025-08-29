@@ -147,7 +147,7 @@ class ZugferdEDocument extends AbstractService
      */
     private function setDocumentTaxes(): self
     {
-        if ($this->document->total_taxes == 0) {
+        if ((string) $this->document->total_taxes == '0') {
 
             $base_amount = 0;
             $tax_amount = 0;
