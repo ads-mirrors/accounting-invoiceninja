@@ -95,10 +95,11 @@ class ProjectReport extends BaseExport
 
         $ts = new TemplateService();
 
-        /** @var Project $_project */
+        /** @var ?Project $_project */
         $_project = $query->first();
 
-        $currency_code = $_project ? $_project->company->currency()->code : $this->company->currency()->code;
+        $currency_code = $_project?->client ? $_project->client->currency()->code : $this->company->currency()->code;
+
         $ts_instance = $ts->setCompany($this->company)
                     // ->setData($data)
                     ->processData($data)
