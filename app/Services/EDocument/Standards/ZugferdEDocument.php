@@ -147,6 +147,7 @@ class ZugferdEDocument extends AbstractService
      */
     private function setDocumentTaxes(): self
     {
+        
         if ((string) $this->document->total_taxes == '0') {
 
             $base_amount = 0;
@@ -262,6 +263,7 @@ class ZugferdEDocument extends AbstractService
         $item = $this->document->line_items[0] ?? null;
 
         if (is_null($item)) {
+            $this->tax_code = ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX;
             return $this;
         }
 
