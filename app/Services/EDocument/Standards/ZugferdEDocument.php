@@ -104,22 +104,22 @@ class ZugferdEDocument extends AbstractService
 
         if ($this->document->custom_surcharge1 > 0) {
             $surcharge = $this->document->uses_inclusive_taxes ? ($this->document->custom_surcharge1 / (1 + ($item["tax_rate"] / 100))) : $this->document->custom_surcharge1;
-            $this->xdocument->addDocumentAllowanceCharge($surcharge, true, $tax_code, "VAT", $item["tax_rate"]);
+            $this->xdocument->addDocumentAllowanceCharge($surcharge, true, $tax_code, "VAT", $item["tax_rate"],null,null,null,null,null,null, ctrans('texts.surcharge'));
         }
 
         if ($this->document->custom_surcharge2 > 0) {
             $surcharge = $this->document->uses_inclusive_taxes ? ($this->document->custom_surcharge2 / (1 + ($item["tax_rate"] / 100))) : $this->document->custom_surcharge2;
-            $this->xdocument->addDocumentAllowanceCharge($surcharge, true, $tax_code, "VAT", $item["tax_rate"]);
+            $this->xdocument->addDocumentAllowanceCharge($surcharge, true, $tax_code, "VAT", $item["tax_rate"],null,null,null,null,null,null, ctrans('texts.surcharge'));
         }
 
         if ($this->document->custom_surcharge3 > 0) {
             $surcharge = $this->document->uses_inclusive_taxes ? ($this->document->custom_surcharge3 / (1 + ($item["tax_rate"] / 100))) : $this->document->custom_surcharge3;
-            $this->xdocument->addDocumentAllowanceCharge($surcharge, true, $tax_code, "VAT", $item["tax_rate"]);
+            $this->xdocument->addDocumentAllowanceCharge($surcharge, true, $tax_code, "VAT", $item["tax_rate"],null,null,null,null,null,null, ctrans('texts.surcharge'));
         }
 
         if ($this->document->custom_surcharge4 > 0) {
             $surcharge = $this->document->uses_inclusive_taxes ? ($this->document->custom_surcharge4 / (1 + ($item["tax_rate"] / 100))) : $this->document->custom_surcharge4;
-            $this->xdocument->addDocumentAllowanceCharge($surcharge, true, $tax_code, "VAT", $item["tax_rate"]);
+            $this->xdocument->addDocumentAllowanceCharge($surcharge, true, $tax_code, "VAT", $item["tax_rate"],null,null,null,null,null,null, ctrans('texts.surcharge'));
         }
 
         return $this;
@@ -175,7 +175,8 @@ class ZugferdEDocument extends AbstractService
                     false,
                     $this->tax_code,
                     "VAT",
-                    0
+                    0,
+                    null,null,null,null,null,null, ctrans('texts.discount')
                 );
             }
 
@@ -215,7 +216,8 @@ class ZugferdEDocument extends AbstractService
                     false,
                     $this->getTaxType($item["tax_id"] ?? '2'),
                     "VAT",
-                    $item["tax_rate"]
+                    $item["tax_rate"],
+                    null,null,null,null,null,null,ctrans('texts.discount')
                 );
             }
 
@@ -270,7 +272,7 @@ class ZugferdEDocument extends AbstractService
             $this->tax_code =  ZugferdDutyTaxFeeCategories::EXEMPT_FROM_TAX;
             // $this->exemption_reason_code = "VATEX-EU-NOT-TAX";
             $this->exemption_reason_code = "VATEX-EU-O";
-            nlog("exemption_reason_code: {$this->exemption_reason_code}");
+            // nlog("exemption_reason_code: {$this->exemption_reason_code}");
         } elseif ($item->tax_id == '9') { //reverse charge
             $this->tax_code = ZugferdDutyTaxFeeCategories::VAT_REVERSE_CHARGE;
             $this->exemption_reason_code = "VATEX-EU-AE";
@@ -587,7 +589,7 @@ class ZugferdEDocument extends AbstractService
             } elseif (in_array($this->document->client->country->iso_3166_2, ["ES-CE", "ES-ML"])) {
                 $tax_type = ZugferdDutyTaxFeeCategories::TAX_FOR_PRODUCTION_SERVICES_AND_IMPORTATION_IN_CEUTA_AND_MELILLA;
             } else {
-                nlog("Unkown tax case for xinvoice");
+                // nlog("Unkown tax case for xinvoice");
                 $tax_type = ZugferdDutyTaxFeeCategories::STANDARD_RATE;
             }
         }
