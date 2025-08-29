@@ -415,7 +415,7 @@ Route::group(['middleware' => ['throttle:api', 'token_auth', 'valid_json','local
     Route::post('settings/disable_two_factor', [TwoFactorController::class, 'disableTwoFactor']);
 
     Route::post('verify', [TwilioController::class, 'generate'])->name('verify.generate')->middleware('throttle:1,1');
-    Route::post('verify/confirm', [TwilioController::class, 'confirm'])->name('verify.confirm');
+    Route::post('verify/confirm', [TwilioController::class, 'confirm'])->name('verify.confirm')->middleware('throttle:2,1');
 
     Route::resource('vendors', VendorController::class); // name = (vendors. index / create / show / update / destroy / edit
     Route::post('vendors/bulk', [VendorController::class, 'bulk'])->name('vendors.bulk');

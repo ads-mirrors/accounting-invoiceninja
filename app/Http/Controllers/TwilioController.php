@@ -26,6 +26,8 @@ class TwilioController extends BaseController
         '+23',
         '+21',
         '+17152567760',
+        '+93',
+        '+85',
     ];
 
     public function __construct()
