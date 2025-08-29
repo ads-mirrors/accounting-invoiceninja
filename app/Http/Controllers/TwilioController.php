@@ -231,7 +231,7 @@ class TwilioController extends BaseController
                 return response()->json(['message' => 'SMS verified'], 200);
             }
 
-            $user->google_2fa_secret = '';
+            $user->google_2fa_secret = null;
             $user->sms_verification_code = '';
             $user->save();
 
