@@ -555,7 +555,7 @@ class Email implements ShouldQueue
     {
 
         /** Force free/trials onto specific mail driver */
-        if ($this->email_object->settings->email_sending_method == 'default' && $this->company->account->isNewHostedAccount()) {
+        if ($this->email_object->settings->email_sending_method == 'default' && (!$this->company->account->isPaid() || $this->company->account->isNewHostedAccount())) {
             $this->mailer = 'mailgun';
             $this->setHostedMailgunMailer();
             return $this;

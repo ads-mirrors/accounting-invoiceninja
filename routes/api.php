@@ -12,6 +12,7 @@
 */
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SNSController;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\PreviewPurchaseOrderController;

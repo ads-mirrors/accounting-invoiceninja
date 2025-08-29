@@ -228,6 +228,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property-read int|null $users_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Vendor> $vendors
  * @property-read int|null $vendors_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Location> $locations
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Webhook> $webhooks
  * @method static \Illuminate\Database\Eloquent\Builder|Company where($query)
  * @method static \Illuminate\Database\Eloquent\Builder|Company find($query)

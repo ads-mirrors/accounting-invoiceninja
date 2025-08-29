@@ -346,17 +346,12 @@ class NinjaMailerJob implements ShouldQueue
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->nmo->settings));
 
-        if(Ninja::isHosted() && $this->nmo?->transport == 'default') {
-            $this->mailer = config('mail.default');
-            return $this;
-        }
-
-        /** Force free/trials onto specific mail driver */
-        if ($this->nmo->settings->email_sending_method == 'default' && $this->company->account->isNewHostedAccount()) {
+        if(Ninja::isHosted() && $this->nmo?->transport == 'default' && ($this->company->account->isNewHostedAccount() || !$this->company->account->isPaid())) {
             $this->mailer = 'mailgun';
             $this->setHostedMailgunMailer();
             return $this;
         }
+
 
         if (Ninja::isHosted() && $this->company->account->isPaid() && $this->nmo->settings->email_sending_method == 'default') {
             //check if outlook.

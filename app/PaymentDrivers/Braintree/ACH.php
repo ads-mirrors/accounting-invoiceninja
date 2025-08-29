@@ -197,7 +197,7 @@ class ACH implements MethodInterface, LivewireMethodInterface
 
     private function processUnsuccessfulPayment($response)
     {
-        $this->braintree->sendFailureMail($response->transaction->additionalProcessorResponse);
+        $this->braintree->sendFailureMail($response->transaction->additionalProcessorResponse ?? 'Unknown error occurred');
 
         $message = [
             'server_response' => $response,

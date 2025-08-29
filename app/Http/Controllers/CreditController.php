@@ -222,6 +222,15 @@ class CreditController extends BaseController
             if ($invoice) {
                 $invoice->status_id = Invoice::STATUS_REVERSED;
                 $invoice->save();
+                                    
+                //2025-08-25 after convert to a credit note, we need to delete the payments associated with the invoice.
+                $invoice->payments()->each(function ($p) {
+                    $p->pivot->forceDelete();
+                    $p->invoices()->each(function ($i) {
+                        $i->pivot->forceDelete();
+                    });
+                });
+
             }
 
         }
