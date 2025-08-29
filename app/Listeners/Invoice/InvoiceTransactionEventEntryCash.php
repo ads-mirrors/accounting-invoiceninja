@@ -93,80 +93,80 @@ class InvoiceTransactionEventEntryCash
      *
      * @param  mixed $invoice
      */
-    private function getCancelledMetaData($invoice)
-    {
+    // private function getCancelledMetaData($invoice)
+    // {
 
-        $calc = $invoice->calc();
+    //     $calc = $invoice->calc();
 
-        $details = [];
+    //     $details = [];
 
-        $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
+    //     $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
 
-        foreach ($taxes as $tax) {
-            $tax_detail = [
-                'tax_name' => $tax['name'],
-                'tax_rate' => $tax['tax_rate'],
-                'taxable_amount' => $tax['base_amount'] ?? $calc->getNetSubtotal(),
-                'tax_amount' => $this->calculateRatio($tax['total']),
-                'tax_amount_paid' => $this->calculateRatio($tax['total']),
-                'tax_amount_remaining' => 0,
-            ];
-            $details[] = $tax_detail;
-        }
+    //     foreach ($taxes as $tax) {
+    //         $tax_detail = [
+    //             'tax_name' => $tax['name'],
+    //             'tax_rate' => $tax['tax_rate'],
+    //             'taxable_amount' => $tax['base_amount'] ?? $calc->getNetSubtotal(),
+    //             'tax_amount' => $this->calculateRatio($tax['total']),
+    //             'tax_amount_paid' => $this->calculateRatio($tax['total']),
+    //             'tax_amount_remaining' => 0,
+    //         ];
+    //         $details[] = $tax_detail;
+    //     }
 
-        return new TransactionEventMetadata([
-            'tax_report' => [
-                'tax_details' => $details,
-                'payment_history' => $this->payments->toArray(),
-                'tax_summary' => [
-                    'total_taxes' => $invoice->total_taxes,
-                    'total_paid' => $this->getTotalTaxPaid($invoice),
-                    'status' => 'cancelled',
-                ],
-            ],
-        ]);
+    //     return new TransactionEventMetadata([
+    //         'tax_report' => [
+    //             'tax_details' => $details,
+    //             'payment_history' => $this->payments->toArray(),
+    //             'tax_summary' => [
+    //                 'total_taxes' => $invoice->total_taxes,
+    //                 'total_paid' => $this->getTotalTaxPaid($invoice),
+    //                 'status' => 'cancelled',
+    //             ],
+    //         ],
+    //     ]);
 
-    }
+    // }
 
     /**
      * Set all tax details to 0
      *
      * @param  mixed $invoice
      */
-    private function getDeletedMetaData($invoice)
-    {
+    // private function getDeletedMetaData($invoice)
+    // {
 
-        $calc = $invoice->calc();
+    //     $calc = $invoice->calc();
 
-        $details = [];
+    //     $details = [];
 
-        $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
+    //     $taxes = array_merge($calc->getTaxMap()->merge($calc->getTotalTaxMap())->toArray());
 
-        foreach ($taxes as $tax) {
-            $tax_detail = [
-                'tax_name' => $tax['name'],
-                'tax_rate' => $tax['tax_rate'],
-                'taxable_amount' => $tax['base_amount'] ?? $calc->getNetSubtotal(),
-                'tax_amount' => $tax['total'],
-                'tax_amount_paid' => $this->calculateRatio($tax['total']),
-                'tax_amount_remaining' => 0,
-            ];
-            $details[] = $tax_detail;
-        }
+    //     foreach ($taxes as $tax) {
+    //         $tax_detail = [
+    //             'tax_name' => $tax['name'],
+    //             'tax_rate' => $tax['tax_rate'],
+    //             'taxable_amount' => $tax['base_amount'] ?? $calc->getNetSubtotal(),
+    //             'tax_amount' => $tax['total'],
+    //             'tax_amount_paid' => $this->calculateRatio($tax['total']),
+    //             'tax_amount_remaining' => 0,
+    //         ];
+    //         $details[] = $tax_detail;
+    //     }
 
-        return new TransactionEventMetadata([
-            'tax_report' => [
-                'tax_details' => $details,
-                'payment_history' => $this->payments->toArray(),
-                'tax_summary' => [
-                    'total_taxes' => $invoice->total_taxes,
-                    'total_paid' => $this->getTotalTaxPaid($invoice),0,
-                    'status' => 'deleted',
-                ],
-            ],
-        ]);
+    //     return new TransactionEventMetadata([
+    //         'tax_report' => [
+    //             'tax_details' => $details,
+    //             'payment_history' => $this->payments->toArray(),
+    //             'tax_summary' => [
+    //                 'total_taxes' => $invoice->total_taxes,
+    //                 'total_paid' => $this->getTotalTaxPaid($invoice),0,
+    //                 'status' => 'deleted',
+    //             ],
+    //         ],
+    //     ]);
 
-    }
+    // }
 
     private function getMetadata($invoice)
     {

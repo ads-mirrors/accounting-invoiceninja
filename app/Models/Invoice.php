@@ -45,6 +45,7 @@ use App\Utils\Number;
  * @property int $status_id
  * @property int|null $project_id
  * @property int|null $vendor_id
+ * @property int|null $location_id
  * @property int|null $recurring_id
  * @property int|null $design_id
  * @property string|null $number

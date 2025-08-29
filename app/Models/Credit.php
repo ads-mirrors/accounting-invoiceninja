@@ -93,6 +93,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $reminder3_sent
  * @property string|null $reminder_last_sent
  * @property float $paid_to_date
+ * @property int|null $location_id
+ * @property object|null $e_invoice
+ * @property object|null $tax_data
  * @property int|null $subscription_id
  * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property int|null $activities_count

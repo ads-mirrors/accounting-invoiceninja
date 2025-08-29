@@ -554,7 +554,9 @@ class Account extends BaseModel
                     $nmo->company = $this->companies()->first();
                     $nmo->settings = $this->companies()->first()->settings;
                     $nmo->to_user = $this->companies()->first()->owner();
-                    NinjaMailerJob::dispatch($nmo, true);
+                    // NinjaMailerJob::dispatch($nmo, true);
+
+                    (new NinjaMailerJob($nmo, true))->handle();
 
                     Cache::put("throttle_notified:{$this->key}", true, 60 * 60 * 24);
 

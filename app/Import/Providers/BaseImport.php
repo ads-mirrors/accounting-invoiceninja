@@ -751,6 +751,7 @@ class BaseImport
         $invoice = $invoice
             ->service()
             ->markSent()
+            ->fillDefaults()
             ->save();
 
         if ($invoice->status_id <= Invoice::STATUS_SENT && $invoice->amount > 0) {

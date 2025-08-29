@@ -281,6 +281,13 @@ class Activity extends StaticModel
     public const EMAIL_CREDIT = 149;
 
     public const ACCOUNT_DELETED = 150;
+
+    public const MERGE_CLIENT = 151;
+
+    public const MERGE_VENDOR = 152;
+
+    public const PURGE_CLIENT = 153;
+
     
     protected $casts = [
         'is_system' => 'boolean',

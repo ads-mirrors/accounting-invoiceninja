@@ -42,6 +42,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $status_id
  * @property int|null $project_id
  * @property int|null $vendor_id
+ * @property int|null $location_id
  * @property int|null $recurring_id
  * @property int|null $design_id
  * @property int|null $invoice_id

@@ -36,6 +36,7 @@ use App\Models\Presenters\RecurringInvoicePresenter;
  * @property int|null $project_id
  * @property int|null $vendor_id
  * @property int $status_id
+ * @property int|null $location_id
  * @property string|null $number
  * @property float $discount
  * @property bool $is_amount_discount

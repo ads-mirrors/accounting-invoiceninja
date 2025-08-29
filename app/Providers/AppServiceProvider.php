@@ -78,7 +78,7 @@ class AppServiceProvider extends ServiceProvider
 
         Livewire::setUpdateRoute(function ($handle) {
             return Route::post('/livewire/update', $handle)
-                ->middleware('client');
+                ->middleware(['client','throttle:1000,1']);
         });
 
         /* Ensure we don't have stale state in jobs */

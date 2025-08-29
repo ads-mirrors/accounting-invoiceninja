@@ -69,21 +69,21 @@ class ReportExportController extends BaseController
     }
 
      
-    private function isXlsxData($fileData)
-    {
-        // Check minimum size (XLSX files are typically > 1KB)
-        if (strlen($fileData) < 1024) {
-            return false;
-        }
+    // private function isXlsxData($fileData)
+    // {
+    //     // Check minimum size (XLSX files are typically > 1KB)
+    //     if (strlen($fileData) < 1024) {
+    //         return false;
+    //     }
 
-        // Check ZIP signature
-        $header = substr($fileData, 0, 4);
-        if ($header !== 'PK' . chr(3) . chr(4)) {
-            return false;
-        }
+    //     // Check ZIP signature
+    //     $header = substr($fileData, 0, 4);
+    //     if ($header !== 'PK' . chr(3) . chr(4)) {
+    //         return false;
+    //     }
 
-        // Check for XLSX-specific content
-        return strpos($fileData, '[Content_Types].xml') !== false;
-    }
+    //     // Check for XLSX-specific content
+    //     return strpos($fileData, '[Content_Types].xml') !== false;
+    // }
 
 }
