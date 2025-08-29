@@ -36,23 +36,21 @@ class PDF extends FPDI
         
         // Calculate X position with offset
         $base_x = config('ninja.pdf_page_numbering_x_alignment');
-        $x_position = $base_x + $this->x_offset;
         
         // Set X position based on alignment
         if ($this->text_alignment == 'L') {
-            $this->SetX($x_position);
+            $this->SetX($this->GetX() + $base_x);
             // Adjust cell width to account for X offset
-            $cell_width = $this->GetPageWidth() - $x_position - 10;
+            $cell_width = $this->GetPageWidth();
             $this->Cell($cell_width, 5, $trans, 0, 0, 'L');
         } elseif ($this->text_alignment == 'R') {
-            $this->SetX($x_position);
+            $this->SetX($this->GetX() + $base_x);
             // For right alignment, calculate width from X position to right edge
-            $cell_width = $this->GetPageWidth() - $x_position;
+            $cell_width = $this->GetPageWidth();
             $this->Cell($cell_width, 5, $trans, 0, 0, 'R');
         } else {
-            $this->SetX($x_position);
             // For center alignment, calculate appropriate width
-            $cell_width = $this->GetPageWidth() - ($x_position * 2);
+            $cell_width = $this->GetPageWidth();
             $this->Cell($cell_width, 5, $trans, 0, 0, 'C');
         }
     }
