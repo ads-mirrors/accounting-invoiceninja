@@ -60,7 +60,7 @@
         "halaxa/json-machine": "^0.7.0",
         "hashids/hashids": "^4.0",
         "hedii/laravel-gelf-logger": "^9",
-        "horstoeko/orderx": "dev-master",
+        "horstoeko/orderx": "^1",
         "horstoeko/zugferd": "^1",
         "horstoeko/zugferdvisualizer": "^1",
         "hyvor/php-json-exporter": "^0.0.3",
@@ -68,7 +68,8 @@
         "intervention/image": "^2.5",
         "invoiceninja/einvoice": "dev-main",
         "invoiceninja/inspector": "^3.0",
-        "invoiceninja/ubl_invoice": "^2",
+        "invoiceninja/ubl_invoice": "^3",
+        "invoiceninja/admin-api": "dev-main",
         "josemmo/facturae-php": "^1.7",
         "laracasts/presenter": "^0.2.1",
         "laravel/framework": "^v11",
@@ -213,10 +214,6 @@
         {
             "type": "vcs",
             "url": "https://github.com/invoiceninja/einvoice"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/turbo124/orderx"
         },
         {
             "type": "vcs",
