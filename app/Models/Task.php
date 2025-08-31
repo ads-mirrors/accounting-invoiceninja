@@ -174,6 +174,7 @@ class Task extends BaseModel
             'custom_value4' => (string) $this->custom_value4,
             'company_key' => $this->company->company_key,
             'time_log' => $this->normalizeTimeLog($this->time_log),
+            'calculated_start_date' => (string) $this->calculated_start_date,
         ];
 
         return $data;
@@ -220,6 +221,36 @@ class Task extends BaseModel
     public function getScoutKey()
     {
         return $this->company->db.":".$this->id;
+    }
+
+    /**
+     * Example: Search tasks by time log descriptions
+     */
+    public static function searchTimeLogs(string $query)
+    {
+        return static::search($query)
+            ->where('time_log.description', $query)
+            ->take(20);
+    }
+
+    /**
+     * Example: Search for running tasks
+     */
+    public static function searchRunningTasks()
+    {
+        return static::search('')
+            ->where('time_log.is_running', true)
+            ->take(50);
+    }
+
+    /**
+     * Example: Search for billable tasks
+     */
+    public static function searchBillableTasks()
+    {
+        return static::search('')
+            ->where('time_log.billable', true)
+            ->take(50);
     }
 
     /**
