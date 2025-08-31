@@ -67,7 +67,6 @@
         "intervention/image": "^2.5",
         "invoiceninja/einvoice": "dev-main",
         "invoiceninja/ubl_invoice": "^3",
-        "invoiceninja/admin-api": "dev-main",
         "josemmo/facturae-php": "^1.7",
         "laracasts/presenter": "^0.2.1",
         "laravel/framework": "^v11",
@@ -222,8 +221,8 @@
             "url": "https://github.com/turbo124/snappdf"
         },
         {
-            "type": "vcs",
-            "url": "https://github.com/invoiceninja/admin-api"
+            "type": "path",
+            "url": "../admin-api"
         }
     ],
     "minimum-stability": "dev",

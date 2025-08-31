@@ -16,6 +16,8 @@ use Carbon\CarbonInterval;
 use App\Models\CompanyUser;
 use Illuminate\Support\Carbon;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\App;
+use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Libraries\Currency\Conversion\CurrencyApi;
 
@@ -105,6 +107,7 @@ class Task extends BaseModel
     use MakesHash;
     use SoftDeletes;
     use Filterable;
+    use Searchable;
 
     protected $fillable = [
         'client_id',
@@ -145,6 +148,78 @@ class Task extends BaseModel
     public function getEntityType()
     {
         return self::class;
+    }
+
+    public function toSearchableArray()
+    {
+        $locale = $this->company->locale();
+
+        App::setLocale($locale);
+
+        $project = $this->project ? " | [ {$this->project->name} ]" : ' ';
+        $client = $this->client ? " | {$this->client->present()->name()} ]" : ' ';
+
+        // Get basic data
+        $data = [
+            'id' => $this->company->db.":".$this->id,
+            'name' => ctrans('texts.task') . " " . ($this->number ?? '') . $project . $client,
+            'hashed_id' => $this->hashed_id,
+            'number' => (string)$this->number,
+            'description' => (string)$this->description,
+            'task_rate' => (float) $this->rate,
+            'is_deleted' => (bool) $this->is_deleted,
+            'custom_value1' => (string) $this->custom_value1,
+            'custom_value2' => (string) $this->custom_value2,
+            'custom_value3' => (string) $this->custom_value3,
+            'custom_value4' => (string) $this->custom_value4,
+            'company_key' => $this->company->company_key,
+            'time_log' => $this->normalizeTimeLog($this->time_log),
+        ];
+
+        return $data;
+    }
+
+    /**
+     * Normalize time_log for Elasticsearch indexing
+     * Handles polymorphic structure: [start, end?, description?, billable?]
+     */
+    private function normalizeTimeLog($time_log): array
+    {
+        // Handle null/empty cases
+        if (empty($time_log)) {
+            return [];
+        }
+
+        $logs = json_decode($time_log, true);
+
+        // Validate decoded data
+        if (!is_array($logs) || empty($logs)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($logs as $log) {
+            // Skip invalid entries
+            if (!is_array($log) || !isset($log[0])) {
+                continue;
+            }
+
+            $normalized[] = [
+                'start_time' => (int) $log[0],
+                'end_time' => isset($log[1]) && $log[1] !== 0 ? (int) $log[1] : null,
+                'description' => isset($log[2]) ? trim((string) $log[2]) : '',
+                'billable' => isset($log[3]) ? (bool) $log[3] : false,
+                'is_running' => isset($log[1]) && $log[1] === 0,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    public function getScoutKey()
+    {
+        return $this->company->db.":".$this->id;
     }
 
     /**
