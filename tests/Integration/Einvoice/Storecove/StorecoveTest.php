@@ -490,7 +490,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $arr = $this->removeEmptyValues($arr);
 
-        nlog($arr);
+        // nlog($arr);
         
     }
 
@@ -1744,7 +1744,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         // $identifiers = $p->getStorecoveMeta();
 
@@ -1779,7 +1779,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1809,7 +1809,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1819,7 +1819,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         //test individual sending
 
-        nlog("Individual");
+        // nlog("Individual");
 
         $invoice = $this->createITData(false);
 
@@ -1837,7 +1837,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1870,7 +1870,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1901,7 +1901,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1932,7 +1932,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = [
           "routing" => [
@@ -1971,7 +1971,7 @@ $this->assertTrue(in_array($item->tax_id, ['1','2']));
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = [
           "routing" => [

@@ -1181,13 +1181,12 @@ $this->account->forceDelete();
 
         config(['queue.default' => 'redis']);
 
-        Credit::factory()->create([
+        Credit::factory()->count(100)->create([
                 'user_id' => $this->user->id,
                 'company_id' => $this->company->id,
                 'client_id' => $this->client->id,
                 'amount' => 100,
                 'balance' => 50,
-                'number' => '1234',
                 'status_id' => 2,
                 'discount' => 10,
                 'po_number' => '1234',
