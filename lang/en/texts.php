@@ -5625,7 +5625,9 @@ $lang = array(
     'lifecycle' => 'Lifecycle',
     'order_columns' => 'Order Columns',
     'topic_arn' => 'Topic ARN',
-
+    'lang_Catalan' => 'Catalan',
+    'lang_Afrikaans' => 'Afrikaans',
+    'lang_Indonesian' => 'Indonesian',
 );
 
 return $lang;
