@@ -5622,6 +5622,10 @@ $lang = array(
     'activity_151' => 'Client :notes merged into :client by :user',
     'activity_152' => 'Vendor :notes merged into :vendor by :user',
     'activity_153' => 'Client :notes purged by :user',
+    'lifecycle' => 'Lifecycle',
+    'order_columns' => 'Order Columns',
+    'topic_arn' => 'Topic ARN',
+
 );
 
 return $lang;

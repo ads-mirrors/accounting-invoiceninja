@@ -394,6 +394,14 @@ class NinjaMailerJob implements ShouldQueue
                 $this->mailer = 'mailgun';
                 $this->setHostedMailgunMailer();
                 return $this;
+            case 'ses':
+                $this->mailer = 'ses';
+                $this->setHostedSesMailer();
+                return $this;
+            // case 'client_ses':
+            //     $this->mailer = 'ses';
+            //     $this->setSesMailer();
+            //     return $this;
             case 'gmail':
                 $this->mailer = 'gmail';
                 $this->setGmailMailer();
@@ -428,6 +436,22 @@ class NinjaMailerJob implements ShouldQueue
         }
 
         return $this;
+    }
+
+
+    private function setHostedSesMailer()
+    {
+
+        if (property_exists($this->nmo->settings, 'email_from_name') && strlen($this->nmo->settings->email_from_name) > 1) {
+            $email_from_name = $this->nmo->settings->email_from_name;
+        } else {
+            $email_from_name = $this->company->present()->name();
+        }
+
+        $this->nmo
+            ->mailable
+            ->from(config('services.ses.from.address'), $email_from_name);
+
     }
 
     private function configureSmtpMailer()
