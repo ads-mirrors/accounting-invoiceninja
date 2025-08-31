@@ -5628,6 +5628,7 @@ $lang = array(
     'lang_Catalan' => 'Catalan',
     'lang_Afrikaans' => 'Afrikaans',
     'lang_Indonesian' => 'Indonesian',
+    'replaced' => 'Replaced',
 );
 
 return $lang;
