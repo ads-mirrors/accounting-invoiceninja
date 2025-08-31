@@ -207,7 +207,7 @@ class Task extends BaseModel
 
             $normalized[] = [
                 'start_time' => (int) $log[0],
-                'end_time' => isset($log[1]) && $log[1] !== 0 ? (int) $log[1] : null,
+                'end_time' => isset($log[1]) && $log[1] !== 0 ? (int) $log[1] : 0,
                 'description' => isset($log[2]) ? trim((string) $log[2]) : '',
                 'billable' => isset($log[3]) ? (bool) $log[3] : false,
                 'is_running' => isset($log[1]) && $log[1] === 0,

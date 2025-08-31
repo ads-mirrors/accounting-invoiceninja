@@ -41,16 +41,16 @@ class PDF extends FPDI
         if ($this->text_alignment == 'L') {
             $this->SetX($this->GetX() + $base_x);
             // Adjust cell width to account for X offset
-            $cell_width = $this->GetPageWidth();
+            $cell_width = $this->GetPageWidth() + $base_x;
             $this->Cell($cell_width, 5, $trans, 0, 0, 'L');
         } elseif ($this->text_alignment == 'R') {
             $this->SetX($this->GetX() + $base_x);
             // For right alignment, calculate width from X position to right edge
-            $cell_width = $this->GetPageWidth();
+            $cell_width = $this->GetPageWidth() + $base_x;
             $this->Cell($cell_width, 5, $trans, 0, 0, 'R');
         } else {
             // For center alignment, calculate appropriate width
-            $cell_width = $this->GetPageWidth();
+            $cell_width = $this->GetPageWidth() + $base_x;
             $this->Cell($cell_width, 5, $trans, 0, 0, 'C');
         }
     }
