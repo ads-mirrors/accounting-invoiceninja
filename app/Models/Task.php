@@ -224,36 +224,6 @@ class Task extends BaseModel
     }
 
     /**
-     * Example: Search tasks by time log descriptions
-     */
-    public static function searchTimeLogs(string $query)
-    {
-        return static::search($query)
-            ->where('time_log.description', $query)
-            ->take(20);
-    }
-
-    /**
-     * Example: Search for running tasks
-     */
-    public static function searchRunningTasks()
-    {
-        return static::search('')
-            ->where('time_log.is_running', true)
-            ->take(50);
-    }
-
-    /**
-     * Example: Search for billable tasks
-     */
-    public static function searchBillableTasks()
-    {
-        return static::search('')
-            ->where('time_log.billable', true)
-            ->take(50);
-    }
-
-    /**
      * Get all of the users that belong to the team.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
