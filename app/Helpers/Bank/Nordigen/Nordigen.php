@@ -180,6 +180,9 @@ class Nordigen
     
     /**
      * validAgreement
+     * @param string $institution_id
+     * @param array $_accounts
+     * @return array|null
      * @todo - very expensive!
      */
     public function validAgreement($institution_id, $_accounts)
@@ -188,11 +191,13 @@ class Nordigen
         $nc = new \App\Helpers\Bank\Nordigen\Http\NordigenClient($this->client->getAccessToken());
         $requisitions = $nc->getAllRequisitions();
 
-        $requisitions->filter(function($requisition) use ($institution_id, $_accounts){
+        $requisition = $requisitions->filter(function($requisition) use ($institution_id, $_accounts){
             if($requisition['institution_id'] == $institution_id && !empty(array_intersect($requisition['accounts'], $_accounts))){
                 return $requisition;
             }
         });
+
+        return $requisition->first()->toArray() ??  null;
         
     }
 

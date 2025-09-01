@@ -143,7 +143,7 @@ class NordigenClient
             $params['offset'] = $offset;
         }
 
-        $response = $this->httpClient->get("{$this->baseUrl}/agreements/", $params);
+        $response = $this->httpClient->get("{$this->baseUrl}/agreements/enduser", $params);
         
         return $this->handlePaginatedResponse($response);
     }
@@ -153,7 +153,7 @@ class NordigenClient
      */
     public function getAgreement(string $agreementId): ?array
     {
-        $response = $this->httpClient->get("{$this->baseUrl}/agreements/{$agreementId}/");
+        $response = $this->httpClient->get("{$this->baseUrl}/agreements/enduser{$agreementId}/");
         
         return $this->handleResponse($response);
     }
@@ -163,7 +163,7 @@ class NordigenClient
      */
     public function createAgreement(array $data): ?array
     {
-        $response = $this->httpClient->post("{$this->baseUrl}/agreements/", $data);
+        $response = $this->httpClient->post("{$this->baseUrl}/agreements/enduser", $data);
         
         return $this->handleResponse($response);
     }
@@ -173,7 +173,7 @@ class NordigenClient
      */
     public function updateAgreement(string $agreementId, array $data): ?array
     {
-        $response = $this->httpClient->put("{$this->baseUrl}/agreements/{$agreementId}/", $data);
+        $response = $this->httpClient->put("{$this->baseUrl}/agreements/enduser/{$agreementId}/", $data);
         
         return $this->handleResponse($response);
     }
@@ -183,7 +183,7 @@ class NordigenClient
      */
     public function deleteAgreement(string $agreementId): bool
     {
-        $response = $this->httpClient->delete("{$this->baseUrl}/agreements/{$agreementId}/");
+        $response = $this->httpClient->delete("{$this->baseUrl}/agreements/enduser/{$agreementId}/");
         
         return $response->successful();
     }
