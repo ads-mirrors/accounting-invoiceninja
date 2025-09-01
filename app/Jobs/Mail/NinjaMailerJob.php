@@ -66,6 +66,8 @@ class NinjaMailerJob implements ShouldQueue
 
     protected $client_brevo_secret = false;
 
+    protected $client_ses_secret = false;
+
     public function __construct(public ?NinjaMailerObject $nmo, public bool $override = false)
     {
     }
@@ -136,6 +138,10 @@ class NinjaMailerJob implements ShouldQueue
 
             if ($this->client_brevo_secret) {
                 $mailer->brevo_config($this->client_brevo_secret);
+            }
+
+            if($this->client_ses_secret) {
+                $mailer->ses_config($this->nmo->settings->ses_access_key, $this->nmo->settings->ses_secret_key, $this->nmo->settings->ses_region, $this->nmo->settings->ses_topic_arn);
             }
 
             $mailable = $this->nmo->mailable;
@@ -398,10 +404,11 @@ class NinjaMailerJob implements ShouldQueue
                 $this->mailer = 'ses';
                 $this->setHostedSesMailer();
                 return $this;
-            // case 'client_ses':
-            //     $this->mailer = 'ses';
-            //     $this->setSesMailer();
-            //     return $this;
+            case 'client_ses':
+                $this->mailer = 'ses';
+                $this->client_ses_secret = true;
+                $this->setSesMailer();
+                return $this;
             case 'gmail':
                 $this->mailer = 'gmail';
                 $this->setGmailMailer();
@@ -545,6 +552,8 @@ class NinjaMailerJob implements ShouldQueue
 
         $this->client_brevo_secret = false;
 
+        $this->client_ses_secret = false;
+
         //always dump the drivers to prevent reuse
         app('mail.manager')->forgetMailers();
     }
@@ -644,6 +653,20 @@ class NinjaMailerJob implements ShouldQueue
         $this->nmo
             ->mailable
             ->from($sending_email, $sending_user);
+    }
+
+    private function setSesMailer(): self
+    {
+        $this->mailer = 'ses';
+
+        $user = $this->resolveSendingUser();
+        $sending_user = (isset($this->nmo->settings->email_from_name) && strlen($this->nmo->settings->email_from_name) > 2) ? $this->nmo->settings->email_from_name : $user->name();
+
+        $this->nmo
+            ->mailable
+            ->from($this->nmo->settings->ses_from_address, $sending_user);
+
+            return $this;
     }
 
     /**
@@ -788,7 +811,7 @@ class NinjaMailerJob implements ShouldQueue
         }
 
         /* GMail users are uncapped */
-        if (Ninja::isHosted() && (in_array($this->nmo->settings->email_sending_method, ['gmail', 'office365', 'client_postmark', 'client_mailgun', 'client_brevo']))) {
+        if (Ninja::isHosted() && (in_array($this->nmo->settings->email_sending_method, ['gmail', 'office365', 'client_postmark', 'client_mailgun', 'client_brevo', 'client_ses']))) {
             return false;
         }
 
