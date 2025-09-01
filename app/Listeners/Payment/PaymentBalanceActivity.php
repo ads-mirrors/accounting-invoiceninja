@@ -26,6 +26,8 @@ class PaymentBalanceActivity implements ShouldQueue
     
     public $delay = 5;
     
+    public $deleteWhenMissingModels = true;
+
     /**
      * Create the event listener.
      *
