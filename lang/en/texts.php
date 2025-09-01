@@ -5629,6 +5629,8 @@ $lang = array(
     'lang_Afrikaans' => 'Afrikaans',
     'lang_Indonesian' => 'Indonesian',
     'replaced' => 'Replaced',
+    'ses_from_address' => 'SES From Address',
+    'ses_from_address_help' => 'The Sending Email Address, must be verified in AWS',
 );
 
 return $lang;

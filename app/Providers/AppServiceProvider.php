@@ -121,6 +121,7 @@ class AppServiceProvider extends ServiceProvider
             return $this;
         });
 
+        
         Mail::extend('brevo', function () {
             return (new BrevoTransportFactory())->create(
                 new Dsn(
@@ -141,6 +142,30 @@ class AppServiceProvider extends ServiceProvider
                     )
                 )
             );
+
+            return $this;
+        });
+
+        // Macro to configure SES with runtime credentials
+        Mailer::macro('ses_config', function (string $key, string $secret, string $region = 'us-east-1', ?string $topic_arn = null) {
+            $config = [
+                'key' => $key,
+                'secret' => $secret,
+                'region' => $region,
+                'version' => 'latest',
+                'service' => 'email',
+            ];
+            
+            $options = [];
+            if ($topic_arn) {
+                $options['ConfigurationSetName'] = $topic_arn;
+            }
+            
+            $sesClient = new \Aws\Ses\SesClient($config);
+            $transport = new \Illuminate\Mail\Transport\SesTransport($sesClient, $options);
+            
+            // @phpstan-ignore /** @phpstan-ignore-next-line **/
+            Mailer::setSymfonyTransport($transport);
 
             return $this;
         });
