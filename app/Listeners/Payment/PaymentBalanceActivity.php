@@ -57,7 +57,7 @@ class PaymentBalanceActivity implements ShouldQueue
     public function failed($exception)
     {
         if ($exception) {
-            nlog('PaymentBalanceActivity failed', ['exception' => $exception]);
+            nlog('PaymentBalanceActivity failed', ['exception' => $exception->getMessage()]);
         }
 
         // config(['queue.failed.driver' => null]);
