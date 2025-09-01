@@ -177,7 +177,11 @@ class Nordigen
         );
     }
 
-
+    
+    /**
+     * validAgreement
+     * @todo - very expensive!
+     */
     public function validAgreement($institution_id, $_accounts)
     {
 

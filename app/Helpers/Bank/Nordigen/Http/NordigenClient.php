@@ -89,21 +89,44 @@ class NordigenClient
         $allRequisitions = collect();
         $offset = null;
         $limit = 100;
+        $maxIterations = 1000; // Safety limit to prevent infinite loops
+        $iteration = 0;
 
         do {
+            $iteration++;
+            
+            // Safety check to prevent infinite loops
+            if ($iteration > $maxIterations) {
+                nlog("getAllRequisitions: Maximum iterations reached ({$maxIterations}), breaking to prevent infinite loop");
+                break;
+            }
+
             $requisitions = $this->getRequisitions($limit, $offset);
             
-            nlog($requisitions);
             if ($requisitions->isEmpty()) {
                 break;
             }
 
             $allRequisitions = $allRequisitions->merge($requisitions);
             
+            // Check if we got fewer results than requested (end of data)
+            if ($requisitions->count() < $limit) {
+                break;
+            }
+            
+            // Use the last requisition's ID as the offset for cursor-based pagination
             $lastRequisition = $requisitions->last();
-            $offset = $lastRequisition['id'] ?? null;
+            $newOffset = $lastRequisition['id'] ?? null;
+            
+            // Check if we're making progress (offset is changing)
+            if ($newOffset === $offset) {
+                nlog("getAllRequisitions: Offset not changing, likely stuck in loop. Breaking.");
+                break;
+            }
+            
+            $offset = $newOffset;
 
-        } while ($requisitions->count() === $limit && $offset);
+        } while ($offset);
 
         return $allRequisitions;
     }
@@ -849,6 +872,8 @@ class NordigenClient
     
         return collect($data);
     }
+
+
 
     /**
      * Handle single response

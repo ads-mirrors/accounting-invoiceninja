@@ -39,11 +39,11 @@ class BulkTaskRequest extends Request
         $user = auth()->user();
 
         return [
-            'action' => 'required|string|in:archive,restore,delete,bulk_update,template',
+            'action' => 'required|string|in:archive,restore,delete,bulk_update,template,start,stop',
             'template' => 'sometimes|string',
             'template_id' => 'sometimes|string',
             'send_email' => 'sometimes|bool',
-            'ids' => ['required','bail','array', Rule::exists('tasks', 'id')->where('company_id', $user->company()->id)],
+            'ids' => ['required','bail','array'],
             'column' => ['required_if:action,bulk_update', 'string', Rule::in(\App\Models\Task::$bulk_update_columns)],
             'new_value' => ['required_if:action,bulk_update|string'],
         ];
