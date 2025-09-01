@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -13,7 +14,7 @@ namespace App\Models;
 
 use App\Utils\Ninja;
 use App\Utils\Number;
-use Laravel\Scout\Searchable;
+use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Support\Carbon;
 use App\Utils\Traits\MakesHash;
 use App\Helpers\Invoice\InvoiceSum;
@@ -92,6 +93,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $reminder3_sent
  * @property string|null $reminder_last_sent
  * @property float $paid_to_date
+ * @property int|null $location_id
+ * @property object|null $e_invoice
+ * @property object|null $tax_data
  * @property int|null $subscription_id
  * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property int|null $activities_count
@@ -117,6 +121,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \App\Models\User $user
  * @property \App\Models\Client $client
  * @property \App\Models\Vendor|null $vendor
+ * @property-read \App\Models\Location|null $location
  * @property-read mixed $pivot
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
@@ -137,7 +142,17 @@ class Credit extends BaseModel
     use MakesInvoiceValues;
     use MakesReminders;
     use Searchable;
-    
+
+    /**
+     * Get the index name for the model.
+     *
+     * @return string
+     */
+    public function searchableAs(): string
+    {
+        return 'credits_v2';
+    }
+
     protected $presenter = CreditPresenter::class;
 
     protected $fillable = [
@@ -205,11 +220,11 @@ class Credit extends BaseModel
         App::setLocale($locale);
 
         return [
-            'id' => $this->id,
+            'id' => $this->company->db.":".$this->id,
             'name' => ctrans('texts.credit') . " " . $this->number . " | " . $this->client->present()->name() .  ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
-            'number' => $this->number,
-            'is_deleted' => $this->is_deleted,
+            'number' => (string)$this->number,
+            'is_deleted' => (bool)$this->is_deleted,
             'amount' => (float) $this->amount,
             'balance' => (float) $this->balance,
             'due_date' => $this->due_date,
@@ -225,7 +240,7 @@ class Credit extends BaseModel
 
     public function getScoutKey()
     {
-        return $this->hashed_id;
+        return $this->company->db.":".$this->id;
     }
 
     public function getEntityType()
@@ -406,18 +421,6 @@ class Credit extends BaseModel
         });
     }
 
-    public function transaction_event()
-    {
-        $credit = $this->fresh();
-
-        return [
-            'credit_id' => $credit->id,
-            'credit_amount' => $credit->amount ?: 0,
-            'credit_balance' => $credit->balance ?: 0,
-            'credit_status' => $credit->status_id ?: 1,
-        ];
-    }
-
     public function translate_entity(): string
     {
         return ctrans('texts.credit');
@@ -442,17 +445,17 @@ class Credit extends BaseModel
     /**
      * entityEmailEvent
      *
-     * Translates the email type into an activity + notification 
+     * Translates the email type into an activity + notification
      * that matches.
      */
     public function entityEmailEvent($invitation, $reminder_template)
     {
-        
+
         switch ($reminder_template) {
             case 'credit':
                 event(new CreditWasEmailed($invitation, $invitation->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), $reminder_template));
                 break;
-            
+
             default:
                 // code...
                 break;

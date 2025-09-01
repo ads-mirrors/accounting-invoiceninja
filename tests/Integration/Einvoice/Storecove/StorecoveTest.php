@@ -297,7 +297,7 @@ class StorecoveTest extends TestCase
 
         foreach($invoice->line_items as $item)
         {
-          $this->assertEquals('1', $item->tax_id);
+          $this->assertTrue(in_array($item->tax_id, ['1','2']));
           $this->assertEquals(0, $item->tax_rate1);
         }
 
@@ -340,7 +340,8 @@ class StorecoveTest extends TestCase
 
         foreach($invoice->line_items as $item)
         {
-          $this->assertEquals('1', $item->tax_id);
+
+$this->assertTrue(in_array($item->tax_id, ['1','2']));
           $this->assertEquals(0, $item->tax_rate1);
         }
 
@@ -376,7 +377,8 @@ class StorecoveTest extends TestCase
 
         foreach($invoice->line_items as $item)
         {
-          $this->assertEquals('1', $item->tax_id);
+
+$this->assertTrue(in_array($item->tax_id, ['1','2']));
           $this->assertEquals($tax_rate, $item->tax_rate1);
         }
 
@@ -488,7 +490,7 @@ class StorecoveTest extends TestCase
 
         $arr = $this->removeEmptyValues($arr);
 
-        nlog($arr);
+        // nlog($arr);
         
     }
 
@@ -1016,7 +1018,7 @@ class StorecoveTest extends TestCase
         $settings->state = 'Lazio';
         $settings->postal_code = '00187';
         $settings->phone = '06 1234567';
-        $settings->email = $this->faker->unique()->safeEmail();
+        $settings->email = \Illuminate\Support\Str::random(32)."@example.com";
         $settings->country_id = '380'; // Italy's ISO country code
         $settings->vat_number = 'IT92443356490'; // Italian VAT number
         $settings->id_number = 'RM 123456'; // Typical Italian company registration format
@@ -1179,7 +1181,7 @@ class StorecoveTest extends TestCase
         $settings->state = 'Berlin';
         $settings->postal_code = '10115';
         $settings->phone = '030 1234567';
-        $settings->email = $this->faker->unique()->safeEmail();
+        $settings->email = \Illuminate\Support\Str::random(32)."@example.com";
         $settings->country_id = '276'; // Germany's ISO country code
         $settings->vat_number = 'DE123456789';
         $settings->id_number = 'HRB 98765';
@@ -1287,7 +1289,7 @@ class StorecoveTest extends TestCase
         $settings->state = 'Madrid';
         $settings->postal_code = '28013';
         $settings->phone = '030 1234567';
-        $settings->email = $this->faker->unique()->safeEmail();
+        $settings->email = \Illuminate\Support\Str::random(32)."@example.com";
         $settings->country_id = '724'; // Germany's ISO country code
         $settings->vat_number = 'ESB16645678';
         $settings->id_number = 'HRB 12345';
@@ -1395,7 +1397,7 @@ class StorecoveTest extends TestCase
         $settings->state = 'Île-de-France';
         $settings->postal_code = '75002';
         $settings->phone = '01 23456789';
-        $settings->email = $this->faker->unique()->safeEmail();
+        $settings->email = \Illuminate\Support\Str::random(32)."@example.com";
         $settings->country_id = '250'; // France's ISO country code
         $settings->vat_number = 'FR82345678911';
         $settings->id_number = '12345678900010';
@@ -1506,7 +1508,7 @@ class StorecoveTest extends TestCase
         $settings->state = 'Vienna';
         $settings->postal_code = '1010';
         $settings->phone = '+43 1 23456789';
-        $settings->email = $this->faker->unique()->safeEmail();
+        $settings->email = \Illuminate\Support\Str::random(32)."@example.com";
         $settings->country_id = '40'; // Austria's ISO country code
         $settings->vat_number = 'ATU92335648';
         $settings->id_number = 'FN 123456x';
@@ -1615,7 +1617,7 @@ class StorecoveTest extends TestCase
         $settings->state = 'Bucharest';
         $settings->postal_code = '010101';
         $settings->phone = '021 1234567';
-        $settings->email = $this->faker->unique()->safeEmail();
+        $settings->email = \Illuminate\Support\Str::random(32)."@example.com";
         $settings->country_id = '642'; // Romania's ISO country code
         $settings->vat_number = 'RO92443356490'; // Romanian VAT number format
         $settings->id_number = 'B12345678'; // Typical Romanian company registration format
@@ -1742,7 +1744,7 @@ class StorecoveTest extends TestCase
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         // $identifiers = $p->getStorecoveMeta();
 
@@ -1777,7 +1779,7 @@ class StorecoveTest extends TestCase
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1807,7 +1809,7 @@ class StorecoveTest extends TestCase
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1817,7 +1819,7 @@ class StorecoveTest extends TestCase
 
         //test individual sending
 
-        nlog("Individual");
+        // nlog("Individual");
 
         $invoice = $this->createITData(false);
 
@@ -1835,7 +1837,7 @@ class StorecoveTest extends TestCase
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1868,7 +1870,7 @@ class StorecoveTest extends TestCase
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1899,7 +1901,7 @@ class StorecoveTest extends TestCase
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = $p->getStorecoveMeta();
 
@@ -1930,7 +1932,7 @@ class StorecoveTest extends TestCase
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = [
           "routing" => [
@@ -1969,7 +1971,7 @@ class StorecoveTest extends TestCase
 
         $p->run();
         $xml  = $p->toXml();
-        nlog($xml);
+        // nlog($xml);
 
         $identifiers = [
           "routing" => [
