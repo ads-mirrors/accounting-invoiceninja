@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "76aa3099a372c88f8afbbca1d30fc30c",
+    "content-hash": "8318e1e4c83e423108e0155e52e26fd8",
     "packages": [
         {
             "name": "afosto/yaac",
@@ -3037,16 +3037,16 @@
         },
         {
             "name": "google/apiclient-services",
-            "version": "v0.409.0",
+            "version": "v0.410.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/google-api-php-client-services.git",
-                "reference": "8366037e450b62ffc1c5489459f207640acca2b4"
+                "reference": "ef335e912305403aef8a6552cc2101c537b9ebdd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/8366037e450b62ffc1c5489459f207640acca2b4",
-                "reference": "8366037e450b62ffc1c5489459f207640acca2b4",
+                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/ef335e912305403aef8a6552cc2101c537b9ebdd",
+                "reference": "ef335e912305403aef8a6552cc2101c537b9ebdd",
                 "shasum": ""
             },
             "require": {
@@ -3075,9 +3075,9 @@
             ],
             "support": {
                 "issues": "https://github.com/googleapis/google-api-php-client-services/issues",
-                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.409.0"
+                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.410.0"
             },
-            "time": "2025-06-04T17:28:44+00:00"
+            "time": "2025-08-26T16:51:06+00:00"
         },
         {
             "name": "google/auth",
@@ -16537,26 +16537,29 @@
         },
         {
             "name": "turbo124/beacon",
-            "version": "v2.0.4",
+            "version": "v3.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/turbo124/beacon.git",
-                "reference": "17769e5b29b9a5e9db5fabd896e0af9e64738dbb"
+                "reference": "3a2d4edc82a190230ccabce25a586b01120b5b66"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/turbo124/beacon/zipball/17769e5b29b9a5e9db5fabd896e0af9e64738dbb",
-                "reference": "17769e5b29b9a5e9db5fabd896e0af9e64738dbb",
+                "url": "https://api.github.com/repos/turbo124/beacon/zipball/3a2d4edc82a190230ccabce25a586b01120b5b66",
+                "reference": "3a2d4edc82a190230ccabce25a586b01120b5b66",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^7",
-                "illuminate/support": "^9.0|^10.0|^11|^12",
-                "php": "^8",
+                "illuminate/support": "^11|^12",
+                "php": "^8.2|^8.3",
                 "turbo124/waffy": "^1.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^10.0"
+                "larastan/larastan": "^3.6",
+                "orchestra/testbench": "^10.6",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^11"
             },
             "type": "library",
             "extra": {
@@ -16594,9 +16597,9 @@
                 "turbo124"
             ],
             "support": {
-                "source": "https://github.com/turbo124/beacon/tree/v2.0.4"
+                "source": "https://github.com/turbo124/beacon/tree/v3.0.1"
             },
-            "time": "2025-04-16T10:54:18+00:00"
+            "time": "2025-09-01T02:13:38+00:00"
         },
         {
             "name": "turbo124/waffy",

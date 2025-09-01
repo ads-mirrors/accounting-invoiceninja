@@ -133,6 +133,16 @@ class Client extends BaseModel implements HasLocalePreference
     use Excludable;
     use Searchable;
 
+    /**
+     * Get the index name for the model.
+     *
+     * @return string
+     */
+    public function searchableAs(): string
+    {
+        return 'clients_v2';
+    }
+
     protected $presenter = ClientPresenter::class;
 
     protected $hidden = [

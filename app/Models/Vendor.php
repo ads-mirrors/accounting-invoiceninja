@@ -101,6 +101,16 @@ class Vendor extends BaseModel
     use AppSetup;
     use Searchable;
 
+    /**
+     * Get the index name for the model.
+     *
+     * @return string
+     */
+    public function searchableAs(): string
+    {
+        return 'vendors_v2';
+    }
+
     protected $fillable = [
         'name',
         'assigned_user_id',

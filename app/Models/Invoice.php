@@ -255,6 +255,11 @@ class Invoice extends BaseModel
     //     return 'invoices_index';  // for when we need to rename
     // }
 
+    public function searchableAs(): string
+    {
+        return 'invoices_v2';
+    }
+
     public function toSearchableArray()
     {
         $locale = $this->company->locale();

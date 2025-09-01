@@ -131,6 +131,16 @@ class Quote extends BaseModel
     use MakesInvoiceValues;
     use Searchable;
 
+    /**
+     * Get the index name for the model.
+     *
+     * @return string
+     */
+    public function searchableAs(): string
+    {
+        return 'quotes_v2';
+    }
+
     protected $presenter = QuotePresenter::class;
 
     protected $touches = [];

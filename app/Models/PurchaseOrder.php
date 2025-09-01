@@ -129,6 +129,16 @@ class PurchaseOrder extends BaseModel
     use SoftDeletes;
     use Searchable;
 
+    /**
+     * Get the index name for the model.
+     *
+     * @return string
+     */
+    public function searchableAs(): string
+    {
+        return 'purchase_orders_v2';
+    }
+
     protected $hidden = [
         'id',
         'private_notes',

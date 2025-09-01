@@ -143,6 +143,16 @@ class Credit extends BaseModel
     use MakesReminders;
     use Searchable;
 
+    /**
+     * Get the index name for the model.
+     *
+     * @return string
+     */
+    public function searchableAs(): string
+    {
+        return 'credits_v2';
+    }
+
     protected $presenter = CreditPresenter::class;
 
     protected $fillable = [

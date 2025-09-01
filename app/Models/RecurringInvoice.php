@@ -138,6 +138,16 @@ class RecurringInvoice extends BaseModel
     use PresentableTrait;
     use Searchable;
 
+    /**
+     * Get the index name for the model.
+     *
+     * @return string
+     */
+    public function searchableAs(): string
+    {
+        return 'recurring_invoices_v2';
+    }
+
     protected $presenter = RecurringInvoicePresenter::class;
 
     /**
