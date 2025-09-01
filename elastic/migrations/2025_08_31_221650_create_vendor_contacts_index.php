@@ -39,7 +39,6 @@ final class CreateVendorContactsIndex implements MigrationInterface
                 'company_key' => ['type' => 'keyword'],
                 'vendor_id' => ['type' => 'keyword'],
                 'send_email' => ['type' => 'boolean'],
-                'last_login' => ['type' => 'date'],
             ]
         ];
 

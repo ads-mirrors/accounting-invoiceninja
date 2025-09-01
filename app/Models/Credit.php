@@ -122,7 +122,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \App\Models\Client $client
  * @property \App\Models\Vendor|null $vendor
  * @property-read \App\Models\Location|null $location
- * @property-read mixed $pivot
+ * @property-read mixed $pivotcredi
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
@@ -223,8 +223,8 @@ class Credit extends BaseModel
             'id' => $this->company->db.":".$this->id,
             'name' => ctrans('texts.credit') . " " . $this->number . " | " . $this->client->present()->name() .  ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
-            'number' => $this->number,
-            'is_deleted' => $this->is_deleted,
+            'number' => (string)$this->number,
+            'is_deleted' => (bool)$this->is_deleted,
             'amount' => (float) $this->amount,
             'balance' => (float) $this->balance,
             'due_date' => $this->due_date,

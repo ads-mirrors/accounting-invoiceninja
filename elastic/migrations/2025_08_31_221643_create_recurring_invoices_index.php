@@ -13,6 +13,10 @@ final class CreateRecurringInvoicesIndex implements MigrationInterface
      */
     public function up(): void
     {
+        // Force drop any existing indices to avoid mapping conflicts
+        Index::dropIfExists('recurring_invoices_v2');
+        Index::dropIfExists('recurring_invoices');
+        
         $mapping = [
             'properties' => [
                 // Core recurring invoice fields

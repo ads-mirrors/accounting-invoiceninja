@@ -187,8 +187,8 @@ class Expense extends BaseModel
             'id' => $this->company->db.":".$this->id,
             'name' => ctrans('texts.expense') . " " . ($this->number ?? '') . ' | ' . Number::formatMoney($this->amount, $this->company) . ' | ' . $this->translateDate($this->date, $this->company->date_format(), $locale),
             'hashed_id' => $this->hashed_id,
-            'number' => $this->number,
-            'is_deleted' => $this->is_deleted,
+            'number' => (string)$this->number,
+            'is_deleted' => (bool)$this->is_deleted,
             'amount' => (float) $this->amount,
             'date' => $this->date ?? null,
             'custom_value1' => (string)$this->custom_value1,
@@ -196,6 +196,8 @@ class Expense extends BaseModel
             'custom_value3' => (string)$this->custom_value3,
             'custom_value4' => (string)$this->custom_value4,
             'company_key' => $this->company->company_key,
+            'public_notes' => (string)$this->public_notes,
+            'private_notes' => (string)$this->private_notes
         ];
     }
 

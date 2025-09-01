@@ -267,9 +267,9 @@ class Client extends BaseModel implements HasLocalePreference
         return [
             'id' => $this->company->db.":".$this->id,
             'name' => $name,
-            'is_deleted' => $this->is_deleted,
+            'is_deleted' => (bool)$this->is_deleted,
             'hashed_id' => $this->hashed_id,
-            'number' => $this->number,
+            'number' => (string)$this->number,
             'id_number' => $this->id_number,
             'vat_number' => $this->vat_number,
             'balance' => $this->balance,
