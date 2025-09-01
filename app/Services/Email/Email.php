@@ -266,7 +266,6 @@ class Email implements ShouldQueue
      */
     public function email()
     {
-nlog("Email::email");
         /* Init the mailer*/
         $mailer = Mail::mailer($this->mailer);
 
