@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -15,6 +16,8 @@ use Carbon\CarbonInterval;
 use App\Models\CompanyUser;
 use Illuminate\Support\Carbon;
 use App\Utils\Traits\MakesHash;
+use Illuminate\Support\Facades\App;
+use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Libraries\Currency\Conversion\CurrencyApi;
 
@@ -104,6 +107,17 @@ class Task extends BaseModel
     use MakesHash;
     use SoftDeletes;
     use Filterable;
+    use Searchable;
+
+    /**
+     * Get the index name for the model.
+     *
+     * @return string
+     */
+    public function searchableAs(): string
+    {
+        return 'tasks_v2';
+    }
 
     protected $fillable = [
         'client_id',
@@ -144,6 +158,79 @@ class Task extends BaseModel
     public function getEntityType()
     {
         return self::class;
+    }
+
+    public function toSearchableArray()
+    {
+        $locale = $this->company->locale();
+
+        App::setLocale($locale);
+
+        $project = $this->project ? " | [ {$this->project->name} ]" : ' ';
+        $client = $this->client ? " | {$this->client->present()->name()} ]" : ' ';
+
+        // Get basic data
+        $data = [
+            'id' => $this->company->db.":".$this->id,
+            'name' => ctrans('texts.task') . " " . ($this->number ?? '') . $project . $client,
+            'hashed_id' => $this->hashed_id,
+            'number' => (string)$this->number,
+            'description' => (string)$this->description,
+            'task_rate' => (float) $this->rate,
+            'is_deleted' => (bool) $this->is_deleted,
+            'custom_value1' => (string) $this->custom_value1,
+            'custom_value2' => (string) $this->custom_value2,
+            'custom_value3' => (string) $this->custom_value3,
+            'custom_value4' => (string) $this->custom_value4,
+            'company_key' => $this->company->company_key,
+            'time_log' => $this->normalizeTimeLog($this->time_log),
+            'calculated_start_date' => (string) $this->calculated_start_date,
+        ];
+
+        return $data;
+    }
+
+    /**
+     * Normalize time_log for Elasticsearch indexing
+     * Handles polymorphic structure: [start, end?, description?, billable?]
+     */
+    private function normalizeTimeLog($time_log): array
+    {
+        // Handle null/empty cases
+        if (empty($time_log)) {
+            return [];
+        }
+
+        $logs = json_decode($time_log, true);
+
+        // Validate decoded data
+        if (!is_array($logs) || empty($logs)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($logs as $log) {
+            // Skip invalid entries
+            if (!is_array($log) || !isset($log[0])) {
+                continue;
+            }
+
+            $normalized[] = [
+                'start_time' => (int) $log[0],
+                'end_time' => isset($log[1]) && $log[1] !== 0 ? (int) $log[1] : 0,
+                'description' => isset($log[2]) ? trim((string) $log[2]) : '',
+                'billable' => isset($log[3]) ? (bool) $log[3] : false,
+                'is_running' => isset($log[1]) && $log[1] === 0,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    public function getScoutKey()
+    {
+        return $this->company->db.":".$this->id;
     }
 
     /**
@@ -247,30 +334,28 @@ class Task extends BaseModel
         }
     }
 
-    public function calcDuration($start_time_cutoff = 0, $end_time_cutoff = 0)
+    public function calcDuration(bool $billable = false)
     {
         $duration = 0;
         $parts = json_decode($this->time_log ?? '{}') ?: [];
 
         foreach ($parts as $part) {
+
+            if($billable && isset($part[3]) && !$part[3]){
+                continue;
+            }
+
             $start_time = $part[0];
+
             if (count($part) == 1 || ! $part[1]) {
                 $end_time = time();
             } else {
                 $end_time = $part[1];
             }
 
-            if ($start_time_cutoff) {
-                $start_time = max($start_time, $start_time_cutoff);
-            }
-            if ($end_time_cutoff) {
-                $end_time = min($end_time, $end_time_cutoff);
-            }
-
             $duration += max($end_time - $start_time, 0);
         }
 
-        // return CarbonInterval::seconds(round($duration))->locale($this->company->locale())->cascade()->forHumans();
         return round($duration);
     }
 
@@ -281,7 +366,7 @@ class Task extends BaseModel
 
     public function getRate(): float
     {
-        if(is_numeric($this->rate) && $this->rate > 0) {
+        if (is_numeric($this->rate) && $this->rate > 0) {
             return $this->rate;
         }
 
@@ -312,7 +397,7 @@ class Task extends BaseModel
 
     public function getQuantity(): float
     {
-        return round(($this->calcDuration() / 3600), 2);
+        return round(($this->calcDuration(true) / 3600), 2);
     }
 
     public function logDuration(int $start_time, int $end_time)
@@ -322,7 +407,7 @@ class Task extends BaseModel
 
     public function taskValue(): float
     {
-        return round(($this->calcDuration() / 3600) * $this->getRate(), 2);
+        return round(($this->calcDuration(true) / 3600) * $this->getRate(), 2);
     }
 
     public function isRunning(): bool
@@ -373,9 +458,6 @@ class Task extends BaseModel
                 $hours = ctrans('texts.hours');
 
                 $parts = [];
-
-                // $parts[] = '<div class="task-time-details">';
-
                 $date_time = [];
 
                 if ($this->company->invoice_task_datelog) {
@@ -396,7 +478,7 @@ class Task extends BaseModel
                 if ($this->company->invoice_task_hours) {
                     $duration = $this->logDuration($log[0], $log[1]);
 
-                    if($this->company->use_comma_as_decimal_place){
+                    if ($this->company->use_comma_as_decimal_place) {
                         $duration = number_format($duration, 2, ',', '.');
                     }
 
@@ -409,15 +491,19 @@ class Task extends BaseModel
                     $parts[] = $interval_description;
                 }
 
-                // $parts[] = '</div>';
+                //need to return early if there is nothing, otherwise we end up injecting a blank new line.
+                if (count($parts) == 1 && empty($parts[0])) {
+                    return '';
+                }
 
                 return implode(PHP_EOL, $parts);
             })
+            ->filter()//filters any empty strings.
             ->implode(PHP_EOL);
 
         $body = '';
 
-        if (strlen($this->description) > 1) {
+        if (strlen($this->description ?? '') > 1) {
             $body .= $this->description. " ";
         }
 

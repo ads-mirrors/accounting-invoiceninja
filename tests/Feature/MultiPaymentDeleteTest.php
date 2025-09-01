@@ -56,7 +56,7 @@ class MultiPaymentDeleteTest extends TestCase
         $user = User::factory()->create([
             'account_id' => $account->id,
             'confirmation_code' => '11',
-            'email' => $this->faker->unique()->safeEmail(),
+            'email' => \Illuminate\Support\Str::random(32)."@example.com",
         ]);
 
         $cu = CompanyUserFactory::create($user->id, $company->id, $account->id);
@@ -156,6 +156,8 @@ class MultiPaymentDeleteTest extends TestCase
         $this->assertEquals(162, $invoice->fresh()->balance);
         $this->assertEquals(162, $invoice->client->fresh()->balance);
         $this->assertEquals(163, $invoice->client->fresh()->paid_to_date);
+
+        sleep(1);
 
         $data = [
             'amount' => 162.0,
@@ -289,6 +291,7 @@ class MultiPaymentDeleteTest extends TestCase
             ],
             'date' => '2019/12/12',
         ];
+sleep(1);
 
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
