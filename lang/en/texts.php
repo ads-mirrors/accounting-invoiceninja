@@ -5631,6 +5631,7 @@ $lang = array(
     'replaced' => 'Replaced',
     'ses_from_address' => 'SES From Address',
     'ses_from_address_help' => 'The Sending Email Address, must be verified in AWS',
+        'unauthorized_action' => 'You are not authorized to perform this action',
 );
 
 return $lang;
