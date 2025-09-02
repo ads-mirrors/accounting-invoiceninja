@@ -12,9 +12,10 @@
 
 namespace App\Repositories;
 
+use App\Models\Task;
+use App\Models\Project;
 use App\Factory\TaskFactory;
 use App\Jobs\Task\TaskAssigned;
-use App\Models\Task;
 use App\Utils\Traits\GeneratesCounter;
 use Illuminate\Database\QueryException;
 
@@ -426,6 +427,36 @@ class TaskRepository extends BaseRepository
 
         $this->calculateProjectDuration($task);
 
+    }
+
+
+    public function bulkUpdate(\Illuminate\Database\Eloquent\Builder $models, string $column, mixed $new_value): void
+    {
+        // First, filter out tasks that have been invoiced
+        $models->whereNull('invoice_id');
+        
+        if ($column === 'project_id') {
+            // Handle project_id updates with client_id synchronization
+            $project = Project::withTrashed()
+                ->where('id', $new_value)
+                ->company()
+                ->first();
+                
+            if ($project) {
+                /** @var \App\Models\Project $project */
+                $models->update([
+                    'project_id' => $project->id,
+                    'client_id' => $project->client_id,
+                ]);
+            }
+        } elseif ($column === 'client_id') {
+            // If you are updating the client - we will unset the project id!
+            $models->update([$column => $new_value, 'project_id' => null]);
+        }
+        else {
+            // Assigned User
+            $models->update([$column => $new_value]);
+        }
     }
 
 }
