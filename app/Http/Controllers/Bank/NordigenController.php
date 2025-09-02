@@ -219,7 +219,7 @@ class NordigenController extends BaseController
             ->where('integration_type', BankIntegration::INTEGRATION_TYPE_NORDIGEN)
             ->where('auto_sync', true)
             ->each(function ($bank_integration) {
-                ProcessBankTransactionsNordigen::dispatch($bank_integration);
+                ProcessBankTransactionsNordigen::dispatch($bank_integration)->delay(now()->addHour());
             });
 
         // prevent rerun of this method with same ref

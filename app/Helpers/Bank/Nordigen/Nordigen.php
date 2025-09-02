@@ -223,11 +223,11 @@ class Nordigen
             $out->metadata = $this->client->account($account_id)->getAccountMetaData();
             $out->institution = $this->client->institution->getInstitution($out->metadata['institution_id']);
 
-            if($out->metadata['status'] == 'READY'){
-                $out->data = $this->client->account($account_id)->getAccountDetails()['account'];
-                $out->balances = $this->client->account($account_id)->getAccountBalances()['balances'];
-            }
-            else{
+            // if($out->metadata['status'] == 'READY'){
+            //     $out->data = $this->client->account($account_id)->getAccountDetails()['account'];
+            //     $out->balances = $this->client->account($account_id)->getAccountBalances()['balances'];
+            // }
+            // else{
 
                 $out->data = [
                     'iban' => $out->metadata['iban'],
@@ -242,7 +242,7 @@ class Nordigen
                         ],
                     ],
                 ];
-            }
+            // }
 
             $it = new AccountTransformer();
             return $it->transform($out);
