@@ -205,9 +205,8 @@ class DeletePayment
 
             /** handle the edge case where a partial credit + unapplied payment is deleted */
             if(!BcMath::equal($this->total_payment_amount, $this->_paid_to_date_deleted)) {
-                $reduced_paid_to_date = BcMath::toFloat(
-                    BcMath::min('0', BcMath::mul(BcMath::sub($this->total_payment_amount, $this->_paid_to_date_deleted), '-1'))
-                );
+                $reduced_paid_to_date = 
+                    min(0, BcMath::toFloat(BcMath::mul(BcMath::sub($this->total_payment_amount, $this->_paid_to_date_deleted), '-1')));
             }
 
             nlog("reduced paid to date: {$reduced_paid_to_date}");
