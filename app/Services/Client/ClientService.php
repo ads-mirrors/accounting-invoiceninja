@@ -119,14 +119,16 @@ class ClientService
 
     public function updatePaymentBalance()
     {
-        $amount = Payment::query()
-                        ->withTrashed()
-                        ->where('client_id', $this->client->id)
-                        ->where('is_deleted', 0)
-                        ->whereIn('status_id', [Payment::STATUS_COMPLETED, Payment::STATUS_PENDING, Payment::STATUS_PARTIALLY_REFUNDED, Payment::STATUS_REFUNDED])
-                        ->selectRaw('SUM(payments.amount - payments.applied) as amount')->first()->amount ?? 0;
 
-        DB::connection(config('database.default'))->transaction(function () use ($amount) {
+        DB::connection(config('database.default'))->transaction(function () {
+
+            $amount = Payment::query()
+                    ->withTrashed()
+                    ->where('client_id', $this->client->id)
+                    ->where('is_deleted', 0)
+                    ->whereIn('status_id', [Payment::STATUS_COMPLETED, Payment::STATUS_PENDING, Payment::STATUS_PARTIALLY_REFUNDED, Payment::STATUS_REFUNDED])
+                    ->selectRaw('SUM(payments.amount - payments.applied) as amount')->first()->amount ?? 0;
+
             $this->client = Client::withTrashed()->where('id', $this->client->id)->lockForUpdate()->first();
             $this->client->payment_balance = $amount;
             $this->client->saveQuietly();
