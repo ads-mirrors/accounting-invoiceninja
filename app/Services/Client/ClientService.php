@@ -45,28 +45,31 @@ class ClientService
 
     public function calculateBalance(?Invoice $invoice = null)
     {
-        $balance = Invoice::withTrashed()
-                          ->where('client_id', $this->client->id)
-                          ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                          ->where('is_deleted', false)
-                          ->sum('balance');
-
-        $pre_client_balance = $this->client->balance;
+        // $pre_client_balance = $this->client->balance;
 
         try {
+
+            $balance = Invoice::withTrashed()
+                        ->where('client_id', $this->client->id)
+                        ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                        ->where('is_deleted', false)
+                        ->sum('balance');    
+
             DB::connection(config('database.default'))->transaction(function () use ($balance) {
                 $this->client = Client::withTrashed()->where('id', $this->client->id)->lockForUpdate()->first();
                 $this->client->balance = $balance;
                 $this->client->saveQuietly();
             }, 2);
+
+
         } catch (\Throwable $throwable) {
             nlog("DB ERROR " . $throwable->getMessage());
         }
 
-        if ($invoice && floatval($this->client->balance)  != floatval($pre_client_balance)) {
-            $diff = $this->client->balance - $pre_client_balance;
-            $invoice->ledger()->insertInvoiceBalance($diff, $this->client->balance, "Update Adjustment Invoice # {$invoice->number} => {$diff}");
-        }
+        // if ($invoice && floatval($this->client->balance)  != floatval($pre_client_balance)) {
+        //     $diff = $this->client->balance - $pre_client_balance;
+        //     $invoice->ledger()->insertInvoiceBalance($diff, $this->client->balance, "Update Adjustment Invoice # {$invoice->number} => {$diff}");
+        // }
 
         return $this;
     }
