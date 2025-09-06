@@ -434,20 +434,13 @@ class TaskRepository extends BaseRepository
 
     public function bulkUpdate(\Illuminate\Database\Eloquent\Builder $models, string $column, mixed $new_value): void
     {
-nlog("xx");
-        nlog($models->pluck('id'));
-nlog("yy");
 
         // First, filter out tasks that have been invoiced
         $models->whereNull('invoice_id');
 
-        nlog($models->pluck('id'));
-
         if(stripos($column, '_id') !== false) {
             $new_value = $this->decodePrimaryKey($new_value);
         }
-
-        nlog("setting column = " . $column . " to " . $new_value);
 
         if ($column === 'project_id') {
             // Handle project_id updates with client_id synchronization
