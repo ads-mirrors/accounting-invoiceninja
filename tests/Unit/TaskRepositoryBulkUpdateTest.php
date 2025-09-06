@@ -102,7 +102,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $models = Task::whereIn('id', [$task1->id, $task2->id]);
 
         // Bulk update project_id
-        $this->taskRepository->bulkUpdate($models, 'project_id', $otherProject->id);
+        $this->taskRepository->bulkUpdate($models, 'project_id', $otherProject->hashed_id);
 
         // Refresh models from database
         $task1->refresh();
@@ -164,7 +164,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $models = Task::where('id', $task->id);
 
         // Bulk update client_id
-        $this->taskRepository->bulkUpdate($models, 'client_id', $newClient->id);
+        $this->taskRepository->bulkUpdate($models, 'client_id', $newClient->hashed_id);
 
         // Refresh model from database
         $task->refresh();
@@ -197,7 +197,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $models = Task::whereIn('id', [$task1->id, $task2->id]);
 
         // Bulk update assigned_user_id
-        $this->taskRepository->bulkUpdate($models, 'assigned_user_id', $this->testUser->id);
+        $this->taskRepository->bulkUpdate($models, 'assigned_user_id', $this->testUser->hashed_id);
 
         // Refresh models from database
         $task1->refresh();
@@ -238,7 +238,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $models = Task::whereIn('id', [$invoicedTask->id, $regularTask->id]);
 
         // Bulk update assigned_user_id
-        $this->taskRepository->bulkUpdate($models, 'assigned_user_id', $this->testUser->id);
+        $this->taskRepository->bulkUpdate($models, 'assigned_user_id', $this->testUser->hashed_id);
 
         // Refresh models from database
         $invoicedTask->refresh();
@@ -269,7 +269,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $models = Task::where('id', $task->id);
 
         // Bulk update project_id (should work with soft deleted project)
-        $this->taskRepository->bulkUpdate($models, 'project_id', $this->testProject->id);
+        $this->taskRepository->bulkUpdate($models, 'project_id', $this->testProject->hashed_id);
 
         // Refresh model from database
         $task->refresh();
@@ -324,7 +324,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $startTime = microtime(true);
         
         // Bulk update assigned_user_id
-        $this->taskRepository->bulkUpdate($models, 'assigned_user_id', $this->testUser->id);
+        $this->taskRepository->bulkUpdate($models, 'assigned_user_id', $this->testUser->hashed_id);
         
         $endTime = microtime(true);
         $executionTime = $endTime - $startTime;
@@ -345,7 +345,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $models = Task::where('id', 99999);
 
         // This should not throw an error
-        $this->taskRepository->bulkUpdate($models, 'assigned_user_id', $this->testUser->id);
+        $this->taskRepository->bulkUpdate($models, 'assigned_user_id', $this->testUser->hashed_id);
 
         // No assertions needed - just ensuring no exceptions are thrown
         $this->assertTrue(true);
@@ -369,7 +369,7 @@ class TaskRepositoryBulkUpdateTest extends TestCase
         $models = Task::where('id', $task->id);
 
         // Bulk update project_id (should work with soft deleted project)
-        $this->taskRepository->bulkUpdate($models, 'project_id', $this->testProject->id);
+        $this->taskRepository->bulkUpdate($models, 'project_id', $this->testProject->hashed_id);
 
         // Refresh model from database
         $task->refresh();

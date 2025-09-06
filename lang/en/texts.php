@@ -5631,7 +5631,10 @@ $lang = array(
     'replaced' => 'Replaced',
     'ses_from_address' => 'SES From Address',
     'ses_from_address_help' => 'The Sending Email Address, must be verified in AWS',
-        'unauthorized_action' => 'You are not authorized to perform this action',
+    'unauthorized_action' => 'You are not authorized to perform this action',
+    'einvoice_received_subject' => 'E-Invoice/s Received',
+    'einvoice_received_body' => 'You have received :count new E-Invoice/s.<br><br>Login to view.',
+
 );
 
 return $lang;

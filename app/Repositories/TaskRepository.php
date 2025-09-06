@@ -16,6 +16,7 @@ use App\Models\Task;
 use App\Models\Project;
 use App\Factory\TaskFactory;
 use App\Jobs\Task\TaskAssigned;
+use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\GeneratesCounter;
 use Illuminate\Database\QueryException;
 
@@ -25,6 +26,7 @@ use Illuminate\Database\QueryException;
 class TaskRepository extends BaseRepository
 {
     use GeneratesCounter;
+    use MakesHash;
 
     public $new_task = true;
 
@@ -432,9 +434,14 @@ class TaskRepository extends BaseRepository
 
     public function bulkUpdate(\Illuminate\Database\Eloquent\Builder $models, string $column, mixed $new_value): void
     {
+
         // First, filter out tasks that have been invoiced
         $models->whereNull('invoice_id');
-        
+
+        if(stripos($column, '_id') !== false) {
+            $new_value = $this->decodePrimaryKey($new_value);
+        }
+
         if ($column === 'project_id') {
             // Handle project_id updates with client_id synchronization
             $project = Project::withTrashed()
@@ -449,7 +456,7 @@ class TaskRepository extends BaseRepository
                     'client_id' => $project->client_id,
                 ]);
             }
-        } elseif ($column === 'client_id') {
+        } elseif ($column === 'client_id') { 
             // If you are updating the client - we will unset the project id!
             $models->update([$column => $new_value, 'project_id' => null]);
         }

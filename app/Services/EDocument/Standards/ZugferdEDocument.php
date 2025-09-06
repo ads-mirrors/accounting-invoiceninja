@@ -92,8 +92,8 @@ class ZugferdEDocument extends AbstractService
             ->setPaymentTerms()         // 3. Then payment terms
             ->setLineItems()            // 4. Then line items
             ->setCustomSurcharges()     // 4a. Surcharges
-            ->setDocumentSummation()   // 5. Finally document summation
-            ->setAdditionalReferencedDocument();   // 6. Additional referenced document
+            ->setDocumentSummation();   // 5. Finally document summation
+            // ->setAdditionalReferencedDocument();   // 6. Additional referenced document
 
         return $this;
 
@@ -127,7 +127,17 @@ class ZugferdEDocument extends AbstractService
 
         return $this;
     }
-
+    
+    /**
+     * setAdditionalReferencedDocument
+     *
+     * circular reference causing the file to never be created.
+     * PDF => xml => PDF => xml
+     * 
+     * Need to abstract the insertion of the base64 document into the XML.
+     * 
+     * @return self
+     */
     private function setAdditionalReferencedDocument(): self
     {
         if($this->document->client->getSetting('merge_e_invoice_to_pdf')) {
