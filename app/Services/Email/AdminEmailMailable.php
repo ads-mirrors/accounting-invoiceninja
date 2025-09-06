@@ -56,7 +56,6 @@ class AdminEmailMailable extends Mailable
      */
     public function content()
     {
-
         return new Content(
             view: 'email.admin.generic',
             text: 'email.admin.generic_text',
