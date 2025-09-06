@@ -62,7 +62,7 @@ class AdminEmailMailable extends Mailable
             text: 'email.admin.generic_text',
             with: [
                 'title' => $this->email_object->subject,
-                'message' => $this->email_object->body,
+                'content' => $this->email_object->body,
                 'url' => $this->email_object->url ?? null,
                 'button' => $this->email_object->button ?? null,
                 'signature' => $this->email_object->company->owner()->signature,
