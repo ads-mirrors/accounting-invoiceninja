@@ -46,7 +46,7 @@ class PaymentTransactionEventEntry implements ShouldQueue
 
     /**
      */
-    public function __construct(private Payment $payment, private array $invoice_ids, private string $db, private float $invoice_adjustment = 0, private bool $is_deleted = false)
+    public function __construct(private Payment $payment, private array $invoice_ids, private string $db, private mixed $invoice_adjustment = 0, private bool $is_deleted = false)
     {}
 
     public function handle()

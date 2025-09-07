@@ -1198,6 +1198,7 @@ class ClientApiTest extends TestCase
 
         $arr = $response->json();
 
+        nlog($arr);
         $this->assertEquals('3', $arr['data']['settings']['language_id']);
     }
 
