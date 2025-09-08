@@ -5634,6 +5634,7 @@ $lang = array(
     'unauthorized_action' => 'You are not authorized to perform this action',
     'einvoice_received_subject' => 'E-Invoice/s Received',
     'einvoice_received_body' => 'You have received :count new E-Invoice/s.<br><br>Login to view.',
+    'download_files_too_large' => 'Some files were too large to attach directly to the email. Please use the links below to download these individually.',
 
 );
 
