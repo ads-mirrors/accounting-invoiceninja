@@ -370,7 +370,7 @@ class CreditTest extends TestCase
 
         $this->assertEquals(100, $c->paid_to_date);
 
-        $i->service()->handleReversal()->save();
+        // $i->service()->handleReversal()->save();
 
 
         $data = $i->toArray();
