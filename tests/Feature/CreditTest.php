@@ -45,6 +45,86 @@ class CreditTest extends TestCase
         $this->makeTestData();
     }
 
+    public function testNewCreditDeletionAfterInvoiceReversal()
+    {
+        $c = Client::factory()->create([
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'balance' => 0,
+            'paid_to_date' => 0,
+        ]);
+        
+        $ii = new InvoiceItem();
+        $ii->cost = 100;
+        $ii->quantity = 1;
+        $ii->product_key = 'xx';
+        $ii->notes = 'yy';
+
+        $i = \App\Models\Invoice::factory()->create([
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'client_id' => $c->id,
+            'tax_name1' => '',
+            'tax_name2' => '',
+            'tax_name3' => '',
+            'tax_rate1' => 0,
+            'tax_rate2' => 0,
+            'tax_rate3' => 0,
+            'discount' => 0,
+            'line_items' => [
+                $ii
+            ],
+            'status_id' => 1,
+        ]);
+
+        $repo = new InvoiceRepository();
+        $repo->save([], $i);
+        
+        $i = $i->calc()->getInvoice();
+        $i = $i->service()->markPaid()->save();
+
+        $payment = $i->payments()->first();
+
+        $this->assertNotNull($payment);
+
+        $this->assertEquals(0, $i->balance);
+        $this->assertEquals(100, $i->amount);
+
+
+        $credit_array = $i->withoutRelations()->toArray();
+        $credit_array['invoice_id'] = $i->hashed_id;
+        $credit_array['client_id'] = $c->hashed_id;
+        
+        $response = $this->withHeaders([
+                    'X-API-SECRET' => config('ninja.api_secret'),
+                    'X-API-TOKEN' => $this->token,
+                ])->post('/api/v1/credits', $credit_array);
+
+        $response->assertStatus(200);
+
+        $arr = $response->json();
+        $credit = \App\Models\Credit::find($this->decodePrimaryKey($arr['data']['id']));
+
+        $this->assertNotNull($credit);
+        $payment = $payment->fresh();
+
+        $i = $i->fresh();
+
+        $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
+        $this->assertTrue($payment->credits()->exists());
+
+        $client = $i->client;
+
+        $this->assertEquals(100, $client->credit_balance);
+
+        $payment->service()->deletePayment()->save();
+
+        $credit = $credit->fresh();
+        $client = $client->fresh();
+
+        $this->assertTrue((bool)$credit->is_deleted);
+        $this->assertEquals(0, $client->credit_balance);
+    }
 
     public function testPartialAmountWithPartialCreditAndPaymentDeletedBalance()
     {
@@ -404,7 +484,7 @@ class CreditTest extends TestCase
 
         $c = $c->fresh();
 
-        $this->assertEquals(100, $c->paid_to_date);
+        $this->assertEquals(0, $c->paid_to_date);
         $this->assertEquals(0, $c->credit_balance);
 
         $credit->service()->restoreCredit()->save();

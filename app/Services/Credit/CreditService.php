@@ -260,18 +260,18 @@ class CreditService
     public function deleteCredit()
     {
         $paid_to_date = $this->credit->invoice_id ? $this->credit->balance : 0;
-
+        /** 2025-09-24 - On invoice reversal => credit => delete - we reassign the payment to the credit - so no need to update the paid to date! */
         $this->credit
             ->client
             ->service()
-            ->updatePaidToDate($paid_to_date)
+            // ->updatePaidToDate($paid_to_date)
             ->adjustCreditBalance($this->credit->balance * -1)
             ->save();
 
         return $this;
     }
 
-
+    /** 2025-09-24 - On invoice reversal => credit => delete - we reassign the payment to the credit - so no need to update the paid to date! */
     public function restoreCredit()
     {
 
@@ -280,7 +280,7 @@ class CreditService
         $this->credit
              ->client
              ->service()
-             ->updatePaidToDate($paid_to_date * -1)
+            //  ->updatePaidToDate($paid_to_date * -1)
              ->adjustCreditBalance($this->credit->balance)
              ->save();
 
