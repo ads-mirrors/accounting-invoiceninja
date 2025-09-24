@@ -153,6 +153,17 @@ class CreditTest extends TestCase
         $this->assertEquals(0, $credit->balance);
         $this->assertEquals(Credit::STATUS_APPLIED, $credit->status_id);
         
+        $payment->service()->deletePayment()->save();
+
+        $payment = $payment->fresh();
+        $client = $client->fresh();
+        $credit = $credit->fresh();
+        $this->assertEquals(1, $payment->is_deleted);
+        $this->assertEquals(0, $client->credit_balance);
+        $this->assertEquals(0, $client->paid_to_date);
+        $this->assertEquals(0, $client->balance);
+        $this->assertEquals(0, $credit->balance);
+        $this->assertEquals(Credit::STATUS_APPLIED, $credit->status_id);
     }
 
     public function testNewCreditDeletionAfterInvoiceReversal()
