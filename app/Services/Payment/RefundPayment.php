@@ -124,6 +124,10 @@ class RefundPayment
             }
         } else {
             $this->payment->refunded += $net_refund;
+
+            if($this->refund_reversed_invoice){
+                $this->payment->refunded += $this->credits_used;
+            }
         }
 
         $this->payment->setRefundMeta($this->refund_data);
