@@ -336,7 +336,8 @@ class RefundPayment
 
             if($this->refund_reversed_invoice){
                 $net_refund = ($this->total_refund - $this->credits_used);
-                $client->service()->updatePaidToDate(-1 * $net_refund)->adjustCreditBalance($net_refund*-1)->save();
+                $client->service()->updatePaidToDate(-1 * $net_refund)->adjustCreditBalance($this->credits_used*-1)->save();
+
             }
             else{
                 $client->service()->updatePaidToDate(-1 * $this->total_refund)->save();
