@@ -91,7 +91,7 @@ class CreditService
     {
         if ((int) $this->credit->balance == 0) {
             $this->credit->status_id = Credit::STATUS_APPLIED;
-        } elseif ((string) $this->credit->amount == (string) $this->credit->balance) {
+        } elseif ((string) round($this->credit->amount, 2) == (string) round($this->credit->balance, 2)) {
             $this->credit->status_id = Credit::STATUS_SENT;
         } elseif ($this->credit->balance > 0) {
             $this->credit->status_id = Credit::STATUS_PARTIAL;

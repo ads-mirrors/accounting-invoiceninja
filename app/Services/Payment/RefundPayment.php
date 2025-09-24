@@ -33,6 +33,8 @@ class RefundPayment
 
     private string $refund_failed_message = '';
 
+    private bool $refund_reversed_invoice = false; //handles reversal of invoices => refund payment => credits => client paid to date.
+
     public function __construct(public Payment $payment, public array $refund_data)
     {
     }
@@ -228,14 +230,21 @@ class RefundPayment
             foreach ($this->payment->credits as $paymentable_credit) {
                 $available_credit = $paymentable_credit->pivot->amount - $paymentable_credit->pivot->refunded;
 
+                $multiplier = $paymentable_credit->invoice_id ? -1 : 1; //where this is a reversed invoice, we need to reverse the multiplier to avoid double counting the paid to date.
+
+                if($paymentable_credit->invoice_id){
+                    $this->refund_reversed_invoice = true;
+                }
+
                 if ($available_credit > $amount_to_refund) {
                     $paymentable_credit->pivot->refunded += $amount_to_refund;
                     $paymentable_credit->pivot->save();
 
                     $paymentable_credit->service()
                                        ->setStatus(Credit::STATUS_SENT)
-                                       ->adjustBalance($amount_to_refund)
-                                       ->updatePaidToDate($amount_to_refund * -1)
+                                       ->adjustBalance($amount_to_refund * $multiplier)
+                                       ->updatePaidToDate(($amount_to_refund * -1) * $multiplier)
+                                       ->setCalculatedStatus()
                                        ->save();
 
 
@@ -248,8 +257,9 @@ class RefundPayment
 
                     $paymentable_credit->service()
                                        ->setStatus(Credit::STATUS_SENT)
-                                       ->adjustBalance($available_credit)
-                                       ->updatePaidToDate($available_credit * -1)
+                                       ->adjustBalance($available_credit * $multiplier)
+                                       ->updatePaidToDate(($available_credit * -1) * $multiplier)
+                                       ->setCalculatedStatus()
                                        ->save();
 
                     $this->credits_used += $available_credit;
@@ -324,7 +334,13 @@ class RefundPayment
                 $client->restore();
             }
 
-            $client->service()->updatePaidToDate(-1 * $this->total_refund)->save();
+            if($this->refund_reversed_invoice){
+                $net_refund = ($this->total_refund - $this->credits_used);
+                $client->service()->updatePaidToDate(-1 * $net_refund)->adjustCreditBalance($net_refund*-1)->save();
+            }
+            else{
+                $client->service()->updatePaidToDate(-1 * $this->total_refund)->save();
+            }
         }
 
         return $this;
