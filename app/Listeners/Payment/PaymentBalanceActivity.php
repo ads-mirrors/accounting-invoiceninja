@@ -47,7 +47,13 @@ class PaymentBalanceActivity implements ShouldQueue
     {
         MultiDB::setDb($event->company->db);
 
-        $event->payment->client->service()->updatePaymentBalance();
+        try{
+            $event->payment->client->service()->updatePaymentBalance();
+        }
+        catch(\Throwable $e){
+
+            nlog("PaymentBalanceActivity ".$e->getMessage());
+        }
     }
 
     public function middleware($event): array
