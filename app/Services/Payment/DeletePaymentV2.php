@@ -100,42 +100,35 @@ class DeletePaymentV2
     {
         if ($this->payment->credits()->exists()) {
             $this->payment->credits()->where('is_deleted', 0)->each(function ($paymentable_credit) {
-                //Unlink the credit from the payment.
-                if($paymentable_credit->invoice_id){
-                    $credit_repo = new \App\Repositories\CreditRepository();
-                    $credit_repo->delete($paymentable_credit);
+                $multiplier = 1;
+
+                //balance remaining on the credit that can offset the paid to date.
+                $net_credit_amount = BcMath::sub($paymentable_credit->pivot->amount, $paymentable_credit->pivot->refunded,2);
+
+                //Updates the Global Total Payment Amount that can later be used to adjust the paid to date.
+                $this->total_payment_amount = BcMath::add($this->total_payment_amount, $net_credit_amount,2);
+
+                //Negative payments need cannot be "subtracted" from the paid to date. so the operator needs to be reversed.
+                if (BcMath::lessThan($net_credit_amount, 0, 2)) {
+                    $multiplier = -1;
                 }
-                else{
-                    $multiplier = 1;
 
-                    //balance remaining on the credit that can offset the paid to date.
-                    $net_credit_amount = BcMath::sub($paymentable_credit->pivot->amount, $paymentable_credit->pivot->refunded,2);
+                //Reverses the operator for the balance and paid to date this allows the amount to be "subtracted" from the paid to date.
+                $balance_multiplier = BcMath::mul($multiplier, -1, 0);
 
-                    //Updates the Global Total Payment Amount that can later be used to adjust the paid to date.
-                    $this->total_payment_amount = BcMath::add($this->total_payment_amount, $net_credit_amount,2);
+                $balance_net_credit_amount = BcMath::mul($net_credit_amount, $balance_multiplier, 2);
 
-                    //Negative payments need cannot be "subtracted" from the paid to date. so the operator needs to be reversed.
-                    if (BcMath::lessThan($net_credit_amount, 0, 2)) {
-                        $multiplier = -1;
-                    }
+                $paymentable_credit->service()
+                                   ->updateBalance($balance_net_credit_amount)
+                                   ->updatePaidToDate($balance_net_credit_amount)
+                                   ->setStatus(Credit::STATUS_SENT)
+                                   ->save();
 
-                    //Reverses the operator for the balance and paid to date this allows the amount to be "subtracted" from the paid to date.
-                    $balance_multiplier = BcMath::mul($multiplier, -1, 0);
+                $client = $this->payment->client->fresh();
 
-                    $balance_net_credit_amount = BcMath::mul($net_credit_amount, $balance_multiplier, 2);
-
-                    $paymentable_credit->service()
-                                    ->updateBalance($balance_net_credit_amount)
-                                    ->updatePaidToDate($balance_net_credit_amount)
-                                    ->setStatus(Credit::STATUS_SENT)
-                                    ->save();
-
-                    $client = $this->payment->client->fresh();
-
-                    $client->service()
-                            ->adjustCreditBalance($net_credit_amount)
-                            ->save();
-                }
+                $client->service()
+                        ->adjustCreditBalance($net_credit_amount)
+                        ->save();
             });
         }
 
@@ -155,6 +148,11 @@ class DeletePaymentV2
             $this->total_payment_amount = BcMath::add($this->total_payment_amount, BcMath::sub($this->payment->amount,$this->payment->refunded,2),2);
 
             $this->payment->invoices()->each(function ($paymentable_invoice) {
+
+                if($paymentable_invoice->status_id == Invoice::STATUS_REVERSED){
+                    $this->update_client_paid_to_date = false;
+                    return;
+                }
 
                 $net_deletable = BcMath::sub($paymentable_invoice->pivot->amount, $paymentable_invoice->pivot->refunded, 2);
 

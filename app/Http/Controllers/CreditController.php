@@ -232,17 +232,18 @@ class CreditController extends BaseController
                 $invoice->save();
                                     
                 //2025-08-25 after convert to a credit note, we need to delete the payments associated with the invoice.
-                $invoice->payments()->each(function ($p) use ($credit) {
-                    // $p->pivot->forceDelete();
-                    $p->invoices()->each(function ($i) use ($credit) {
-                        // $i->pivot->forceDelete();
-                        $pivot = $i->pivot;
-                        $pivot->paymentable_id = $credit->id;
-                        $pivot->paymentable_type = Credit::class;
-                        $pivot->save();
+                //2025-09-25 this logic is flawed as unlinking the invoice then prevents a valid refund from taking place.
+                // $invoice->payments()->each(function ($p) use ($credit) {
+                //     // $p->pivot->forceDelete();
+                //     $p->invoices()->each(function ($i) use ($credit) {
+                //         // $i->pivot->forceDelete();
+                //         $pivot = $i->pivot;
+                //         $pivot->paymentable_id = $credit->id;
+                //         $pivot->paymentable_type = Credit::class;
+                //         $pivot->save();
 
-                    });
-                });
+                //     });
+                // });
 
             }
 

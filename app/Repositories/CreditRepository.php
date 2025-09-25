@@ -58,8 +58,8 @@ class CreditRepository extends BaseRepository
 
     public function restore($credit)
     {
-        //we cannot restore a deleted payment.
-        if (! $credit->trashed() || $credit->invoice_id) {
+        
+        if (! $credit->trashed()) {
             return;
         }
 

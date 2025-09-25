@@ -111,7 +111,7 @@ class CreditTest extends TestCase
         $i = $i->fresh();
 
         $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
-        $this->assertTrue($payment->credits()->exists());
+        // $this->assertTrue($payment->credits()->exists());
 
         $client = $i->client;
 
@@ -122,12 +122,10 @@ class CreditTest extends TestCase
             'id' => $payment->hashed_id,
             'amount' => 100,
             'date' => '2020/12/12',
+            
             'invoices' => [
-                
-            ],
-            'credits' => [
                 [
-                    'invoice_id' => $credit->hashed_id,
+                    'invoice_id' => $i->hashed_id,
                     'amount' => 100,
                 ],
             ],
@@ -144,25 +142,28 @@ class CreditTest extends TestCase
         $payment = $payment->fresh();
         $client = $client->fresh();
 
-        $this->assertEquals(0, $client->credit_balance);
-        $this->assertEquals(0, $client->paid_to_date);
-        $this->assertEquals(0, $client->balance);
-
         $this->assertEquals(100, $payment->refunded);
         $this->assertEquals(\App\Models\Payment::STATUS_REFUNDED, $payment->status_id);
         $this->assertEquals(0, $credit->balance);
         $this->assertEquals(Credit::STATUS_APPLIED, $credit->status_id);
         
+
+        $this->assertEquals(0, $client->paid_to_date);
+        $this->assertEquals(0, $client->balance);
+        $this->assertEquals(0, $client->credit_balance);
+
         $payment->service()->deletePayment()->save();
 
         $payment = $payment->fresh();
         $client = $client->fresh();
         $credit = $credit->fresh();
+
         $this->assertEquals(1, $payment->is_deleted);
         $this->assertEquals(0, $client->credit_balance);
         $this->assertEquals(0, $client->paid_to_date);
         $this->assertEquals(0, $client->balance);
         $this->assertEquals(0, $credit->balance);
+            
         $this->assertEquals(Credit::STATUS_APPLIED, $credit->status_id);
     }
 
@@ -232,8 +233,7 @@ class CreditTest extends TestCase
         $i = $i->fresh();
 
         $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
-        $this->assertTrue($payment->credits()->exists());
-
+        
         $client = $i->client;
 
         $this->assertEquals(100, $client->credit_balance);
@@ -243,13 +243,16 @@ class CreditTest extends TestCase
         $credit = $credit->fresh();
         $client = $client->fresh();
 
-        $this->assertTrue((bool)$credit->is_deleted);
-        $this->assertEquals(0, $client->credit_balance);
+        $this->assertEquals(Credit::STATUS_SENT, $credit->status_id);
+        $this->assertEquals(100, $client->credit_balance);
+        $this->assertEquals(0, $client->balance);
+        $this->assertEquals(0, $client->paid_to_date);
+        $this->assertEquals(0, $i->balance);
+        $this->assertEquals(\App\Models\Invoice::STATUS_REVERSED, $i->status_id);
     }
 
     public function testPartialAmountWithPartialCreditAndPaymentDeletedBalance()
     {
-
              
         $c = Client::factory()->create([
             'company_id' => $this->company->id,
