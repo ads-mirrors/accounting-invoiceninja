@@ -127,7 +127,9 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
             );
 
             Stripe::setApiKey($this->company_gateway->getConfigField('apiKey'));
-            Stripe::setAPiVersion('2023-10-16');
+            // Stripe::setAPiVersion('2023-10-16');
+            // Stripe::setApiVersion('2024-04-10');
+            Stripe::setApiVersion('2025-03-31.basil');
         }
 
         return $this;
