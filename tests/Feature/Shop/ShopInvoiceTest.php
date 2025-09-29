@@ -27,6 +27,7 @@ class ShopInvoiceTest extends TestCase
 {
     use MakesHash;
     use MockAccountData;
+
     protected $faker;
 
     protected function setUp(): void
@@ -88,7 +89,7 @@ class ShopInvoiceTest extends TestCase
                 'X-API-COMPANY-KEY' => $this->company->company_key,
             ])->get('api/v1/shop/products');
         } catch (ValidationException $e) {
-            $this->assertNotNull($message);
+            $this->assertNotNull($e->getMessage());
         }
 
         $response->assertStatus(403);

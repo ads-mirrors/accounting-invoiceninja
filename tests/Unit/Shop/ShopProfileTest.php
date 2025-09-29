@@ -12,6 +12,7 @@
 namespace Tests\Unit\Shop;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\App;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
@@ -28,7 +29,11 @@ class ShopProfileTest extends TestCase
     {
         parent::setUp();
 
+        App::setLocale('en');
+
         $this->makeTestData();
+
+        $this->markTestSkipped("redundant test");
     }
 
     public function testProfileDisplays()

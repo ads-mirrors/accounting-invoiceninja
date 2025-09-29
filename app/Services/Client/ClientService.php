@@ -92,7 +92,7 @@ class ClientService
         return $this;
     }
 
-    public function updateBalanceAndPaidToDate(float $balance, float $paid_to_date)
+    public function updateBalanceAndPaidToDate($balance, $paid_to_date)
     {
         
         DB::connection(config('database.default'))->transaction(function () use ($balance, $paid_to_date) {
@@ -105,7 +105,7 @@ class ClientService
         return $this;
     }
 
-    public function updatePaidToDate(float $amount)
+    public function updatePaidToDate($amount)
     {
         
         DB::connection(config('database.default'))->transaction(function () use ($amount) {
@@ -138,7 +138,7 @@ class ClientService
     }
 
 
-    public function adjustCreditBalance(float $amount)
+    public function adjustCreditBalance(mixed $amount)
     {
 
         $this->client->credit_balance += $amount;

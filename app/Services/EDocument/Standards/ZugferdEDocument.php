@@ -138,26 +138,26 @@ class ZugferdEDocument extends AbstractService
      * 
      * @return self
      */
-    private function setAdditionalReferencedDocument(): self
-    {
-        if($this->document->client->getSetting('merge_e_invoice_to_pdf')) {
-            return $this;
-        }
+    // private function setAdditionalReferencedDocument(): self
+    // {
+    //     if($this->document->client->getSetting('merge_e_invoice_to_pdf')) {
+    //         return $this;
+    //     }
 
-        $invitation = $this->document->invitations()->first();
-        $pdf = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
-        $file_name = $this->document->numberFormatter().'.pdf';
+    //     $invitation = $this->document->invitations()->first();
+    //     $pdf = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
+    //     $file_name = $this->document->numberFormatter().'.pdf';
 
-        $this->temp_file_path = \App\Utils\TempFile::filePath($pdf, $file_name);
+    //     $this->temp_file_path = \App\Utils\TempFile::filePath($pdf, $file_name);
         
-        $this->xdocument->addDocumentInvoiceSupportingDocumentWithFile(
-            $this->document->number,
-            $this->temp_file_path,
-            $file_name,
-        );
+    //     $this->xdocument->addDocumentInvoiceSupportingDocumentWithFile(
+    //         $this->document->number,
+    //         $this->temp_file_path,
+    //         $file_name,
+    //     );
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
     /**
      * setDocumentTaxes
