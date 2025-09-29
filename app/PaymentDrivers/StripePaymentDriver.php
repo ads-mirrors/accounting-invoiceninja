@@ -553,7 +553,7 @@ class StripePaymentDriver extends BaseDriver implements SupportsHeadlessInterfac
         $searchResults = \Stripe\Customer::all([
             'email' => (string)$this->client->present()->email(),
             'limit' => 2,
-            'starting_after' => null,
+            // 'starting_after' => null,
         ], $this->stripe_connect_auth);
 
         if (count($searchResults) == 1) {
