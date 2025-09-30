@@ -112,7 +112,7 @@ class TaskTransformer extends BaseTransformer
 
         try {
 
-            $stub_start_date = \Carbon\Carbon::parse($stub_start_date);
+            $stub_start_date = \Carbon\Carbon::parse($stub_start_date, $this->company->timezone()->name);
             $this->stubbed_timestamp = $stub_start_date->timestamp;
 
             return $stub_start_date->timestamp;
@@ -125,7 +125,7 @@ class TaskTransformer extends BaseTransformer
 
         
         try {
-            $stub_start_date = \Carbon\Carbon::parse(str_replace('/', '-', $stub_start_date));
+            $stub_start_date = \Carbon\Carbon::parse(str_replace('/', '-', $stub_start_date), $this->company->timezone()->name);
             $this->stubbed_timestamp = $stub_start_date->timestamp;
 
             return $stub_start_date->timestamp;
@@ -137,7 +137,7 @@ class TaskTransformer extends BaseTransformer
         try {
 
             $stub_start_date = \Carbon\Carbon::createFromFormat($this->company->date_format(), $stub_start_date);
-            $this->stubbed_timestamp = $stub_start_date->timestamp;
+            $this->stubbed_timestamp = $stub_start_date->timestamp - $this->company->utc_offset();
         } catch (\Exception $e) {
             nlog($e->getMessage());
             return $this->stubbed_timestamp;
@@ -154,7 +154,7 @@ class TaskTransformer extends BaseTransformer
 
         try {
 
-            $stub_end_date = \Carbon\Carbon::parse($stub_end_date);
+            $stub_end_date = \Carbon\Carbon::parse($stub_end_date, $this->company->timezone()->name);
 
             if ($stub_end_date->timestamp == $this->stubbed_timestamp) {
                 
@@ -173,7 +173,7 @@ class TaskTransformer extends BaseTransformer
 
         try {
 
-            $stub_end_date = \Carbon\Carbon::parse(str_replace('/', '-', $stub_end_date));
+            $stub_end_date = \Carbon\Carbon::parse(str_replace('/', '-', $stub_end_date), $this->company->timezone()->name);
 
             if ($stub_end_date->timestamp == $this->stubbed_timestamp) {
                 return $this->stubbed_timestamp;
@@ -193,7 +193,7 @@ class TaskTransformer extends BaseTransformer
         try {
 
             $stub_end_date = \Carbon\Carbon::createFromFormat($this->company->date_format(), $stub_end_date);
-            $this->stubbed_timestamp = $stub_end_date->timestamp;
+            $this->stubbed_timestamp = $stub_end_date->timestamp - $this->company->utc_offset();
         } catch (\Exception $e) {
             nlog("fall back failed too" . $e->getMessage());
             return $this->stubbed_timestamp;
